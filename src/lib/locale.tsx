@@ -76,6 +76,7 @@ const EN: Record<string, string> = {
   'catalog.empty.none.title': 'New patterns coming soon',
   'catalog.empty.none.desc': 'We are expanding the catalog. Need a specific pattern? Request it and we make it for you.',
   'catalog.empty.none.cta': 'Request a custom pattern',
+  'product.whatsapp': 'Ask on WhatsApp',
 };
 
 interface LocaleContextType {

@@ -1,8 +1,9 @@
 import { Link } from 'react-router-dom';
 import type { Product } from '../../lib/types';
-import { ShoppingCart } from 'lucide-react';
+import { ShoppingCart, MessageCircle } from 'lucide-react';
 import { useCart } from '../../contexts/CartContext';
 import { useLocale } from '../../lib/locale';
+import { WHATSAPP_NUMBER } from '../../lib/whatsapp';
 
 interface ProductCardProps {
   product: Product;
@@ -12,6 +13,7 @@ export function ProductCard({ product }: ProductCardProps) {
   const { addItem } = useCart();
   const { t, formatPrice } = useLocale();
   const hasDiscount = product.sale_price !== null && product.sale_price < product.price;
+  const waUrl = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(`Hola Modeltex, tengo una consulta sobre el molde: ${product.name}`)}`;
 
   return (
     <div className="card group overflow-hidden">
@@ -83,6 +85,18 @@ export function ProductCard({ product }: ProductCardProps) {
             <ShoppingCart className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Consulta por WhatsApp (fina) */}
+        <a
+          href={waUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          onClick={(e) => e.stopPropagation()}
+          className="mt-3 flex items-center justify-center gap-1.5 w-full py-1.5 text-xs font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
+        >
+          <MessageCircle className="w-3.5 h-3.5" />
+          {t('product.whatsapp', 'Consultar por WhatsApp')}
+        </a>
       </div>
     </div>
   );
