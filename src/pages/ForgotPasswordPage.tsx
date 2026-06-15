@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
 
           <div className="mb-8 text-center">
             <div className="inline-flex justify-center mb-6">
-              <BrandLogo variant="full" size={42} />
+              <BrandLogo variant="full" size={96} />
             </div>
             <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">Recuperar contrasena</h1>
             <p className="text-gray-500 text-sm">Te enviamos un enlace para restablecer tu contrasena</p>

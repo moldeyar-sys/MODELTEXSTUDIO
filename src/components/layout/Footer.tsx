@@ -15,7 +15,7 @@ export function Footer() {
           {/* Brand */}
           <div>
             <div className="mb-4">
-              <BrandLogo variant="full" tone="light" size={36} />
+              <BrandLogo variant="full" tone="light" size={72} />
             </div>
             <p className="text-primary-200 text-sm leading-relaxed mb-4">
               {t('footer.tagline', 'Moldes digitales profesionales listos para imprimir y producir. Tienda digital para fabricantes, emprendedores y diseñadores.')}

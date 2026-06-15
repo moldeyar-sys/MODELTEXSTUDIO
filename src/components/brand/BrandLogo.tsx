@@ -1,49 +1,40 @@
 import { useState } from 'react';
 
 interface BrandLogoProps {
-  /** 'full' = isotipo + wordmark · 'icon' = solo isotipo */
+  /** 'full' = logo completo (buzo + M + texto MODELTEX) · 'icon' = solo la M */
   variant?: 'full' | 'icon';
-  /** 'dark' = wordmark azul (fondos claros) · 'light' = wordmark crema (fondos oscuros) */
+  /** compat: el logo ya trae su texto, este prop no afecta al logo completo */
   tone?: 'dark' | 'light';
   /** alto del logo en px */
   size?: number;
   className?: string;
 }
 
-export function BrandLogo({ variant = 'full', tone = 'dark', size = 36, className = '' }: BrandLogoProps) {
+export function BrandLogo({ variant = 'full', size = 40, className = '' }: BrandLogoProps) {
   const [imgError, setImgError] = useState(false);
 
-  const icon = imgError ? (
-    <span
-      className="inline-flex items-center justify-center rounded-md bg-brand-blue text-white font-display font-bold flex-shrink-0"
-      style={{ width: size, height: size, fontSize: Math.round(size * 0.55) }}
-    >
-      M
-    </span>
-  ) : (
-    <img
-      src="/brand/modeltex-icon.png?v=2"
-      alt="Modeltex"
-      onError={() => setImgError(true)}
-      style={{ height: size, width: size }}
-      className="object-contain rounded-md select-none flex-shrink-0"
-      draggable={false}
-    />
-  );
+  // Logo COMPLETO (buzo + M + MODELTEX) tal cual el isotipo de marca.
+  const src = variant === 'icon' ? '/brand/modeltex-icon.png?v=2' : '/brand/modeltex-logo-full.png?v=3';
 
-  if (variant === 'icon') {
-    return <span className={`inline-flex ${className}`}>{icon}</span>;
+  if (imgError) {
+    return (
+      <span
+        className={`inline-flex items-center justify-center rounded-md bg-brand-blue text-white font-display font-bold ${className}`}
+        style={{ height: size, paddingInline: size * 0.3, fontSize: Math.round(size * 0.5) }}
+      >
+        MODELTEX
+      </span>
+    );
   }
 
   return (
-    <span className={`inline-flex items-center gap-2 ${className}`}>
-      {icon}
-      <span
-        className={`font-display font-bold tracking-tight ${tone === 'light' ? 'text-brand-cream' : 'text-brand-blue'}`}
-        style={{ fontSize: Math.round(size * 0.6) }}
-      >
-        Modeltex
-      </span>
-    </span>
+    <img
+      src={src}
+      alt="Modeltex"
+      onError={() => setImgError(true)}
+      style={{ height: size, width: 'auto' }}
+      className={`object-contain rounded-lg select-none ${className}`}
+      draggable={false}
+    />
   );
 }
