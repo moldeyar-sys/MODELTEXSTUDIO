@@ -22,7 +22,7 @@ export function BrandLogo({ variant = 'full', tone = 'dark', size = 36, classNam
     </span>
   ) : (
     <img
-      src="/brand/modeltex-icon.png"
+      src="/brand/modeltex-icon.png?v=2"
       alt="Modeltex"
       onError={() => setImgError(true)}
       style={{ height: size, width: size }}
