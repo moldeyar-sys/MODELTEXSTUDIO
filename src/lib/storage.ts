@@ -17,12 +17,43 @@ function safeName(name: string): string {
   return cleanExt ? `${cleanBase || 'archivo'}.${cleanExt}` : (cleanBase || 'archivo');
 }
 
-/** Sube una imagen al bucket publico y devuelve su URL publica. */
+/**
+ * Comprime/redimensiona una imagen en el navegador antes de subir.
+ * Reescala al lado máximo `maxDim` y reencoda a WebP con `quality`.
+ * Si algo falla o no conviene, devuelve el archivo original.
+ */
+export async function compressImage(file: File, maxDim = 1600, quality = 0.82): Promise<File> {
+  if (!file.type.startsWith('image/') || file.type === 'image/svg+xml') return file;
+  let bitmap: ImageBitmap;
+  try {
+    bitmap = await createImageBitmap(file);
+  } catch {
+    return file; // formatos no decodificables (ej. HEIC) -> se sube original
+  }
+  let { width, height } = bitmap;
+  const scale = Math.min(1, maxDim / Math.max(width, height));
+  width = Math.round(width * scale);
+  height = Math.round(height * scale);
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext('2d');
+  if (!ctx) { bitmap.close?.(); return file; }
+  ctx.drawImage(bitmap, 0, 0, width, height);
+  bitmap.close?.();
+  const blob: Blob | null = await new Promise(res => canvas.toBlob(res, 'image/webp', quality));
+  if (!blob || blob.size >= file.size) return file; // si no achicó, dejar original
+  const newName = file.name.replace(/\.[^.]+$/, '') + '.webp';
+  return new File([blob], newName, { type: 'image/webp' });
+}
+
+/** Sube una imagen (comprimida) al bucket publico y devuelve su URL publica. */
 export async function uploadProductImage(file: File): Promise<string> {
-  const path = `${Date.now()}-${safeName(file.name)}`;
+  const optimized = await compressImage(file);
+  const path = `${Date.now()}-${safeName(optimized.name)}`;
   const { error } = await supabase.storage
     .from(IMAGES_BUCKET)
-    .upload(path, file, { cacheControl: '3600', upsert: false });
+    .upload(path, optimized, { cacheControl: '3600', upsert: false, contentType: optimized.type });
   if (error) throw error;
   return supabase.storage.from(IMAGES_BUCKET).getPublicUrl(path).data.publicUrl;
 }
