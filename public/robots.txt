@@ -1,0 +1,11 @@
+User-agent: *
+Allow: /
+
+# Evitar indexar áreas privadas / de cuenta
+Disallow: /admin
+Disallow: /checkout
+Disallow: /mi-cuenta
+Disallow: /mis-compras
+Disallow: /descargas
+
+Sitemap: https://moldey.com/sitemap.xml
