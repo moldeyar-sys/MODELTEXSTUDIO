@@ -280,7 +280,7 @@ const HomePage = () => {
                 <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent-500/30 rounded-full blur-3xl" />
                 <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-petroleum-400/30 rounded-full blur-3xl" />
                 <img
-                  src="/brand/modeltex-hero.png"
+                  src="/brand/modeltex-hero.webp"
                   alt="Modeltex - Moldería de precisión: patronaje digital profesional"
                   className="relative w-full rounded-3xl shadow-2xl border border-white/20"
                 />
