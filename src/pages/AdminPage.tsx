@@ -110,7 +110,7 @@ export default function AdminPage() {
     <div className="min-h-screen bg-petroleum-50">
       <div className="container-custom py-8">
         <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">Panel de Administración</h1>
-        <p className="text-gray-500 mb-8">Gestioná productos, pedidos y clientes de Moldey</p>
+        <p className="text-gray-500 mb-8">Gestioná productos, pedidos y clientes de Modeltex</p>
 
         {/* Tabs */}
         <div className="flex gap-1 bg-white rounded-xl p-1 border border-gray-200 mb-8 overflow-x-auto">

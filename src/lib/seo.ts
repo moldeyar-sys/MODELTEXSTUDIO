@@ -9,11 +9,11 @@ interface SeoOptions {
   type?: 'website' | 'product' | 'article';
 }
 
-const SITE_NAME = 'Moldey';
-const SITE_URL = 'https://moldey.com';
+const SITE_NAME = 'Modeltex';
+const SITE_URL = 'https://modeltexstudio.com';
 const DEFAULT_DESCRIPTION =
   'Moldes digitales profesionales en PDF A4, plotter y formatos editables. Descarga inmediata. Vendemos a todo el mundo.';
-const DEFAULT_IMAGE = 'https://moldey.com/brand/og-image.png';
+const DEFAULT_IMAGE = 'https://modeltexstudio.com/brand/og-image.png';
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);

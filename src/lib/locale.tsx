@@ -3,8 +3,8 @@ import { createContext, useContext, useEffect, useState, useCallback, type React
 export type Lang = 'es' | 'en';
 export type Currency = 'ARS' | 'USD';
 
-const LANG_KEY = 'moldey_lang';
-const CURRENCY_KEY = 'moldey_currency';
+const LANG_KEY = 'modeltex_lang';
+const CURRENCY_KEY = 'modeltex_currency';
 const FALLBACK_ARS_PER_USD = 1450; // tasa de respaldo si falla la API
 
 // Diccionario solo para inglés. Si falta la clave (o el idioma es 'es'),
@@ -47,12 +47,12 @@ const EN: Record<string, string> = {
 
   'home.hero.badge': 'We ship worldwide',
   'home.hero.title': 'Digital clothing patterns to print and produce in any country',
-  'home.hero.subtitle': 'Buy professional patterns in A4 PDF, plotter and editable formats. Moldey sells digital files for textile entrepreneurs, manufacturers, workshops and apparel designers worldwide.',
+  'home.hero.subtitle': 'Buy professional patterns in A4 PDF, plotter and editable formats. Modeltex sells digital files for textile entrepreneurs, manufacturers, workshops and apparel designers worldwide.',
   'home.featured.title': 'Featured products',
   'home.featured.subtitle': 'Discover our most popular patterns and bestsellers',
   'home.featured.viewAll': 'View full catalog',
   'home.testimonials.title': 'What our customers say',
-  'home.testimonials.subtitle': 'Entrepreneurs, workshops and designers across Latin America already produce with Moldey',
+  'home.testimonials.subtitle': 'Entrepreneurs, workshops and designers across Latin America already produce with Modeltex',
   'home.cta.title': 'Ready to get started?',
   'home.visual.title': 'Professional digital patternmaking',
   'home.visual.subtitle': 'Graded industrial patterns, ready to produce',

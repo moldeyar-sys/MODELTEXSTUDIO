@@ -192,7 +192,7 @@ const HomePage = () => {
     {
       name: 'Carolina M.',
       role: 'Emprendedora textil · Argentina',
-      text: 'Arranqué mi marca de indumentaria con los moldes de Moldey. Los archivos vienen impecables y graduados en todos los talles. Me ahorraron muchísimo tiempo de moldería.',
+      text: 'Arranqué mi marca de indumentaria con los moldes de Modeltex. Los archivos vienen impecables y graduados en todos los talles. Me ahorraron muchísimo tiempo de moldería.',
       rating: 5,
     },
     {
@@ -247,7 +247,7 @@ const HomePage = () => {
               </h1>
 
               <p className="font-sans text-lg md:text-xl text-gray-100 mb-10 leading-relaxed">
-                {t('home.hero.subtitle', 'Compra moldes profesionales en PDF A4, plotter y formatos editables. Moldey vende archivos digitales para emprendedores textiles, fabricantes, talleres y disenadores de indumentaria en todo el mundo.')}
+                {t('home.hero.subtitle', 'Compra moldes profesionales en PDF A4, plotter y formatos editables. Modeltex vende archivos digitales para emprendedores textiles, fabricantes, talleres y disenadores de indumentaria en todo el mundo.')}
               </p>
 
               {/* CTA Buttons */}
@@ -274,14 +274,14 @@ const HomePage = () => {
               </div>
             </div>
 
-            {/* Right: imagen real de Moldey */}
+            {/* Right: imagen real de Modeltex */}
             <div className="flex-shrink-0 w-full max-w-md">
               <div className="relative">
                 <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent-500/30 rounded-full blur-3xl" />
                 <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-petroleum-400/30 rounded-full blur-3xl" />
                 <img
-                  src="/brand/hero-studio.webp"
-                  alt="Moldey - Moldería de precisión: patronaje digital profesional"
+                  src="/brand/modeltex-hero.png"
+                  alt="Modeltex - Moldería de precisión: patronaje digital profesional"
                   className="relative w-full rounded-3xl shadow-2xl border border-white/20"
                 />
                 <div className="relative mt-4 flex flex-wrap justify-center gap-2">
@@ -445,7 +445,7 @@ const HomePage = () => {
           <div className="text-center mb-16">
             <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.testimonials.title', 'Lo que dicen nuestros clientes')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
-              {t('home.testimonials.subtitle', 'Emprendedores, talleres y diseñadores de toda Latinoamérica ya producen con Moldey')}
+              {t('home.testimonials.subtitle', 'Emprendedores, talleres y diseñadores de toda Latinoamérica ya producen con Modeltex')}
             </p>
           </div>
 
@@ -558,7 +558,7 @@ const HomePage = () => {
               {t('home.cta.title', '¿Listo para comenzar?')}
             </h2>
             <p className="font-sans text-lg text-gray-100 mb-10 leading-relaxed">
-              Únete a miles de fabricantes, emprendedores y diseñadores que confían en Moldey para sus creaciones.
+              Únete a miles de fabricantes, emprendedores y diseñadores que confían en Modeltex para sus creaciones.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">

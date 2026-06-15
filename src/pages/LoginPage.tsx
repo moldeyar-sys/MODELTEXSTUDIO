@@ -35,11 +35,11 @@ export default function LoginPage() {
       <div className="max-w-md w-full">
         <div className="bg-white rounded-2xl shadow-xl p-8 sm:p-10">
           <div className="mb-8 text-center">
-            <Link to="/" className="inline-flex justify-center mb-6" aria-label="Moldey - Inicio">
+            <Link to="/" className="inline-flex justify-center mb-6" aria-label="Modeltex - Inicio">
               <BrandLogo variant="full" size={42} />
             </Link>
             <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">Iniciar sesion</h1>
-            <p className="text-gray-500">Ingresa a tu cuenta de Moldey</p>
+            <p className="text-gray-500">Ingresa a tu cuenta de Modeltex</p>
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-5">

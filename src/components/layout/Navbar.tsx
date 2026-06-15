@@ -28,7 +28,7 @@ export function Navbar() {
       <div className="container-custom">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center group" onClick={() => setIsOpen(false)} aria-label="Moldey - Inicio">
+          <Link to="/" className="flex items-center group" onClick={() => setIsOpen(false)} aria-label="Modeltex - Inicio">
             <BrandLogo variant="full" size={40} className="transition-transform group-hover:scale-[1.03]" />
           </Link>
 

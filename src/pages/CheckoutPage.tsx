@@ -99,7 +99,7 @@ export default function CheckoutPage() {
               <h3 className="font-semibold text-gray-900 mb-3">Datos para transferencia</h3>
               <div className="space-y-2 text-sm text-gray-600">
                 <p><span className="font-medium text-gray-700">Alias:</span> MOLDEY.DIGITAL</p>
-                <p><span className="font-medium text-gray-700">Titular:</span> Moldey</p>
+                <p><span className="font-medium text-gray-700">Titular:</span> Modeltex</p>
                 <p><span className="font-medium text-gray-700">Banco:</span> (Por confirmar)</p>
                 <p><span className="font-medium text-gray-700">CBU/CVU:</span> (Por confirmar)</p>
               </div>
@@ -130,7 +130,7 @@ export default function CheckoutPage() {
               </p>
               <img
                 src="/brand/paypal-qr.png"
-                alt="QR de PayPal para pagar a Moldey"
+                alt="QR de PayPal para pagar a Modeltex"
                 className="w-56 max-w-full mx-auto rounded-xl border border-gray-200"
               />
               <p className="mt-4 text-xs text-petroleum-600">
@@ -319,7 +319,7 @@ export default function CheckoutPage() {
               </button>
 
               <p className="text-xs text-gray-400 text-center mt-3">
-                Al confirmar, aceptás los términos de compra de Moldey
+                Al confirmar, aceptás los términos de compra de Modeltex
               </p>
             </div>
           </div>

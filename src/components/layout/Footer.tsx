@@ -22,7 +22,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-2 text-primary-200 text-sm">
               <Mail className="w-4 h-4" />
-              <span>info@moldey.com</span>
+              <span>info@modeltexstudio.com</span>
             </div>
             <div className="flex items-center gap-2 text-primary-200 text-sm mt-2">
               <MapPin className="w-4 h-4" />
@@ -46,7 +46,7 @@ export function Footer() {
 
           {/* Links */}
           <div>
-            <h4 className="font-semibold text-white mb-4">Moldey</h4>
+            <h4 className="font-semibold text-white mb-4">Modeltex</h4>
             <ul className="space-y-2">
               <li><Link to="/catalogo" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.fullCatalog', 'Catálogo completo')}</Link></li>
               <li><Link to="/catalogo?categoria=packs" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.packs', 'Packs de moldes')}</Link></li>
@@ -69,7 +69,7 @@ export function Footer() {
 
         <div className="border-t border-primary-700/50 mt-12 pt-8 text-center">
           <p className="text-primary-300 text-sm">
-            &copy; {new Date().getFullYear()} Moldey. {t('footer.rights', 'Todos los derechos reservados.')}
+            &copy; {new Date().getFullYear()} Modeltex. {t('footer.rights', 'Todos los derechos reservados.')}
           </p>
         </div>
       </div>
