@@ -21,6 +21,7 @@ export function Navbar() {
     { to: '/', label: t('nav.home', 'Inicio') },
     { to: '/catalogo', label: t('nav.catalog', 'Catálogo') },
     { to: '/diseno-a-pedido', label: t('nav.custom', 'Diseño a pedido') },
+    { to: '/ia-textil', label: t('nav.iaTextil', 'IA Textil') },
   ];
 
   return (

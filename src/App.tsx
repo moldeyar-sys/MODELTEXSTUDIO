@@ -25,6 +25,7 @@ const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage'));
 const MyDownloadsPage = lazy(() => import('./pages/MyDownloadsPage'));
 const AdminPage = lazy(() => import('./pages/AdminPage'));
 const CustomDesignPage = lazy(() => import('./pages/CustomDesignPage'));
+const IaTextilPage = lazy(() => import('./pages/IaTextilPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function PageLoader() {
@@ -54,6 +55,7 @@ function AppLayout() {
             <Route path="/mis-compras" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
             <Route path="/descargas" element={<ProtectedRoute><MyDownloadsPage /></ProtectedRoute>} />
             <Route path="/diseno-a-pedido" element={<CustomDesignPage />} />
+            <Route path="/ia-textil" element={<IaTextilPage />} />
             <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
