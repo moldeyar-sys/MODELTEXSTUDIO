@@ -7,6 +7,7 @@ import { useLocale } from '../lib/locale';
 import { supabase } from '../lib/supabase';
 import type { PaymentMethod } from '../lib/types';
 import { PAYMENT_METHODS } from '../lib/types';
+import { WhatsAppConsultButton } from '../components/ui/WhatsAppConsultButton';
 
 // Link de pago de Mercado Pago (monto fijo). Cambialo acá si lo regenerás.
 const MP_PAYMENT_LINK = 'https://link.mercadopago.com.ar/modeltex';
@@ -162,6 +163,9 @@ export default function CheckoutPage() {
           <div className="flex flex-col gap-3">
             <Link to="/mis-compras" className="btn-primary">Ver mis compras</Link>
             <Link to="/catalogo" onClick={() => { /* Navigate cleanly without filter params */ }} className="btn-secondary">Seguir comprando</Link>
+            <WhatsAppConsultButton
+              message={`Hola Modeltex, tengo una consulta sobre mi pedido #${orderId.slice(0, 8)} (pago por ${PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label || paymentMethod}).`}
+            />
           </div>
         </div>
       </div>
@@ -317,6 +321,11 @@ export default function CheckoutPage() {
                   'Confirmar pedido'
                 )}
               </button>
+
+              <WhatsAppConsultButton
+                className="mt-3"
+                message={`Hola Modeltex, tengo una duda para finalizar mi compra (total ${formatPrice(total)}).`}
+              />
 
               <p className="text-xs text-gray-400 text-center mt-3">
                 Al confirmar, aceptás los términos de compra de Modeltex

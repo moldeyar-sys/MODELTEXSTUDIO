@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { useCart } from '../contexts/CartContext';
 import { useLocale } from '../lib/locale';
+import { WhatsAppConsultButton } from '../components/ui/WhatsAppConsultButton';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, total, clearCart } = useCart();
@@ -130,6 +131,11 @@ export default function CartPage() {
               <Link to="/checkout" className="btn-primary w-full text-center block">
                 {t('cart.checkout', 'Ir a pagar')}
               </Link>
+
+              <WhatsAppConsultButton
+                className="mt-3"
+                message="Hola Modeltex, tengo una duda con mi compra antes de pagar."
+              />
 
               <button
                 onClick={clearCart}
