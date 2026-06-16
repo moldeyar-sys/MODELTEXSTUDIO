@@ -5,15 +5,16 @@ import {
   Plus, Edit3, Trash2,
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
-  Upload, ImagePlus, X, FileText, Loader2, Gift
+  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail
 } from 'lucide-react';
-import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold } from '../lib/types';
+import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
 import { fetchAllFreeMolds } from '../lib/freeMolds';
+import { fetchContactMessages } from '../lib/contact';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts';
 
 export default function AdminPage() {
   useAuth();
@@ -23,6 +24,7 @@ export default function AdminPage() {
   const [customers, setCustomers] = useState<Profile[]>([]);
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [freeMolds, setFreeMolds] = useState<FreeMold[]>([]);
+  const [contacts, setContacts] = useState<ContactMessage[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -36,18 +38,20 @@ export default function AdminPage() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [prodRes, orderRes, custRes, reqRes, freeRes] = await Promise.all([
+    const [prodRes, orderRes, custRes, reqRes, freeRes, contactRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('custom_requests').select('*').order('created_at', { ascending: false }),
       fetchAllFreeMolds(), // resiliente: si la tabla no existe, devuelve [] sin romper el admin
+      fetchContactMessages(), // resiliente igual
     ]);
     setProducts((prodRes.data as Product[]) || []);
     setOrders((orderRes.data as Order[]) || []);
     setCustomers((custRes.data as Profile[]) || []);
     setRequests((reqRes.data as CustomRequest[]) || []);
     setFreeMolds(freeRes);
+    setContacts(contactRes);
     setLoading(false);
   };
 
@@ -58,6 +62,7 @@ export default function AdminPage() {
     { id: 'customers', label: 'Clientes', icon: <UserCheck className="w-4 h-4" /> },
     { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
     { id: 'free', label: 'Moldes Gratis', icon: <Gift className="w-4 h-4" /> },
+    { id: 'contacts', label: 'Contactos', icon: <Mail className="w-4 h-4" /> },
   ];
 
   const updateOrderStatus = async (orderId: string, field: 'payment_status' | 'order_status', value: string) => {
@@ -99,6 +104,17 @@ export default function AdminPage() {
   const toggleFreeActive = async (id: string, is_active: boolean) => {
     const { error } = await supabase.from('free_molds').update({ is_active }).eq('id', id);
     if (!error) setFreeMolds(prev => prev.map(m => m.id === id ? { ...m, is_active } : m));
+  };
+
+  const toggleContactRead = async (id: string, is_read: boolean) => {
+    const { error } = await supabase.from('contact_messages').update({ is_read }).eq('id', id);
+    if (!error) setContacts(prev => prev.map(c => c.id === id ? { ...c, is_read } : c));
+  };
+
+  const deleteContact = async (id: string) => {
+    if (!confirm('¿Eliminar este mensaje?')) return;
+    const { error } = await supabase.from('contact_messages').delete().eq('id', id);
+    if (!error) setContacts(prev => prev.filter(c => c.id !== id));
   };
 
   const paidOrders = orders.filter(o => o.payment_status === 'pagado');
@@ -539,6 +555,57 @@ export default function AdminPage() {
                 </p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Contactos */}
+        {activeTab === 'contacts' && (
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-semibold text-gray-900 text-lg">Mensajes de contacto</h2>
+              <p className="text-sm text-gray-500">Los que llegan desde la página pública <span className="font-mono">/contacto</span></p>
+            </div>
+            {contacts.map(c => (
+              <div key={c.id} className={`card p-5 ${c.is_read ? '' : 'border-l-4 border-l-primary-600'}`}>
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
+                  <div>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {c.name || 'Sin nombre'}
+                      {!c.is_read && <span className="ml-2 text-[10px] font-bold text-white bg-primary-600 px-1.5 py-0.5 rounded">NUEVO</span>}
+                    </p>
+                    <p className="text-xs text-gray-400">
+                      {c.created_at && new Date(c.created_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 text-xs">
+                    {c.whatsapp && (
+                      <a href={`https://wa.me/${c.whatsapp.replace(/[^0-9]/g, '')}`} target="_blank" rel="noopener noreferrer" className="px-2.5 py-1 bg-green-100 text-green-700 rounded-lg hover:bg-green-200">
+                        WhatsApp
+                      </a>
+                    )}
+                    {c.email && (
+                      <a href={`mailto:${c.email}`} className="px-2.5 py-1 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200">Email</a>
+                    )}
+                  </div>
+                </div>
+                {c.subject && <p className="text-sm font-medium text-gray-700 mb-1">Asunto: {c.subject}</p>}
+                <p className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 whitespace-pre-wrap">{c.message}</p>
+                <div className="flex flex-wrap gap-2 mt-3">
+                  <button onClick={() => toggleContactRead(c.id, !c.is_read)} className="text-xs font-medium px-3 py-1.5 bg-gray-100 text-gray-600 rounded-lg hover:bg-gray-200">
+                    Marcar {c.is_read ? 'no leído' : 'leído'}
+                  </button>
+                  <button onClick={() => deleteContact(c.id)} className="text-xs font-medium px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100">
+                    Eliminar
+                  </button>
+                </div>
+              </div>
+            ))}
+            {contacts.length === 0 && (
+              <p className="text-gray-500 text-center py-8 text-sm">
+                Todavía no llegaron mensajes.
+                <br />(Si esperabas alguno y no aparece, falta correr el SQL de Contacto en Supabase.)
+              </p>
+            )}
           </div>
         )}
       </div>

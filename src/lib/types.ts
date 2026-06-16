@@ -157,6 +157,18 @@ export const FREE_MOLD_TAGS = [
   'Principiante', 'Producción', 'Verano', 'Invierno', 'Todo el año',
 ];
 
+// ==================== CONTACTO ====================
+export interface ContactMessage {
+  id: string;
+  name: string;
+  whatsapp: string;
+  email: string;
+  subject: string;
+  message: string;
+  is_read: boolean;
+  created_at: string;
+}
+
 export const CUSTOMER_TYPES: { value: CustomerType; label: string }[] = [
   { value: 'emprendedor', label: 'Emprendedor' },
   { value: 'fabricante', label: 'Fabricante' },

@@ -23,6 +23,7 @@ export function Navbar() {
     { to: '/diseno-a-pedido', label: t('nav.custom', 'Diseño a pedido') },
     { to: '/ia-textil', label: t('nav.iaTextil', 'IA Textil') },
     { to: '/moldes-gratis', label: t('nav.freeMolds', 'Moldes Gratis') },
+    { to: '/contacto', label: t('nav.contact', 'Contacto') },
   ];
 
   return (

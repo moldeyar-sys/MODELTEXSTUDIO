@@ -27,6 +27,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const CustomDesignPage = lazy(() => import('./pages/CustomDesignPage'));
 const IaTextilPage = lazy(() => import('./pages/IaTextilPage'));
 const FreeMoldsPage = lazy(() => import('./pages/FreeMoldsPage'));
+const ContactPage = lazy(() => import('./pages/ContactPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function PageLoader() {
@@ -58,6 +59,7 @@ function AppLayout() {
             <Route path="/diseno-a-pedido" element={<CustomDesignPage />} />
             <Route path="/ia-textil" element={<IaTextilPage />} />
             <Route path="/moldes-gratis" element={<FreeMoldsPage />} />
+            <Route path="/contacto" element={<ContactPage />} />
             <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
