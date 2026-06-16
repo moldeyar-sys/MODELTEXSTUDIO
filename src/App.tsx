@@ -6,6 +6,7 @@ import { CartProvider } from './contexts/CartContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { WhatsAppButton } from './components/layout/WhatsAppButton';
+import { ChatWidget } from './components/chat/ChatWidget';
 import { ProtectedRoute, AdminRoute } from './components/layout/ProtectedRoute';
 
 // HomePage se carga de inmediato (landing). El resto se carga on-demand
@@ -60,6 +61,7 @@ function AppLayout() {
       </main>
       <Footer />
       <WhatsAppButton />
+      <ChatWidget />
     </div>
   );
 }
