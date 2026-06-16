@@ -3,6 +3,8 @@ import type { FileType } from './types';
 
 export const IMAGES_BUCKET = 'product-images';
 export const FILES_BUCKET = 'product-files';
+// Bucket PUBLICO solo para archivos gratuitos (separado del privado de pagos).
+export const FREE_FILES_BUCKET = 'free-files';
 
 function safeName(name: string): string {
   const dot = name.lastIndexOf('.');
@@ -74,6 +76,19 @@ export async function uploadProductFile(productId: string, file: File): Promise<
 /** Borra un archivo descargable del bucket privado por su ruta interna. */
 export async function removeProductFile(path: string): Promise<void> {
   await supabase.storage.from(FILES_BUCKET).remove([path]);
+}
+
+/**
+ * Sube un archivo GRATUITO al bucket PUBLICO 'free-files' y devuelve su URL
+ * publica (descarga directa). Aislado del bucket privado de productos pagos.
+ */
+export async function uploadFreeMoldFile(file: File): Promise<string> {
+  const path = `${Date.now()}-${safeName(file.name)}`;
+  const { error } = await supabase.storage
+    .from(FREE_FILES_BUCKET)
+    .upload(path, file, { upsert: false, contentType: file.type || undefined });
+  if (error) throw error;
+  return supabase.storage.from(FREE_FILES_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 /**

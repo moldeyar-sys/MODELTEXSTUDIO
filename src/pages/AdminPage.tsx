@@ -5,13 +5,15 @@ import {
   Plus, Edit3, Trash2,
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
-  Upload, ImagePlus, X, FileText, Loader2
+  Upload, ImagePlus, X, FileText, Loader2, Gift
 } from 'lucide-react';
-import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus } from '../lib/types';
+import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
+import { fetchAllFreeMolds } from '../lib/freeMolds';
+import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free';
 
 export default function AdminPage() {
   useAuth();
@@ -20,9 +22,12 @@ export default function AdminPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [customers, setCustomers] = useState<Profile[]>([]);
   const [requests, setRequests] = useState<CustomRequest[]>([]);
+  const [freeMolds, setFreeMolds] = useState<FreeMold[]>([]);
   const [loading, setLoading] = useState(true);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [showFreeForm, setShowFreeForm] = useState(false);
+  const [editingFree, setEditingFree] = useState<FreeMold | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
@@ -31,16 +36,18 @@ export default function AdminPage() {
 
   const fetchAll = async () => {
     setLoading(true);
-    const [prodRes, orderRes, custRes, reqRes] = await Promise.all([
+    const [prodRes, orderRes, custRes, reqRes, freeRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('custom_requests').select('*').order('created_at', { ascending: false }),
+      fetchAllFreeMolds(), // resiliente: si la tabla no existe, devuelve [] sin romper el admin
     ]);
     setProducts((prodRes.data as Product[]) || []);
     setOrders((orderRes.data as Order[]) || []);
     setCustomers((custRes.data as Profile[]) || []);
     setRequests((reqRes.data as CustomRequest[]) || []);
+    setFreeMolds(freeRes);
     setLoading(false);
   };
 
@@ -50,6 +57,7 @@ export default function AdminPage() {
     { id: 'orders', label: 'Pedidos', icon: <ShoppingCart className="w-4 h-4" /> },
     { id: 'customers', label: 'Clientes', icon: <UserCheck className="w-4 h-4" /> },
     { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
+    { id: 'free', label: 'Moldes Gratis', icon: <Gift className="w-4 h-4" /> },
   ];
 
   const updateOrderStatus = async (orderId: string, field: 'payment_status' | 'order_status', value: string) => {
@@ -80,6 +88,17 @@ export default function AdminPage() {
   const toggleProductFeatured = async (id: string, is_featured: boolean) => {
     const { error } = await supabase.from('products').update({ is_featured }).eq('id', id);
     if (!error) setProducts(prev => prev.map(p => p.id === id ? { ...p, is_featured } : p));
+  };
+
+  const deleteFreeMold = async (id: string) => {
+    if (!confirm('¿Eliminar este molde gratis?')) return;
+    const { error } = await supabase.from('free_molds').delete().eq('id', id);
+    if (!error) setFreeMolds(prev => prev.filter(m => m.id !== id));
+  };
+
+  const toggleFreeActive = async (id: string, is_active: boolean) => {
+    const { error } = await supabase.from('free_molds').update({ is_active }).eq('id', id);
+    if (!error) setFreeMolds(prev => prev.map(m => m.id === id ? { ...m, is_active } : m));
   };
 
   const paidOrders = orders.filter(o => o.payment_status === 'pagado');
@@ -438,6 +457,88 @@ export default function AdminPage() {
               </div>
             ))}
             {requests.length === 0 && <p className="text-gray-500 text-center py-8">No hay solicitudes de diseño</p>}
+          </div>
+        )}
+
+        {/* Moldes Gratis */}
+        {activeTab === 'free' && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <div>
+                <h2 className="font-semibold text-gray-900 text-lg">Moldes Gratis</h2>
+                <p className="text-sm text-gray-500">Se muestran en la sección pública <span className="font-mono">/moldes-gratis</span></p>
+              </div>
+              <button onClick={() => { setEditingFree(null); setShowFreeForm(true); }} className="btn-primary">
+                <Plus className="w-4 h-4 mr-1" /> Nuevo molde gratis
+              </button>
+            </div>
+
+            {showFreeForm && (
+              <FreeMoldForm
+                mold={editingFree}
+                onClose={() => { setShowFreeForm(false); setEditingFree(null); fetchAll(); }}
+              />
+            )}
+
+            <div className="card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Molde</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Categoría</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Archivos</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Descargas</th>
+                      <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Activo</th>
+                      <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Acciones</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {freeMolds.map(m => (
+                      <tr key={m.id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                              {m.image_url
+                                ? <img src={m.image_url} alt="" className="w-full h-full object-cover" />
+                                : <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">M</div>}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">{m.title}</p>
+                              <p className="text-xs text-gray-400">{m.code || '—'}</p>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 capitalize hidden sm:table-cell">{m.category}</td>
+                        <td className="px-4 py-3 text-center text-sm text-gray-700">{m.files?.length || 0}</td>
+                        <td className="px-4 py-3 text-center text-sm text-gray-700">{m.download_count || 0}</td>
+                        <td className="px-4 py-3 text-center">
+                          <button onClick={() => toggleFreeActive(m.id, !m.is_active)}>
+                            {m.is_active ? <CheckCircle className="w-5 h-5 text-green-500 mx-auto" /> : <XCircle className="w-5 h-5 text-gray-300 mx-auto" />}
+                          </button>
+                        </td>
+                        <td className="px-4 py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            <button onClick={() => { setEditingFree(m); setShowFreeForm(true); }} className="p-1.5 text-gray-400 hover:text-primary-600 rounded">
+                              <Edit3 className="w-4 h-4" />
+                            </button>
+                            <button onClick={() => deleteFreeMold(m.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded">
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              {freeMolds.length === 0 && (
+                <p className="text-gray-500 text-center py-8 text-sm">
+                  Todavía no hay moldes gratis. Tocá "Nuevo molde gratis" para cargar el primero.
+                  <br />(Si da error al guardar, falta correr el SQL de Moldes Gratis en Supabase.)
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>

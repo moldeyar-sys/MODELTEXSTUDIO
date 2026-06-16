@@ -22,6 +22,7 @@ export function Navbar() {
     { to: '/catalogo', label: t('nav.catalog', 'Catálogo') },
     { to: '/diseno-a-pedido', label: t('nav.custom', 'Diseño a pedido') },
     { to: '/ia-textil', label: t('nav.iaTextil', 'IA Textil') },
+    { to: '/moldes-gratis', label: t('nav.freeMolds', 'Moldes Gratis') },
   ];
 
   return (

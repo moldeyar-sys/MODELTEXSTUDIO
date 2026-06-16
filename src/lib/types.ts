@@ -124,6 +124,39 @@ export const FABRICS = [
   'Microfibra deportiva', 'Sublimable', 'Toalla', 'Polerón',
 ];
 
+// ==================== MOLDES GRATIS ====================
+// Archivo descargable gratuito (vive en el bucket PUBLICO 'free-files').
+export interface FreeMoldFile {
+  label: string; // formato visible: "PDF A4", "Plotter", "DXF"...
+  name: string;  // nombre del archivo
+  url: string;   // URL publica de descarga
+}
+
+export interface FreeMold {
+  id: string;
+  title: string;
+  code: string;
+  category: string;
+  product_type: string;
+  fabric_recommendation: string;
+  sizes: string[];
+  formats: string[];
+  tags: string[];
+  season: string;
+  image_url: string;
+  files: FreeMoldFile[];
+  description: string;
+  is_active: boolean;
+  sort_order: number;
+  download_count: number;
+  created_at: string;
+}
+
+export const FREE_MOLD_TAGS = [
+  'Gratis', 'Aprobado', 'Para probar', 'PDF A4', 'Plotter', 'Digital',
+  'Principiante', 'Producción', 'Verano', 'Invierno', 'Todo el año',
+];
+
 export const CUSTOMER_TYPES: { value: CustomerType; label: string }[] = [
   { value: 'emprendedor', label: 'Emprendedor' },
   { value: 'fabricante', label: 'Fabricante' },
