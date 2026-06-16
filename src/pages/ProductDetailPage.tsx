@@ -7,6 +7,7 @@ import { ProductCard } from '../components/ui/ProductCard';
 import { useSeo } from '../lib/seo';
 import { useLocale } from '../lib/locale';
 import type { Product } from '../lib/types';
+import { CATEGORIES } from '../lib/types';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -151,7 +152,7 @@ export default function ProductDetailPage() {
           <div>
             <div className="flex items-center gap-2 mb-3">
               <span className="text-sm font-medium text-petroleum-600 bg-petroleum-50 px-3 py-1 rounded-lg capitalize">
-                {product.category === 'nino' ? 'Niño' : product.category === 'nina' ? 'Niña' : product.category.replace('-', ' ')}
+                {CATEGORIES.find(c => c.value === product.category)?.label || product.category.replace('-', ' ')}
               </span>
               {product.garment_type && (
                 <span className="text-sm font-medium text-gray-500 bg-gray-100 px-3 py-1 rounded-lg">
@@ -206,6 +207,20 @@ export default function ProductDetailPage() {
                 <div className="flex flex-wrap gap-2">
                   {product.formats.map(f => (
                     <span key={f} className="px-3 py-1.5 bg-primary-50 text-primary-700 text-sm rounded-lg font-medium">
+                      {f}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Telas recomendadas */}
+            {product.recommended_fabrics?.length > 0 && (
+              <div className="mb-6">
+                <h3 className="text-sm font-semibold text-gray-700 mb-2">Telas recomendadas</h3>
+                <div className="flex flex-wrap gap-2">
+                  {product.recommended_fabrics.map(f => (
+                    <span key={f} className="px-3 py-1.5 bg-petroleum-50 text-petroleum-700 text-sm rounded-lg font-medium">
                       {f}
                     </span>
                   ))}

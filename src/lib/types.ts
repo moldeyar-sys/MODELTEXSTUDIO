@@ -4,7 +4,7 @@ export type PaymentMethod = 'mercadopago' | 'paypal' | 'stripe' | 'transfer' | '
 export type PaymentStatus = 'pendiente' | 'pagado' | 'rechazado' | 'cancelado';
 export type OrderStatus = 'pendiente' | 'entregado' | 'cancelado';
 export type CustomRequestStatus = 'pendiente' | 'contactando' | 'en_proceso' | 'completado';
-export type ProductCategory = 'hombre' | 'dama' | 'nino' | 'nina' | 'escolar' | 'deportivo' | 'invierno' | 'verano' | 'sublimacion' | 'packs' | 'diseno-pedido';
+export type ProductCategory = 'dama' | 'hombre' | 'nina' | 'nino' | 'adultos-unisex' | 'ninos-unisex' | 'bebes';
 export type FileType = 'pdf_a4' | 'pdf_plotter' | 'plt' | 'dxf' | 'cdr' | 'sublimacion' | 'other';
 
 export interface Profile {
@@ -31,6 +31,7 @@ export interface Product {
   garment_type: string;
   sizes: string[];
   formats: string[];
+  recommended_fabrics: string[];
   main_image_url: string;
   gallery: string[];
   is_active: boolean;
@@ -98,20 +99,30 @@ export interface CartItem {
 }
 
 export const CATEGORIES: { value: ProductCategory; label: string }[] = [
-  { value: 'hombre', label: 'Hombre' },
   { value: 'dama', label: 'Dama' },
-  { value: 'nino', label: 'Niño' },
+  { value: 'hombre', label: 'Hombre' },
   { value: 'nina', label: 'Niña' },
-  { value: 'escolar', label: 'Escolar' },
-  { value: 'deportivo', label: 'Deportivo' },
-  { value: 'invierno', label: 'Invierno' },
-  { value: 'verano', label: 'Verano' },
-  { value: 'sublimacion', label: 'Sublimación' },
-  { value: 'packs', label: 'Packs' },
-  { value: 'diseno-pedido', label: 'Diseño a pedido' },
+  { value: 'nino', label: 'Niño' },
+  { value: 'adultos-unisex', label: 'Adultos unisex' },
+  { value: 'ninos-unisex', label: 'Niños unisex' },
+  { value: 'bebes', label: 'Bebés' },
 ];
 
 export const FORMATS = ['PDF A4', 'PDF Plotter', 'PLT', 'DXF', 'CDR', 'Sublimación'];
+
+// Grupos de talles listos para cargar de una con un clic (en el panel admin).
+export const SIZE_GROUPS: { label: string; sizes: string[] }[] = [
+  { label: 'Bebés (1 a 9)', sizes: ['1', '2', '3', '4', '5', '6', '7', '8', '9'] },
+  { label: 'Niños / Niñas (2 a 18)', sizes: ['2', '4', '6', '8', '10', '12', '14', '16', '18'] },
+  { label: 'Adultos (XS a 4XL)', sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] },
+];
+
+// Telas recomendadas sugeridas (se pueden agregar manualmente otras).
+export const FABRICS = [
+  'Algodón', 'Frisa', 'Rústico', 'Morley', 'Modal', 'Lycra', 'Jersey',
+  'Piqué', 'Gabardina', 'Jean / Denim', 'Polar', 'Lanilla', 'Bengalina',
+  'Microfibra deportiva', 'Sublimable', 'Toalla', 'Polerón',
+];
 
 export const CUSTOMER_TYPES: { value: CustomerType; label: string }[] = [
   { value: 'emprendedor', label: 'Emprendedor' },

@@ -8,7 +8,7 @@ import {
   Upload, ImagePlus, X, FileText, Loader2
 } from 'lucide-react';
 import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus } from '../lib/types';
-import { CATEGORIES, PAYMENT_METHODS } from '../lib/types';
+import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
 
 type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests';
@@ -467,6 +467,7 @@ function ProductForm({
     garment_type: product?.garment_type || '',
     sizes: product?.sizes?.join(', ') || '',
     formats: product?.formats?.join(', ') || '',
+    recommended_fabrics: product?.recommended_fabrics?.join(', ') || '',
     main_image_url: product?.main_image_url || '',
     is_active: product?.is_active ?? true,
     is_featured: product?.is_featured ?? false,
@@ -508,6 +509,21 @@ function ProductForm({
       .replace(/[^a-z0-9]+/g, '-')
       .replace(/(^-|-$)/g, '');
   };
+
+  // Agrega valores (sin duplicar) a un campo separado por comas: talles o telas.
+  const appendCsv = (field: 'sizes' | 'recommended_fabrics', values: string[]) => {
+    setForm(prev => {
+      const current = prev[field].split(',').map(s => s.trim()).filter(Boolean);
+      const merged = [...current];
+      for (const v of values) {
+        if (!merged.some(c => c.toLowerCase() === v.toLowerCase())) merged.push(v);
+      }
+      return { ...prev, [field]: merged.join(', ') };
+    });
+  };
+
+  const clearCsv = (field: 'sizes' | 'recommended_fabrics') =>
+    setForm(prev => ({ ...prev, [field]: '' }));
 
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -591,7 +607,8 @@ function ProductForm({
     setError('');
 
     const slug = form.slug || generateSlug(form.name);
-    const productData = {
+    // Campos base que SIEMPRE existen en la base.
+    const baseData = {
       name: form.name,
       slug,
       short_description: form.short_description,
@@ -607,29 +624,32 @@ function ProductForm({
       is_active: form.is_active,
       is_featured: form.is_featured,
     };
+    // Telas recomendadas: solo se guardan si la columna ya existe en la base.
+    const fabrics = form.recommended_fabrics.split(',').map(s => s.trim()).filter(Boolean);
+    const fullData = { ...baseData, recommended_fabrics: fabrics };
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const save = (payload: any) =>
+      currentProduct
+        ? supabase.from('products').update(payload).eq('id', currentProduct.id).select().single()
+        : supabase.from('products').insert(payload).select().single();
 
     try {
-      if (currentProduct) {
-        const { data, error: updateError } = await supabase
-          .from('products')
-          .update(productData)
-          .eq('id', currentProduct.id)
-          .select()
-          .single();
-        if (updateError) throw updateError;
-        setCurrentProduct(data as Product);
-      } else {
-        const { data, error: insertError } = await supabase
-          .from('products')
-          .insert(productData)
-          .select()
-          .single();
-        if (insertError) throw insertError;
-        setCurrentProduct(data as Product);
+      // 1er intento: con telas. Si la columna todavia no existe, reintenta sin ellas.
+      let { data, error: saveError } = await save(fullData);
+      if (saveError && saveError.message?.includes('recommended_fabrics')) {
+        ({ data, error: saveError } = await save(baseData));
       }
+      if (saveError) throw saveError;
+      setCurrentProduct(data as Product);
       onRefresh();
-    } catch {
-      setError('Error al guardar el producto. Verificá que el slug no esté duplicado.');
+    } catch (err) {
+      const msg = (err as { message?: string })?.message || '';
+      if (msg.toLowerCase().includes('duplicate') || msg.includes('slug')) {
+        setError('El slug ya está en uso. Cambiá el slug por uno distinto.');
+      } else {
+        setError(`Error al guardar el producto: ${msg || 'desconocido'}`);
+      }
     } finally {
       setSaving(false);
     }
@@ -644,8 +664,8 @@ function ProductForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre *</label>
-            <input name="name" value={form.name} onChange={handleChange} required className="input-field" />
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre - Código *</label>
+            <input name="name" value={form.name} onChange={handleChange} required className="input-field" placeholder="Ej: BUZO - 99M" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug</label>
@@ -674,13 +694,60 @@ function ProductForm({
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de prenda</label>
             <input name="garment_type" value={form.garment_type} onChange={handleChange} className="input-field" placeholder="Remera, Pantalón..." />
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Talles (separados por coma)</label>
-            <input name="sizes" value={form.sizes} onChange={handleChange} className="input-field" placeholder="S, M, L, XL" />
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Talles</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {SIZE_GROUPS.map(g => (
+                <button
+                  key={g.label}
+                  type="button"
+                  onClick={() => appendCsv('sizes', g.sizes)}
+                  className="text-xs font-medium px-3 py-1.5 bg-primary-50 text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-100 transition-colors"
+                >
+                  + {g.label}
+                </button>
+              ))}
+              {form.sizes && (
+                <button
+                  type="button"
+                  onClick={() => clearCsv('sizes')}
+                  className="text-xs font-medium px-3 py-1.5 bg-gray-50 text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+            <input name="sizes" value={form.sizes} onChange={handleChange} className="input-field" placeholder="Tocá un grupo o escribí manual: S, M, L, XL" />
+            <p className="text-xs text-gray-400 mt-1">Tocá un botón para cargar el grupo completo, o escribí los talles separados por coma.</p>
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Formatos (separados por coma)</label>
             <input name="formats" value={form.formats} onChange={handleChange} className="input-field" placeholder="PDF A4, PDF Plotter, DXF" />
+          </div>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Telas recomendadas</label>
+            <div className="flex flex-wrap gap-2 mb-2">
+              {FABRICS.map(f => (
+                <button
+                  key={f}
+                  type="button"
+                  onClick={() => appendCsv('recommended_fabrics', [f])}
+                  className="text-xs font-medium px-3 py-1.5 bg-petroleum-50 text-petroleum-700 border border-petroleum-200 rounded-lg hover:bg-petroleum-100 transition-colors"
+                >
+                  + {f}
+                </button>
+              ))}
+              {form.recommended_fabrics && (
+                <button
+                  type="button"
+                  onClick={() => clearCsv('recommended_fabrics')}
+                  className="text-xs font-medium px-3 py-1.5 bg-gray-50 text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  Limpiar
+                </button>
+              )}
+            </div>
+            <input name="recommended_fabrics" value={form.recommended_fabrics} onChange={handleChange} className="input-field" placeholder="Tocá una tela o escribí manual: Frisa, Morley..." />
           </div>
         </div>
 

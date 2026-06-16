@@ -6,7 +6,7 @@ import { BrandLogo } from '../brand/BrandLogo';
 
 export function Footer() {
   const { t } = useLocale();
-  const mainCats = CATEGORIES.filter(c => !['packs', 'diseno-pedido'].includes(c.value));
+  const mainCats = CATEGORIES;
 
   return (
     <footer className="bg-primary-900 text-white">
@@ -49,7 +49,6 @@ export function Footer() {
             <h4 className="font-semibold text-white mb-4">Modeltex</h4>
             <ul className="space-y-2">
               <li><Link to="/catalogo" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.fullCatalog', 'Catálogo completo')}</Link></li>
-              <li><Link to="/catalogo?categoria=packs" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.packs', 'Packs de moldes')}</Link></li>
               <li><Link to="/diseno-a-pedido" className="text-primary-200 text-sm hover:text-white transition-colors">{t('nav.custom', 'Diseño a pedido')}</Link></li>
               <li><Link to="/registro" className="text-primary-200 text-sm hover:text-white transition-colors">{t('nav.register', 'Crear cuenta')}</Link></li>
               <li><Link to="/login" className="text-primary-200 text-sm hover:text-white transition-colors">{t('nav.signin', 'Iniciar sesión')}</Link></li>
