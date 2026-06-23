@@ -24,13 +24,13 @@ export function ProductCard({ product }: ProductCardProps) {
   return (
     <div className="card group overflow-hidden flex flex-col">
       <Link to={`/producto/${product.slug}`} className="block">
-        <div className="aspect-[4/3] bg-gray-100 relative overflow-hidden">
+        <div className="aspect-[4/3] bg-gray-50 relative overflow-hidden">
           {product.main_image_url ? (
             <img
               src={product.main_image_url}
               alt={product.name}
               loading="lazy"
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500"
             />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300">
@@ -57,15 +57,15 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.short_description}</p>
         )}
 
-        {/* Precios Cartón / PDF en una sola fila, compactos */}
-        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-sm">
-          <span className="text-gray-500">
-            Cartón <span className="font-bold text-primary-900">{carton !== null ? formatPrice(carton) : 'Consultar'}</span>
-          </span>
-          <span className="text-gray-300">·</span>
-          <span className="text-gray-500">
+        {/* Precios por formato */}
+        <div className="mt-3 text-sm space-y-0.5">
+          <p className="text-gray-500">
+            Moldes en Cartón <span className="font-bold text-primary-900">{carton !== null ? formatPrice(carton) : 'Consultar'}</span>
+          </p>
+          <p className="text-gray-500">
             PDF-A4 <span className="font-bold text-primary-900">{pdf !== null ? formatPrice(pdf) : 'Consultar'}</span>
-          </span>
+            <span className="text-[11px] text-gray-400 ml-2">· Consultar para otros formatos</span>
+          </p>
         </div>
 
         {/* Comprar (despliega opciones) */}
