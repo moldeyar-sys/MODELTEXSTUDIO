@@ -648,6 +648,7 @@ function ProductForm({
   const [gallery, setGallery] = useState<string[]>(product?.gallery || []);
   const [files, setFiles] = useState<ProductFile[]>([]);
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
@@ -818,21 +819,31 @@ function ProductForm({
         ? supabase.from('products').update(payload).eq('id', currentProduct.id).select().single()
         : supabase.from('products').insert(payload).select().single();
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const isSchemaError = (e: any) =>
+      e && (e.code === 'PGRST204' || e.code === '42703' || /column|does not exist|could not find/i.test(e.message || ''));
+
     try {
-      // 1er intento: con todos los campos. Si falta alguna columna nueva, reintenta sin las opcionales.
+      // 1er intento: con todos los campos. Solo si falta una columna (schema) reintenta sin las opcionales.
       let { data, error: saveError } = await save(fullData);
-      if (saveError && OPTIONAL_COLS.some(c => saveError!.message?.includes(c))) {
+      if (saveError && isSchemaError(saveError) && OPTIONAL_COLS.some(c => saveError!.message?.includes(c))) {
         ({ data, error: saveError } = await save(baseData));
       }
       if (saveError) throw saveError;
+      if (!data) throw new Error('NO_ROWS');
       setCurrentProduct(data as Product);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2500);
       onRefresh();
     } catch (err) {
-      const msg = (err as { message?: string })?.message || '';
-      if (msg.toLowerCase().includes('duplicate') || msg.includes('slug')) {
+      const e = err as { message?: string; code?: string };
+      const msg = e?.message || '';
+      if (e?.code === 'PGRST116' || msg === 'NO_ROWS' || /\b0 rows|no rows|rows returned/i.test(msg)) {
+        setError('No se pudo guardar: tu sesión no tiene permisos de administrador (o expiró). Cerrá sesión y volvé a entrar con tu cuenta admin, y reintentá.');
+      } else if (msg.toLowerCase().includes('duplicate') || msg.includes('slug')) {
         setError('El slug ya está en uso. Cambiá el slug por uno distinto.');
       } else {
-        setError(`Error al guardar el producto: ${msg || 'desconocido'}`);
+        setError(`Error al guardar: ${msg || 'desconocido'}`);
       }
     } finally {
       setSaving(false);
@@ -1047,13 +1058,18 @@ function ProductForm({
 
         {error && <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{error}</div>}
 
-        <div className="flex gap-3">
+        <div className="flex items-center gap-3">
           <button type="submit" disabled={saving} className="btn-primary disabled:opacity-50">
             {saving ? 'Guardando...' : currentProduct ? 'Guardar cambios' : 'Crear producto'}
           </button>
           <button type="button" onClick={onClose} className="btn-secondary">
             {currentProduct ? 'Cerrar' : 'Cancelar'}
           </button>
+          {saved && (
+            <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-green-600">
+              <CheckCircle className="w-4 h-4" /> Cambios guardados
+            </span>
+          )}
         </div>
       </form>
 
