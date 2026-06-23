@@ -238,16 +238,16 @@ const HomePage = () => {
             <div className="flex-1 max-w-2xl text-center lg:text-left">
               {/* Badge */}
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white/90 text-sm font-medium px-4 py-2 rounded-full mb-6 border border-white/10">
-                <Globe className="w-4 h-4" />
-                <span>{t('home.hero.badge', 'Vendemos a todo el mundo')}</span>
+                <ShieldCheck className="w-4 h-4" />
+                <span>{t('home.hero.badge', '18+ años en la industria textil')}</span>
               </div>
 
               <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                {t('home.hero.title', 'Moldes digitales de ropa para imprimir y producir en cualquier pais')}
+                {t('home.hero.title', 'Moldería textil profesional para fabricantes de indumentaria')}
               </h1>
 
               <p className="font-sans text-lg md:text-xl text-gray-100 mb-10 leading-relaxed">
-                {t('home.hero.subtitle', 'Compra moldes profesionales en PDF A4, plotter y formatos editables. Modeltex vende archivos digitales para emprendedores textiles, fabricantes, talleres y disenadores de indumentaria en todo el mundo.')}
+                {t('home.hero.subtitle', 'Moldes digitales y en cartón, packs, moldería a pedido y tizado computarizado. Precisión industrial, escalado completo y entrega rápida para que produzcas sin demoras.')}
               </p>
 
               {/* CTA Buttons */}
