@@ -25,14 +25,14 @@ export default function CatalogPage() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
-    try {
-      let query = supabase
-        .from('products')
-        .select('*')
-        .eq('is_active', true);
-
+    // useCategoriesArray=true: matchea por el array `categories` (multi). Si esa
+    // columna aún no existe (falta el SQL), reintenta con la categoría única.
+    const buildQuery = (useCategoriesArray: boolean) => {
+      let query = supabase.from('products').select('*').eq('is_active', true);
       if (category) {
-        query = query.eq('category', category);
+        query = useCategoriesArray
+          ? query.or(`categories.cs.{${category}},category.eq.${category}`)
+          : query.eq('category', category);
       }
       if (busqueda) {
         query = query.or(`name.ilike.%${busqueda}%,short_description.ilike.%${busqueda}%`);
@@ -40,16 +40,20 @@ export default function CatalogPage() {
       if (format) {
         query = query.contains('formats', [format]);
       }
-
       switch (sort) {
         case 'precio_asc': query = query.order('price', { ascending: true }); break;
         case 'precio_desc': query = query.order('price', { ascending: false }); break;
         case 'nombre': query = query.order('name', { ascending: true }); break;
         default: query = query.order('created_at', { ascending: false });
       }
+      return query;
+    };
 
-      const { data, error } = await query;
-
+    try {
+      let { data, error } = await buildQuery(true);
+      if (error && /categories/i.test(error.message || '')) {
+        ({ data, error } = await buildQuery(false));
+      }
       if (error) {
         console.error('Error fetching products:', error);
         setProducts([]);

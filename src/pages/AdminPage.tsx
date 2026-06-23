@@ -629,7 +629,9 @@ function ProductForm({
     slug: product?.slug || '',
     short_description: product?.short_description || '',
     long_description: product?.long_description || '',
-    category: product?.category || 'dama',
+    categories: (product?.categories && product.categories.length > 0
+      ? product.categories
+      : (product?.category ? [product.category] : ['dama'])) as string[],
     garment_type: product?.garment_type || '',
     codigo: product?.codigo || '',
     precio_carton: product?.precio_carton != null ? String(product.precio_carton) : '',
@@ -698,6 +700,19 @@ function ProductForm({
 
   const clearCsv = (field: 'sizes' | 'recommended_fabrics') =>
     setForm(prev => ({ ...prev, [field]: '' }));
+
+  // Alterna una categoría (máximo 3). La primera elegida es la principal.
+  const toggleCategory = (value: string) => {
+    setForm(prev => {
+      const cur = prev.categories;
+      if (cur.includes(value)) {
+        const next = cur.filter(v => v !== value);
+        return { ...prev, categories: next.length ? next : cur }; // no dejar vacío
+      }
+      if (cur.length >= 3) return prev; // tope de 3
+      return { ...prev, categories: [...cur, value] };
+    });
+  };
 
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -790,7 +805,7 @@ function ProductForm({
       // Precio base interno = precio PDF-A4 (para el carrito). Sin precio oferta.
       price: form.precio_pdf_a4 ? parseFloat(form.precio_pdf_a4) : 0,
       sale_price: null,
-      category: form.category,
+      category: form.categories[0] || 'dama', // principal
       garment_type: form.garment_type,
       sizes: form.sizes.split(',').map(s => s.trim()).filter(Boolean),
       formats: form.formats.split(',').map(s => s.trim()).filter(Boolean),
@@ -801,6 +816,7 @@ function ProductForm({
     };
     // Campos opcionales: solo se guardan si la columna ya existe en la base.
     const optionalData = {
+      categories: form.categories,
       recommended_fabrics: form.recommended_fabrics.split(',').map(s => s.trim()).filter(Boolean),
       codigo: form.codigo.trim(),
       precio_carton: form.precio_carton ? parseFloat(form.precio_carton) : null,
@@ -901,11 +917,27 @@ function ProductForm({
               </button>
             </div>
           </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoría</label>
-            <select name="category" value={form.category} onChange={handleChange} className="input-field">
-              {CATEGORIES.map(c => <option key={c.value} value={c.value}>{c.label}</option>)}
-            </select>
+          <div className="sm:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Categorías <span className="text-gray-400 font-normal">(hasta 3 — la 1ª es la principal)</span></label>
+            <div className="flex flex-wrap gap-2">
+              {CATEGORIES.map(c => {
+                const selected = form.categories.includes(c.value);
+                const order = form.categories.indexOf(c.value) + 1;
+                return (
+                  <button
+                    type="button"
+                    key={c.value}
+                    onClick={() => toggleCategory(c.value)}
+                    className={`text-sm font-medium px-3 py-1.5 rounded-lg border transition-colors ${
+                      selected ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                    }`}
+                  >
+                    {selected && <span className="mr-1 opacity-80">{order}.</span>}{c.label}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="text-xs text-gray-400 mt-1">El artículo aparece en cada categoría elegida (y una sola vez en "Todos").</p>
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de prenda</label>

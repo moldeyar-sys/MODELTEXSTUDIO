@@ -27,7 +27,8 @@ export interface Product {
   long_description: string;
   price: number;
   sale_price: number | null;
-  category: ProductCategory;
+  category: ProductCategory; // categoría principal (la que se ve como etiqueta)
+  categories?: string[]; // categorías múltiples (hasta 3); incluye la principal
   garment_type: string;
   sizes: string[];
   formats: string[];
