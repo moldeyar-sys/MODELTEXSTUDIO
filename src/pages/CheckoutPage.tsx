@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet } from 'lucide-react';
-import { useCart } from '../contexts/CartContext';
+import { useCart, cartUnitPrice, cartItemKey } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../lib/locale';
 import { supabase } from '../lib/supabase';
@@ -46,17 +46,19 @@ export default function CheckoutPage() {
 
       if (orderError) throw orderError;
 
-      const orderItems = items.map(item => ({
+      const baseItems = items.map(item => ({
         order_id: order.id,
         product_id: item.product.id,
-        price: item.product.sale_price ?? item.product.price,
+        price: cartUnitPrice(item),
         quantity: item.quantity,
       }));
+      const orderItems = baseItems.map((b, idx) => ({ ...b, formato: items[idx].format ?? null }));
 
-      const { error: itemsError } = await supabase
-        .from('order_items')
-        .insert(orderItems);
-
+      // Resiliente: si la columna 'formato' aún no existe, reintenta sin ella.
+      let { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+      if (itemsError && itemsError.message?.includes('formato')) {
+        ({ error: itemsError } = await supabase.from('order_items').insert(baseItems));
+      }
       if (itemsError) throw itemsError;
 
       setOrderId(order.id);
@@ -269,7 +271,7 @@ export default function CheckoutPage() {
               <h2 className="font-semibold text-gray-900 text-lg mb-4">Productos</h2>
               <div className="divide-y divide-gray-100">
                 {items.map(item => (
-                  <div key={item.product.id} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div key={cartItemKey(item)} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         {item.product.main_image_url ? (
@@ -280,11 +282,12 @@ export default function CheckoutPage() {
                       </div>
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.product.name}</p>
+                        {item.format && <p className="text-xs text-primary-700">{item.format}</p>}
                         <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
                       </div>
                     </div>
                     <span className="text-sm font-semibold text-gray-900 flex-shrink-0 ml-3">
-                      {formatPrice((item.product.sale_price ?? item.product.price) * item.quantity)}
+                      {formatPrice(cartUnitPrice(item) * item.quantity)}
                     </span>
                   </div>
                 ))}

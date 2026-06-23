@@ -29,6 +29,15 @@ export function pdfPrice(p: Product): number | null {
   return typeof p.price === 'number' && p.price > 0 ? p.price : null;
 }
 
+/** Precio PDF Plóter (mismo para las 3 medidas). null → "Consultar". Nunca 0. */
+export function ploterPrice(p: Product): number | null {
+  const v = p.precio_pdf_ploter;
+  return typeof v === 'number' && v > 0 ? v : null;
+}
+
+/** Medidas de plóter disponibles (mismo precio). */
+export const PLOTER_SIZES = ['90 cm', '120 cm', '150 cm'];
+
 export function cartonAvailable(p: Product): boolean {
   return p.disponible_carton !== false; // undefined = disponible
 }

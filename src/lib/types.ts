@@ -36,6 +36,7 @@ export interface Product {
   codigo?: string;
   precio_carton?: number | null;
   precio_pdf_a4?: number | null;
+  precio_pdf_ploter?: number | null;
   disponible_carton?: boolean;
   disponible_pdf_a4?: boolean;
   mostrar_consulta_otro_formato?: boolean;
@@ -103,6 +104,10 @@ export interface CustomRequest {
 export interface CartItem {
   product: Product;
   quantity: number;
+  /** Formato comercial elegido (ej: "Moldes en Cartón"). Si falta, se usa el precio base. */
+  format?: string;
+  /** Precio unitario del formato elegido. Si falta, cae al precio del producto. */
+  unitPrice?: number;
 }
 
 export const CATEGORIES: { value: ProductCategory; label: string }[] = [

@@ -1,15 +1,12 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { ShoppingCart, ArrowLeft, Check, ImageOff } from 'lucide-react';
+import { ArrowLeft, Check, ImageOff } from 'lucide-react';
 import { supabase } from '../lib/supabase';
-import { useCart } from '../contexts/CartContext';
 import { ProductCard } from '../components/ui/ProductCard';
 import { useSeo } from '../lib/seo';
-import { useLocale } from '../lib/locale';
 import type { Product } from '../lib/types';
 import { CATEGORIES } from '../lib/types';
-import { ConsultButtons } from '../components/ui/ConsultButtons';
-import { cartonPrice, pdfPrice, cartonAvailable, pdfAvailable, showOtroFormato } from '../lib/productFormats';
+import { FormatOptions } from '../components/ui/FormatOptions';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -17,9 +14,6 @@ export default function ProductDetailPage() {
   const [related, setRelated] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeImage, setActiveImage] = useState(0);
-  const [added, setAdded] = useState(false);
-  const { addItem } = useCart();
-  const { t, formatPrice } = useLocale();
 
   useEffect(() => {
     fetchProduct();
@@ -51,13 +45,6 @@ export default function ProductDetailPage() {
       .neq('id', p.id)
       .limit(4);
     setRelated((data as Product[]) || []);
-  };
-
-  const handleAddToCart = () => {
-    if (!product) return;
-    addItem(product);
-    setAdded(true);
-    setTimeout(() => setAdded(false), 2000);
   };
 
   const allImages = product
@@ -169,66 +156,10 @@ export default function ProductDetailPage() {
               {product.long_description || product.short_description}
             </p>
 
-            {/* Formatos y precios */}
+            {/* Formatos y precios (agregar al carrito por formato) */}
             <div className="border border-gray-200 rounded-2xl p-5 mb-6">
               <h3 className="text-sm font-semibold text-gray-700 mb-4">Elegí tu formato</h3>
-              <div className="space-y-4">
-                {/* Moldes en Cartón */}
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-2.5">
-                    <div>
-                      <p className="font-semibold text-gray-900">Moldes en Cartón</p>
-                      <p className="text-xs text-gray-400">Solo Argentina</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      {!cartonAvailable(product) ? (
-                        <span className="text-sm font-medium text-gray-400">No disponible</span>
-                      ) : cartonPrice(product) !== null ? (
-                        <span className="text-xl font-bold text-primary-900 whitespace-nowrap">{formatPrice(cartonPrice(product)!)}</span>
-                      ) : (
-                        <span className="text-sm font-semibold text-petroleum-600">Consultar</span>
-                      )}
-                    </div>
-                  </div>
-                  <ConsultButtons product={product} format="carton" />
-                </div>
-
-                <div className="border-t border-gray-100" />
-
-                {/* Moldes en PDF-A4 */}
-                <div>
-                  <div className="flex items-start justify-between gap-3 mb-2.5">
-                    <div>
-                      <p className="font-semibold text-gray-900">Moldes en PDF-A4</p>
-                      <p className="text-xs text-gray-400">Global</p>
-                    </div>
-                    <div className="text-right flex-shrink-0">
-                      {!pdfAvailable(product) ? (
-                        <span className="text-sm font-medium text-gray-400">No disponible</span>
-                      ) : pdfPrice(product) !== null ? (
-                        <span className="text-xl font-bold text-primary-900 whitespace-nowrap">{formatPrice(pdfPrice(product)!)}</span>
-                      ) : (
-                        <span className="text-sm font-semibold text-petroleum-600">Consultar</span>
-                      )}
-                    </div>
-                  </div>
-                  <ConsultButtons product={product} format="pdf" />
-                </div>
-
-                {/* ¿Otro formato? */}
-                {showOtroFormato(product) && (
-                  <>
-                    <div className="border-t border-gray-100" />
-                    <div>
-                      <div className="mb-2.5">
-                        <p className="font-semibold text-gray-900">¿Necesitás otro formato?</p>
-                        <p className="text-xs text-gray-400">Consultanos por WhatsApp o Telegram</p>
-                      </div>
-                      <ConsultButtons product={product} format="otro" />
-                    </div>
-                  </>
-                )}
-              </div>
+              <FormatOptions product={product} />
             </div>
 
             {/* Sizes */}
@@ -303,22 +234,6 @@ export default function ProductDetailPage() {
                 Para PDF A4, imprimí en tamaño real (100%) sin escalar. Para plotter, verificá que el formato coincida con tu equipo. Los archivos CDR y DXF se pueden editar en CorelDRAW u otros programas de diseño.
               </p>
             </div>
-
-            {/* Add to cart */}
-            <button
-              onClick={handleAddToCart}
-              className={`w-full flex items-center justify-center gap-3 py-4 rounded-xl text-base font-semibold transition-all duration-200 active:scale-[0.98] ${
-                added
-                  ? 'bg-green-500 text-white'
-                  : 'bg-primary-800 text-white hover:bg-primary-700'
-              }`}
-            >
-              {added ? (
-                <><Check className="w-5 h-5" /> {t('common.added', 'Agregado al carrito')}</>
-              ) : (
-                <><ShoppingCart className="w-5 h-5" /> {t('common.addToCart', 'Agregar al carrito')}</>
-              )}
-            </button>
           </div>
         </div>
 

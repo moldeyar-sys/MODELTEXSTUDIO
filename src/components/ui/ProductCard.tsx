@@ -1,16 +1,25 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { ShoppingCart, X } from 'lucide-react';
 import type { Product } from '../../lib/types';
 import { CATEGORIES } from '../../lib/types';
-import { FormatPrices } from './FormatPrices';
+import { useLocale } from '../../lib/locale';
+import { cartonPrice, pdfPrice } from '../../lib/productFormats';
 import { ConsultButtons } from './ConsultButtons';
+import { FormatOptions } from './FormatOptions';
 
 interface ProductCardProps {
   product: Product;
 }
 
 export function ProductCard({ product }: ProductCardProps) {
+  const { formatPrice } = useLocale();
+  const [showOptions, setShowOptions] = useState(false);
   const categoryLabel =
     CATEGORIES.find(c => c.value === product.category)?.label || product.category.replace('-', ' ');
+
+  const carton = cartonPrice(product);
+  const pdf = pdfPrice(product);
 
   return (
     <div className="card group overflow-hidden flex flex-col">
@@ -48,16 +57,56 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.short_description}</p>
         )}
 
-        {/* Precios por formato */}
-        <div className="mt-3 bg-gray-50 rounded-xl p-3">
-          <FormatPrices product={product} />
+        {/* Precios Cartón / PDF en una sola fila, compactos */}
+        <div className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-3 text-sm">
+          <span className="text-gray-500">
+            Cartón <span className="font-bold text-primary-900">{carton !== null ? formatPrice(carton) : 'Consultar'}</span>
+          </span>
+          <span className="text-gray-300">·</span>
+          <span className="text-gray-500">
+            PDF-A4 <span className="font-bold text-primary-900">{pdf !== null ? formatPrice(pdf) : 'Consultar'}</span>
+          </span>
         </div>
 
-        {/* Consultar por WhatsApp / Telegram */}
+        {/* Comprar (despliega opciones) */}
+        <button
+          onClick={() => setShowOptions(true)}
+          className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-primary-800 text-white text-sm font-semibold hover:bg-primary-700 transition-colors active:scale-[0.98]"
+        >
+          <ShoppingCart className="w-4 h-4" /> Comprar
+        </button>
+
+        {/* WhatsApp + Telegram */}
         <div className="mt-auto pt-3">
           <ConsultButtons product={product} format="general" />
         </div>
       </div>
+
+      {/* Modal de opciones de formato */}
+      {showOptions && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+          onClick={() => setShowOptions(false)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400">Elegí el formato</p>
+                <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
+              </div>
+              <button onClick={() => setShowOptions(false)} aria-label="Cerrar" className="p-1 hover:bg-gray-100 rounded-lg flex-shrink-0">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-4">
+              <FormatOptions product={product} />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
