@@ -22,7 +22,7 @@ interface FormatOptionsProps {
  * Tocar 1-3 agrega al carrito con su precio.
  */
 export function FormatOptions({ product }: FormatOptionsProps) {
-  const { addItem } = useCart();
+  const { addItem, itemCount } = useCart();
   const { formatPrice } = useLocale();
   const [ploterSize, setPloterSize] = useState(PLOTER_SIZES[0]);
   const [added, setAdded] = useState<string | null>(null);
@@ -130,9 +130,13 @@ export function FormatOptions({ product }: FormatOptionsProps) {
         </div>
       )}
 
-      {added && (
-        <Link to="/carrito" className="block text-center text-xs font-semibold text-primary-700 hover:text-primary-900 pt-1">
-          Ver carrito →
+      {/* Botón COMPRAR permanente: aparece apenas hay algo en el carrito */}
+      {itemCount > 0 && (
+        <Link
+          to="/carrito"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-accent-500 text-white text-sm font-bold hover:bg-accent-600 transition-colors active:scale-[0.98] shadow-sm"
+        >
+          <ShoppingCart className="w-4 h-4" /> Comprar ({itemCount})
         </Link>
       )}
     </div>

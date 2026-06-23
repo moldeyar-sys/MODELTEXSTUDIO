@@ -629,8 +629,6 @@ function ProductForm({
     slug: product?.slug || '',
     short_description: product?.short_description || '',
     long_description: product?.long_description || '',
-    price: product?.price?.toString() || '',
-    sale_price: product?.sale_price?.toString() || '',
     category: product?.category || 'dama',
     garment_type: product?.garment_type || '',
     codigo: product?.codigo || '',
@@ -788,8 +786,9 @@ function ProductForm({
       slug,
       short_description: form.short_description,
       long_description: form.long_description,
-      price: parseFloat(form.price) || 0,
-      sale_price: form.sale_price ? parseFloat(form.sale_price) : null,
+      // Precio base interno = precio PDF-A4 (para el carrito). Sin precio oferta.
+      price: form.precio_pdf_a4 ? parseFloat(form.precio_pdf_a4) : 0,
+      sale_price: null,
       category: form.category,
       garment_type: form.garment_type,
       sizes: form.sizes.split(',').map(s => s.trim()).filter(Boolean),
@@ -860,14 +859,6 @@ function ProductForm({
                 Generar
               </button>
             </div>
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Precio *</label>
-            <input name="price" type="number" step="0.01" value={form.price} onChange={handleChange} required className="input-field" />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Precio oferta</label>
-            <input name="sale_price" type="number" step="0.01" value={form.sale_price} onChange={handleChange} className="input-field" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Categoría</label>
