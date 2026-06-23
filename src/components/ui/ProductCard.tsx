@@ -64,7 +64,6 @@ export function ProductCard({ product }: ProductCardProps) {
           </p>
           <p className="text-gray-500">
             PDF-A4 <span className="font-bold text-primary-900">{pdf !== null ? formatPrice(pdf) : 'Consultar'}</span>
-            <span className="text-[11px] text-gray-400 ml-2">· Consultar para otros formatos</span>
           </p>
         </div>
 
