@@ -82,7 +82,7 @@ export function ChatWidget() {
       {!open && (
         <button
           onClick={() => setOpen(true)}
-          className="fixed bottom-24 right-6 z-50 w-14 h-14 bg-primary-800 hover:bg-primary-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
+          className="fixed bottom-[10rem] right-6 z-50 w-14 h-14 bg-primary-800 hover:bg-primary-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
           aria-label="Abrir asistente virtual"
         >
           <Bot className="w-6 h-6" />
