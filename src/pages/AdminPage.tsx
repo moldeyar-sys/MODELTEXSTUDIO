@@ -36,8 +36,8 @@ export default function AdminPage() {
     fetchAll();
   }, []);
 
-  const fetchAll = async () => {
-    setLoading(true);
+  const fetchAll = async (showSpinner = true) => {
+    if (showSpinner) setLoading(true);
     const [prodRes, orderRes, custRes, reqRes, freeRes, contactRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
@@ -52,7 +52,7 @@ export default function AdminPage() {
     setRequests((reqRes.data as CustomRequest[]) || []);
     setFreeMolds(freeRes);
     setContacts(contactRes);
-    setLoading(false);
+    if (showSpinner) setLoading(false);
   };
 
   const tabs: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
@@ -237,8 +237,8 @@ export default function AdminPage() {
             {showProductForm && (
               <ProductForm
                 product={editingProduct}
-                onRefresh={fetchAll}
-                onClose={() => { setShowProductForm(false); fetchAll(); }}
+                onRefresh={() => fetchAll(false)}
+                onClose={() => { setShowProductForm(false); fetchAll(false); }}
               />
             )}
 
@@ -492,7 +492,7 @@ export default function AdminPage() {
             {showFreeForm && (
               <FreeMoldForm
                 mold={editingFree}
-                onClose={() => { setShowFreeForm(false); setEditingFree(null); fetchAll(); }}
+                onClose={() => { setShowFreeForm(false); setEditingFree(null); fetchAll(false); }}
               />
             )}
 
