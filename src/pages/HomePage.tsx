@@ -247,7 +247,7 @@ const HomePage = () => {
               </h1>
 
               <p className="font-sans text-lg md:text-xl text-gray-100 mb-10 leading-relaxed">
-                {t('home.hero.subtitle', 'Moldes digitales y en cartón, packs, moldería a pedido y tizado computarizado. Precisión industrial, escalado completo y entrega rápida para que produzcas sin demoras.')}
+                {t('home.hero.subtitle', 'Moldes digitales y en cartón, moldería a pedido y tizado computarizado. Precisión industrial, escalado completo y entrega rápida para que produzcas sin demoras.')}
               </p>
 
               {/* CTA Buttons */}

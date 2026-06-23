@@ -47,7 +47,7 @@ const EN: Record<string, string> = {
 
   'home.hero.badge': '18+ years in the textile industry',
   'home.hero.title': 'Professional textile patternmaking for apparel manufacturers',
-  'home.hero.subtitle': 'Digital and cardboard patterns, packs, custom patternmaking and computerized marker making. Industrial precision, full grading and fast delivery so you produce without delays.',
+  'home.hero.subtitle': 'Digital and cardboard patterns, custom patternmaking and computerized marker making. Industrial precision, full grading and fast delivery so you produce without delays.',
   'home.featured.title': 'Featured products',
   'home.featured.subtitle': 'Discover our most popular patterns and bestsellers',
   'home.featured.viewAll': 'View full catalog',
