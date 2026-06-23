@@ -8,9 +8,12 @@ import type { ContactMessage } from './types';
  * (email, instagram y horario son genéricos; WhatsApp es el número real.)
  */
 export const CONTACT_INFO = {
-  whatsapp: WHATSAPP_NUMBER,
-  email: 'contacto@modeltexstudio.com', // ← EJEMPLO, reemplazar por el real
-  instagram: 'modeltexstudio',          // ← EJEMPLO (sin @), reemplazar por el real
+  email: 'contacto@modeltexstudio.com',
+  whatsapp: WHATSAPP_NUMBER,   // 5491166531086 → se usa en wa.me
+  telegram: '5491166531086',   // se usa en t.me/+<telegram>
+  facebook: 'modeltex.ar',     // se usa en facebook.com/<facebook>
+  instagram: '',               // ← agregar después (usuario sin @)
+  tiktok: '',                  // ← agregar después (usuario sin @)
   location: 'Argentina — envíos digitales a todo el mundo',
   hours: 'Lunes a sábado, 9 a 18 hs',
 };

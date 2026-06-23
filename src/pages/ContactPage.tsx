@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { MessageCircle, Mail, Instagram, MapPin, Clock, Send, Loader2, CheckCircle2 } from 'lucide-react';
+import { MessageCircle, Mail, Instagram, MapPin, Clock, Send, Loader2, CheckCircle2, Facebook, Music2 } from 'lucide-react';
 import { useSeo } from '../lib/seo';
 import { CONTACT_INFO, submitContactMessage, buildContactWhatsApp } from '../lib/contact';
 
@@ -47,11 +47,32 @@ export default function ContactPage() {
       color: 'text-primary-700 bg-primary-50',
     },
     {
+      icon: Send,
+      label: 'Telegram',
+      value: '+54 9 11 6653 1086',
+      href: `https://t.me/+${CONTACT_INFO.telegram}`,
+      color: 'text-sky-700 bg-sky-50',
+    },
+    {
+      icon: Facebook,
+      label: 'Facebook',
+      value: `/${CONTACT_INFO.facebook}`,
+      href: `https://facebook.com/${CONTACT_INFO.facebook}`,
+      color: 'text-blue-700 bg-blue-50',
+    },
+    {
       icon: Instagram,
       label: 'Instagram',
-      value: `@${CONTACT_INFO.instagram}`,
-      href: `https://instagram.com/${CONTACT_INFO.instagram}`,
+      value: CONTACT_INFO.instagram ? `@${CONTACT_INFO.instagram}` : 'Próximamente',
+      href: CONTACT_INFO.instagram ? `https://instagram.com/${CONTACT_INFO.instagram}` : null,
       color: 'text-accent-700 bg-accent-50',
+    },
+    {
+      icon: Music2,
+      label: 'TikTok',
+      value: CONTACT_INFO.tiktok ? `@${CONTACT_INFO.tiktok}` : 'Próximamente',
+      href: CONTACT_INFO.tiktok ? `https://tiktok.com/@${CONTACT_INFO.tiktok}` : null,
+      color: 'text-gray-700 bg-gray-100',
     },
   ];
 
@@ -79,14 +100,8 @@ export default function ContactPage() {
             <div className="space-y-3">
               {methods.map(m => {
                 const Icon = m.icon;
-                return (
-                  <a
-                    key={m.label}
-                    href={m.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="card flex items-center gap-4 p-4 hover:-translate-y-0.5 transition-transform"
-                  >
+                const inner = (
+                  <>
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${m.color}`}>
                       <Icon className="w-5 h-5" />
                     </div>
@@ -94,7 +109,22 @@ export default function ContactPage() {
                       <p className="text-sm font-semibold text-gray-900">{m.label}</p>
                       <p className="text-sm text-gray-500 truncate">{m.value}</p>
                     </div>
+                  </>
+                );
+                return m.href ? (
+                  <a
+                    key={m.label}
+                    href={m.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="card flex items-center gap-4 p-4 hover:-translate-y-0.5 transition-transform"
+                  >
+                    {inner}
                   </a>
+                ) : (
+                  <div key={m.label} className="card flex items-center gap-4 p-4 opacity-60 cursor-default">
+                    {inner}
+                  </div>
                 );
               })}
             </div>
