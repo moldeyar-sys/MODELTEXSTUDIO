@@ -127,6 +127,8 @@ export const SIZE_GROUPS: { label: string; sizes: string[] }[] = [
   { label: 'Bebés (1 a 9)', sizes: ['1', '2', '3', '4', '5', '6', '7', '8', '9'] },
   { label: 'Niños / Niñas (2 a 18)', sizes: ['2', '4', '6', '8', '10', '12', '14', '16', '18'] },
   { label: 'Adultos (XS a 4XL)', sizes: ['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL'] },
+  { label: 'S a 2XL', sizes: ['S', 'M', 'L', 'XL', '2XL'] },
+  { label: '4 a 16', sizes: ['4', '6', '8', '10', '12', '14', '16'] },
 ];
 
 // Telas recomendadas sugeridas (se pueden agregar manualmente otras).
