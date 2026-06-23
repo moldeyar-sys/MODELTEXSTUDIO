@@ -57,14 +57,16 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.short_description}</p>
         )}
 
-        {/* Precios por formato */}
-        <div className="mt-3 text-sm space-y-0.5">
-          <p className="text-gray-500">
-            Moldes en Cartón <span className="font-bold text-primary-900">{carton !== null ? formatPrice(carton) : 'Consultar'}</span>
-          </p>
-          <p className="text-gray-500">
-            PDF-A4 <span className="font-bold text-primary-900">{pdf !== null ? formatPrice(pdf) : 'Consultar'}</span>
-          </p>
+        {/* Precios por formato (etiqueta a la izquierda, precio alineado a la derecha) */}
+        <div className="mt-3 text-sm space-y-1">
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-gray-500">Moldes en Cartón</span>
+            <span className="font-bold text-primary-900">{carton !== null ? formatPrice(carton) : 'Consultar'}</span>
+          </div>
+          <div className="flex items-baseline justify-between gap-2">
+            <span className="text-gray-500">Digital - PDF-A4</span>
+            <span className="font-bold text-primary-900">{pdf !== null ? formatPrice(pdf) : 'Consultar'}</span>
+          </div>
         </div>
 
         {/* Comprar (despliega opciones) */}
