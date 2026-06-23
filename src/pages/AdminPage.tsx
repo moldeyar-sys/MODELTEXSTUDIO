@@ -633,6 +633,12 @@ function ProductForm({
     sale_price: product?.sale_price?.toString() || '',
     category: product?.category || 'dama',
     garment_type: product?.garment_type || '',
+    codigo: product?.codigo || '',
+    precio_carton: product?.precio_carton != null ? String(product.precio_carton) : '',
+    precio_pdf_a4: product?.precio_pdf_a4 != null ? String(product.precio_pdf_a4) : '',
+    disponible_carton: product?.disponible_carton ?? true,
+    disponible_pdf_a4: product?.disponible_pdf_a4 ?? true,
+    mostrar_consulta_otro_formato: product?.mostrar_consulta_otro_formato ?? true,
     sizes: product?.sizes?.join(', ') || '',
     formats: product?.formats?.join(', ') || '',
     recommended_fabrics: product?.recommended_fabrics?.join(', ') || '',
@@ -792,9 +798,18 @@ function ProductForm({
       is_active: form.is_active,
       is_featured: form.is_featured,
     };
-    // Telas recomendadas: solo se guardan si la columna ya existe en la base.
-    const fabrics = form.recommended_fabrics.split(',').map(s => s.trim()).filter(Boolean);
-    const fullData = { ...baseData, recommended_fabrics: fabrics };
+    // Campos opcionales: solo se guardan si la columna ya existe en la base.
+    const optionalData = {
+      recommended_fabrics: form.recommended_fabrics.split(',').map(s => s.trim()).filter(Boolean),
+      codigo: form.codigo.trim(),
+      precio_carton: form.precio_carton ? parseFloat(form.precio_carton) : null,
+      precio_pdf_a4: form.precio_pdf_a4 ? parseFloat(form.precio_pdf_a4) : null,
+      disponible_carton: form.disponible_carton,
+      disponible_pdf_a4: form.disponible_pdf_a4,
+      mostrar_consulta_otro_formato: form.mostrar_consulta_otro_formato,
+    };
+    const OPTIONAL_COLS = Object.keys(optionalData);
+    const fullData = { ...baseData, ...optionalData };
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const save = (payload: any) =>
@@ -803,9 +818,9 @@ function ProductForm({
         : supabase.from('products').insert(payload).select().single();
 
     try {
-      // 1er intento: con telas. Si la columna todavia no existe, reintenta sin ellas.
+      // 1er intento: con todos los campos. Si falta alguna columna nueva, reintenta sin las opcionales.
       let { data, error: saveError } = await save(fullData);
-      if (saveError && saveError.message?.includes('recommended_fabrics')) {
+      if (saveError && OPTIONAL_COLS.some(c => saveError!.message?.includes(c))) {
         ({ data, error: saveError } = await save(baseData));
       }
       if (saveError) throw saveError;
@@ -832,8 +847,8 @@ function ProductForm({
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre - Código *</label>
-            <input name="name" value={form.name} onChange={handleChange} required className="input-field" placeholder="Ej: BUZO - 99M" />
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre *</label>
+            <input name="name" value={form.name} onChange={handleChange} required className="input-field" placeholder="Ej: BUZO 99-M" />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Slug</label>
@@ -862,6 +877,42 @@ function ProductForm({
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Tipo de prenda</label>
             <input name="garment_type" value={form.garment_type} onChange={handleChange} className="input-field" placeholder="Remera, Pantalón..." />
           </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Código</label>
+            <input name="codigo" value={form.codigo} onChange={handleChange} className="input-field" placeholder="Ej: 99-M" />
+          </div>
+
+          {/* Formatos y precios comerciales (se ven en catálogo y ficha) */}
+          <div className="sm:col-span-2 border border-gray-200 rounded-xl p-4 bg-gray-50/60">
+            <p className="text-sm font-semibold text-gray-700 mb-3">Formatos y precios comerciales</p>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Precio Moldes en Cartón <span className="text-gray-400 font-normal">(Solo Argentina)</span>
+                </label>
+                <input name="precio_carton" type="number" step="0.01" value={form.precio_carton} onChange={handleChange} className="input-field" placeholder="Vacío = Consultar" />
+                <label className="flex items-center gap-2 text-xs text-gray-600 mt-2">
+                  <input type="checkbox" name="disponible_carton" checked={form.disponible_carton} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                  Disponible en Cartón
+                </label>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  Precio Moldes en PDF-A4 <span className="text-gray-400 font-normal">(Global)</span>
+                </label>
+                <input name="precio_pdf_a4" type="number" step="0.01" value={form.precio_pdf_a4} onChange={handleChange} className="input-field" placeholder="Vacío = usa el precio base" />
+                <label className="flex items-center gap-2 text-xs text-gray-600 mt-2">
+                  <input type="checkbox" name="disponible_pdf_a4" checked={form.disponible_pdf_a4} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+                  Disponible en PDF-A4
+                </label>
+              </div>
+            </div>
+            <label className="flex items-center gap-2 text-xs text-gray-600 mt-3">
+              <input type="checkbox" name="mostrar_consulta_otro_formato" checked={form.mostrar_consulta_otro_formato} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
+              Mostrar opción "¿Necesitás otro formato?" en la ficha
+            </label>
+          </div>
+
           <div className="sm:col-span-2">
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Talles</label>
             <div className="flex flex-wrap gap-2 mb-2">

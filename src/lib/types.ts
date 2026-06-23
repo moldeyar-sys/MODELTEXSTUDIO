@@ -32,6 +32,13 @@ export interface Product {
   sizes: string[];
   formats: string[];
   recommended_fabrics: string[];
+  // Formatos comerciales (opcionales: resilientes si la columna aún no existe)
+  codigo?: string;
+  precio_carton?: number | null;
+  precio_pdf_a4?: number | null;
+  disponible_carton?: boolean;
+  disponible_pdf_a4?: boolean;
+  mostrar_consulta_otro_formato?: boolean;
   main_image_url: string;
   gallery: string[];
   is_active: boolean;
