@@ -5,7 +5,6 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useLocale } from '../../lib/locale';
 import { LocaleSwitcher } from './LocaleSwitcher';
-import { BrandLogo } from '../brand/BrandLogo';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -31,8 +30,14 @@ export function Navbar() {
       <div className="container-custom">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link to="/" className="flex items-center group" onClick={() => setIsOpen(false)} aria-label="Modeltex - Inicio">
-            <BrandLogo variant="full" size={52} className="transition-transform group-hover:scale-[1.03]" />
+          <Link to="/" className="flex items-center gap-2 group" onClick={() => setIsOpen(false)} aria-label="Modeltex - Inicio">
+            <img
+              src="/brand/modeltex-mark.png?v=1"
+              alt="Modeltex"
+              draggable={false}
+              className="h-9 w-auto select-none transition-transform group-hover:scale-[1.03]"
+            />
+            <span className="font-bold text-xl sm:text-2xl tracking-tight text-gray-900">MODELTEX</span>
           </Link>
 
           {/* Desktop nav */}
