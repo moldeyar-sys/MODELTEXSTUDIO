@@ -8,4 +8,4 @@ Disallow: /mi-cuenta
 Disallow: /mis-compras
 Disallow: /descargas
 
-Sitemap: https://moldey.com/sitemap.xml
+Sitemap: https://modeltex.com.ar/sitemap.xml

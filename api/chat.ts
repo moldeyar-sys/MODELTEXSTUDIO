@@ -100,7 +100,7 @@ export default async function handler(req: any, res: any) {
       headers: {
         Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
-        'HTTP-Referer': 'https://modeltexstudio.com',
+        'HTTP-Referer': 'https://modeltex.com.ar',
         'X-Title': 'Modeltex Asistente',
       },
       body: JSON.stringify({ model: OPENROUTER_MODEL, messages, temperature: 0.4, max_tokens: 600 }),

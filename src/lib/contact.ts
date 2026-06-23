@@ -8,7 +8,7 @@ import type { ContactMessage } from './types';
  * (email, instagram y horario son genéricos; WhatsApp es el número real.)
  */
 export const CONTACT_INFO = {
-  email: 'contacto@modeltexstudio.com',
+  email: 'contacto@modeltex.com.ar',
   whatsapp: WHATSAPP_NUMBER,   // 5491166531086 → se usa en wa.me
   telegram: '5491166531086',   // se usa en t.me/+<telegram>
   facebook: 'modeltex.ar',     // se usa en facebook.com/<facebook>

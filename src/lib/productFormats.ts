@@ -2,7 +2,7 @@ import { WHATSAPP_NUMBER } from './whatsapp';
 import type { Product } from './types';
 
 // ===== Configuración central de formatos comerciales y consultas =====
-export const SITE_URL = 'https://modeltexstudio.com';
+export const SITE_URL = 'https://modeltex.com.ar';
 
 export type ConsultFormat = 'carton' | 'pdf' | 'otro' | 'general';
 

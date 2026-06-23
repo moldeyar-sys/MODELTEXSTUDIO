@@ -22,7 +22,7 @@ export function Footer() {
             </p>
             <div className="flex items-center gap-2 text-primary-200 text-sm">
               <Mail className="w-4 h-4" />
-              <span>info@modeltexstudio.com</span>
+              <span>contacto@modeltex.com.ar</span>
             </div>
             <div className="flex items-center gap-2 text-primary-200 text-sm mt-2">
               <MapPin className="w-4 h-4" />

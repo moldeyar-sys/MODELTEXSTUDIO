@@ -56,7 +56,7 @@ export function buildFreeMoldWhatsApp(m: FreeMold): string {
     `Talles incluidos: ${(m.sizes || []).join(', ') || '-'}\n` +
     `Formatos: ${(m.formats || []).join(', ') || '-'}\n` +
     `Tela recomendada: ${m.fabric_recommendation || '-'}\n` +
-    `Link: ${typeof window !== 'undefined' ? window.location.origin : 'https://modeltexstudio.com'}/moldes-gratis\n\n` +
+    `Link: ${typeof window !== 'undefined' ? window.location.origin : 'https://modeltex.com.ar'}/moldes-gratis\n\n` +
     `Gracias.`;
   return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(text)}`;
 }
