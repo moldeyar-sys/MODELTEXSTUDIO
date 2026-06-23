@@ -1,6 +1,8 @@
-import { Download, MessageCircle, FileDown, Tag } from 'lucide-react';
+import { Download, MessageCircle, FileDown, Tag, Lock, UserPlus } from 'lucide-react';
+import { Link } from 'react-router-dom';
 import type { FreeMold } from '../../lib/types';
 import { buildFreeMoldWhatsApp, incrementFreeMoldDownload } from '../../lib/freeMolds';
+import { useAuth } from '../../contexts/AuthContext';
 
 interface Props {
   mold: FreeMold;
@@ -18,8 +20,12 @@ const categoryLabel = (c: string) => {
 };
 
 export function FreeMoldCard({ mold }: Props) {
+  const { user } = useAuth();
   const waUrl = buildFreeMoldWhatsApp(mold);
   const files = mold.files || [];
+  // Sin cuenta: solo se pueden descargar los archivos marcados "free". Con cuenta: todos.
+  const canDownload = (f: { free?: boolean }) => !!user || !!f.free;
+  const hasLocked = !user && files.some(f => !f.free);
 
   const handleDownload = (url: string) => {
     incrementFreeMoldDownload(mold.id);
@@ -85,39 +91,55 @@ export function FreeMoldCard({ mold }: Props) {
           </div>
         )}
 
-        {/* Archivos disponibles para descargar (al lado/junto a la foto) */}
+        {/* Archivos para descargar (azul = descarga / gris = requiere cuenta) */}
         <div className="mt-3 rounded-xl border border-gray-100 bg-gray-50/60 p-2.5">
           <p className="text-[11px] font-semibold text-gray-500 mb-1.5">Archivos para descargar</p>
           {files.length > 0 ? (
             <div className="flex flex-col gap-1.5">
-              {files.map((f, i) => (
-                <button
-                  key={i}
-                  onClick={() => handleDownload(f.url)}
-                  className="flex items-center justify-between gap-2 w-full px-2.5 py-1.5 bg-white border border-gray-200 rounded-lg text-xs font-medium text-gray-700 hover:border-primary-300 hover:bg-primary-50/40 transition-colors"
-                >
-                  <span className="truncate">{f.label || f.name}</span>
-                  <Download className="w-3.5 h-3.5 text-primary-700 flex-shrink-0" />
-                </button>
-              ))}
+              {files.map((f, i) =>
+                canDownload(f) ? (
+                  <button
+                    key={i}
+                    onClick={() => handleDownload(f.url)}
+                    className="flex items-center justify-between gap-2 w-full px-2.5 py-1.5 bg-primary-800 text-white border border-primary-800 rounded-lg text-xs font-semibold hover:bg-primary-700 transition-colors"
+                  >
+                    <span className="truncate">{f.label || f.name}</span>
+                    <Download className="w-3.5 h-3.5 flex-shrink-0" />
+                  </button>
+                ) : (
+                  <div
+                    key={i}
+                    title="Creá tu cuenta para descargar este talle"
+                    className="flex items-center justify-between gap-2 w-full px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-xs font-medium text-gray-400 cursor-not-allowed select-none"
+                  >
+                    <span className="truncate">{f.label || f.name}</span>
+                    <Lock className="w-3.5 h-3.5 flex-shrink-0" />
+                  </div>
+                )
+              )}
             </div>
           ) : (
             <p className="text-xs text-gray-400">Disponible pronto.</p>
+          )}
+
+          {/* Mensaje crear cuenta (solo si hay talles bloqueados y no tiene cuenta) */}
+          {hasLocked && (
+            <div className="mt-2.5 pt-2.5 border-t border-gray-200">
+              <p className="text-[11px] text-gray-600 mb-1.5">Creá tu cuenta para descargar gratis <b>todos los talles</b>.</p>
+              <Link
+                to="/registro"
+                className="flex items-center justify-center gap-1.5 w-full py-2 bg-petroleum-600 text-white text-xs font-semibold rounded-lg hover:bg-petroleum-700 transition-colors"
+              >
+                <UserPlus className="w-3.5 h-3.5" /> Crear cuenta gratis
+              </Link>
+            </div>
           )}
         </div>
 
         <div className="flex-1" />
 
-        {/* Acciones */}
-        <div className="mt-3 space-y-2">
-          {files.length > 0 && (
-            <button
-              onClick={() => handleDownload(files[0].url)}
-              className="w-full flex items-center justify-center gap-1.5 py-2.5 bg-primary-800 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors active:scale-[0.98]"
-            >
-              <Download className="w-4 h-4" /> Descargar gratis
-            </button>
-          )}
+        {/* Consulta */}
+        <div className="mt-3">
           <a
             href={waUrl}
             target="_blank"

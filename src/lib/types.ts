@@ -141,9 +141,10 @@ export const FABRICS = [
 // ==================== MOLDES GRATIS ====================
 // Archivo descargable gratuito (vive en el bucket PUBLICO 'free-files').
 export interface FreeMoldFile {
-  label: string; // formato visible: "PDF A4", "Plotter", "DXF"...
+  label: string; // formato/talle visible: "Talle S - Molde", "Talle S - Guía"...
   name: string;  // nombre del archivo
   url: string;   // URL publica de descarga
+  free?: boolean; // true = se descarga SIN crear cuenta (muestra gratis)
 }
 
 export interface FreeMold {

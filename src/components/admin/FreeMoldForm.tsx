@@ -81,7 +81,7 @@ export function FreeMoldForm({
       const added: FreeMoldFile[] = [];
       for (const f of list) {
         const url = await uploadFreeMoldFile(f);
-        added.push({ label: inferLabel(f.name), name: f.name, url });
+        added.push({ label: inferLabel(f.name), name: f.name, url, free: false });
       }
       setFiles(prev => [...prev, ...added]);
     } catch {
@@ -93,6 +93,9 @@ export function FreeMoldForm({
 
   const updateFileLabel = (i: number, label: string) =>
     setFiles(prev => prev.map((f, idx) => (idx === i ? { ...f, label } : f)));
+
+  const toggleFileFree = (i: number) =>
+    setFiles(prev => prev.map((f, idx) => (idx === i ? { ...f, free: !f.free } : f)));
 
   const removeFile = (i: number) => setFiles(prev => prev.filter((_, idx) => idx !== i));
 
@@ -238,10 +241,14 @@ export function FreeMoldForm({
                   <input
                     value={f.label}
                     onChange={e => updateFileLabel(i, e.target.value)}
-                    className="input-field text-sm flex-shrink-0 w-40"
-                    placeholder="Etiqueta (PDF A4...)"
+                    className="input-field text-sm flex-shrink-0 w-44"
+                    placeholder="Ej: Talle S - Molde"
                   />
                   <span className="text-xs text-gray-500 truncate flex-1">{f.name}</span>
+                  <label className={`flex items-center gap-1 text-[11px] font-medium px-2 py-1 rounded-lg cursor-pointer flex-shrink-0 ${f.free ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'}`} title="Se descarga sin crear cuenta">
+                    <input type="checkbox" checked={!!f.free} onChange={() => toggleFileFree(i)} className="w-3.5 h-3.5 rounded border-gray-300 text-green-600 focus:ring-green-500" />
+                    Sin cuenta
+                  </label>
                   <button type="button" onClick={() => removeFile(i)} className="p-1.5 text-gray-400 hover:text-red-600 rounded flex-shrink-0">
                     <Trash2 className="w-4 h-4" />
                   </button>
@@ -254,7 +261,9 @@ export function FreeMoldForm({
             {uploadingFile ? 'Subiendo...' : 'Subir archivos'}
             <input type="file" multiple className="hidden" onChange={handleFilesUpload} disabled={uploadingFile} />
           </label>
-          <p className="text-xs text-gray-400 mt-1">Se guardan en el bucket público "free-files". Editá la etiqueta de cada archivo (ej: PDF A4, Plotter).</p>
+          <p className="text-xs text-gray-400 mt-1">
+            Recordá: cada talle suele ser <b>2 PDF</b> (molde + guía). Marcá <b>"Sin cuenta"</b> en los archivos que se podrán descargar gratis SIN crear cuenta (ej: el talle de muestra). El resto pedirá crear cuenta.
+          </p>
         </div>
 
         <div>
