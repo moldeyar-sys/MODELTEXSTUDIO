@@ -857,6 +857,36 @@ function ProductForm({
       </h3>
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        {/* Imagen del articulo: PRIMERO, para verla mientras se cargan los datos */}
+        <div className="rounded-xl border border-gray-200 bg-gray-50/60 p-4">
+          <label className="block text-sm font-medium text-gray-700 mb-2">Imagen del artículo</label>
+          <div className="flex items-start gap-4">
+            <div className="w-28 h-28 rounded-xl bg-white overflow-hidden flex-shrink-0 border border-gray-200">
+              {form.main_image_url ? (
+                <img src={form.main_image_url} alt="" className="w-full h-full object-cover" />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center text-gray-300">
+                  <ImagePlus className="w-8 h-8" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 space-y-2">
+              <label className="btn-secondary inline-flex items-center gap-2 cursor-pointer text-sm">
+                {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploadingImage ? 'Subiendo...' : 'Subir imagen'}
+                <input type="file" accept="image/*" className="hidden" onChange={handleMainImageUpload} disabled={uploadingImage} />
+              </label>
+              <input
+                name="main_image_url"
+                value={form.main_image_url}
+                onChange={handleChange}
+                className="input-field text-xs"
+                placeholder="...o pegá una URL https://"
+              />
+            </div>
+          </div>
+        </div>
+
         <div className="grid sm:grid-cols-2 gap-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre *</label>
@@ -980,35 +1010,6 @@ function ProductForm({
           </div>
         </div>
 
-        {/* Imagen principal */}
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1.5">Imagen principal</label>
-          <div className="flex items-start gap-4">
-            <div className="w-24 h-24 rounded-xl bg-gray-100 overflow-hidden flex-shrink-0 border border-gray-200">
-              {form.main_image_url ? (
-                <img src={form.main_image_url} alt="" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-gray-300">
-                  <ImagePlus className="w-7 h-7" />
-                </div>
-              )}
-            </div>
-            <div className="flex-1 space-y-2">
-              <label className="btn-secondary inline-flex items-center gap-2 cursor-pointer text-sm">
-                {uploadingImage ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                {uploadingImage ? 'Subiendo...' : 'Subir imagen'}
-                <input type="file" accept="image/*" className="hidden" onChange={handleMainImageUpload} disabled={uploadingImage} />
-              </label>
-              <input
-                name="main_image_url"
-                value={form.main_image_url}
-                onChange={handleChange}
-                className="input-field text-xs"
-                placeholder="...o pegá una URL https://"
-              />
-            </div>
-          </div>
-        </div>
 
         {/* Galería */}
         <div>
