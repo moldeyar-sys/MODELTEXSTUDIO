@@ -135,6 +135,29 @@ export default function CatalogPage() {
       </div>
 
       <div className="container-custom py-8">
+        {/* Botones de categoría (siempre visibles) */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-5 -mx-1 px-1">
+          <button
+            onClick={() => updateFilter('categoria', '')}
+            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+              !category ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+            }`}
+          >
+            Todos
+          </button>
+          {CATEGORIES.map(c => (
+            <button
+              key={c.value}
+              onClick={() => updateFilter('categoria', c.value)}
+              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                category === c.value ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              {c.label}
+            </button>
+          ))}
+        </div>
+
         {/* Search & Filter Bar */}
         <div className="flex flex-col sm:flex-row gap-3 mb-8">
           <form onSubmit={handleSearch} className="flex-1 flex">

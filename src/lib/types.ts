@@ -115,9 +115,9 @@ export const CATEGORIES: { value: ProductCategory; label: string }[] = [
   { value: 'hombre', label: 'Hombre' },
   { value: 'nina', label: 'Niña' },
   { value: 'nino', label: 'Niño' },
+  { value: 'bebes', label: 'Bebés' },
   { value: 'adultos-unisex', label: 'Adultos unisex' },
   { value: 'ninos-unisex', label: 'Niños unisex' },
-  { value: 'bebes', label: 'Bebés' },
 ];
 
 export const FORMATS = ['PDF A4', 'PDF Plotter', 'PLT', 'DXF', 'CDR', 'Sublimación'];
