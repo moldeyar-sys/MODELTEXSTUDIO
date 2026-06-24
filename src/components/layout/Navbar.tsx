@@ -4,7 +4,6 @@ import { Menu, X, ShoppingCart, User, ChevronDown, LogOut, Package, Download, Se
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useLocale } from '../../lib/locale';
-import { LocaleSwitcher } from './LocaleSwitcher';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -59,7 +58,6 @@ export function Navbar() {
 
           {/* Desktop right */}
           <div className="hidden md:flex items-center gap-3">
-            <LocaleSwitcher />
             <Link
               to="/carrito"
               className="relative p-2 rounded-lg text-gray-600 hover:text-primary-800 hover:bg-gray-50 transition-colors"
@@ -167,7 +165,6 @@ export function Navbar() {
         {/* Mobile menu */}
         {isOpen && (
           <div className="md:hidden pb-4 border-t border-gray-100 pt-2">
-            <div className="px-4 py-2"><LocaleSwitcher /></div>
             {navLinks.map(link => (
               <Link
                 key={link.to}
