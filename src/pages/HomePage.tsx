@@ -225,7 +225,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* HERO SECTION */}
-      <section className="relative pt-16 pb-24 md:pt-20 md:pb-32 overflow-hidden">
+      <section className="relative pt-16 pb-32 md:pt-20 md:pb-40 overflow-hidden">
         {/* Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-600 opacity-95 z-0" />
 
@@ -262,18 +262,44 @@ const HomePage = () => {
                   <ArrowRight size={20} />
                 </Link>
                 <Link
-                  to="/moldes-gratis"
-                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl border-2 border-white/70 text-white text-lg font-semibold hover:bg-white/10 hover:scale-105 transition-all"
-                >
-                  <Gift size={18} /> Moldes Gratis
-                </Link>
-                <Link
                   to="/diseno-a-pedido"
                   className="btn-accent px-7 py-3.5 text-lg font-semibold hover:scale-105 transition-transform"
                 >
                   Diseño a pedido
                 </Link>
               </div>
+
+              {/* Moldes Gratis Card */}
+              <Link
+                to="/moldes-gratis"
+                className="group mt-6 inline-flex w-full max-w-md items-center gap-4 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-400/20 via-yellow-300/10 to-amber-500/15 backdrop-blur-sm px-5 py-4 shadow-lg hover:from-amber-400/30 hover:via-yellow-300/20 hover:to-amber-500/25 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 cursor-pointer"
+              >
+                {/* Gift icon */}
+                <div className="relative flex-shrink-0">
+                  <div className="w-14 h-14 rounded-xl bg-amber-400 flex items-center justify-center shadow-md group-hover:rotate-6 transition-transform duration-300">
+                    <Gift className="text-white w-7 h-7" />
+                  </div>
+                  <span className="absolute -top-2 -right-2 bg-green-400 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide shadow">
+                    FREE
+                  </span>
+                </div>
+
+                {/* Text */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-amber-300 text-xs font-bold uppercase tracking-widest mb-0.5">
+                    ¡Probá antes de comprar!
+                  </p>
+                  <p className="text-white text-base font-bold leading-tight">
+                    Moldes Gratis
+                  </p>
+                  <p className="text-white/70 text-sm leading-snug mt-0.5">
+                    Descargá moldes reales sin pagar nada
+                  </p>
+                </div>
+
+                {/* Arrow */}
+                <ArrowRight className="text-amber-400 w-5 h-5 flex-shrink-0 group-hover:translate-x-1 transition-transform duration-200" />
+              </Link>
             </div>
 
             {/* Right: imagen real de Modeltex */}
