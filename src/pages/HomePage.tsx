@@ -18,6 +18,7 @@ import {
   ShieldCheck,
   Headphones,
   BadgeCheck,
+  Gift,
 } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
 import { supabase } from '../lib/supabase';
@@ -254,22 +255,22 @@ const HomePage = () => {
               <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center flex-wrap">
                 <Link
                   to="/catalogo"
-                  className="btn-primary px-8 py-3 text-lg font-semibold inline-flex items-center gap-2 hover:scale-105 transition-transform"
+                  className="cta-attention inline-flex items-center gap-2 px-9 py-4 rounded-xl bg-white text-primary-900 text-lg font-bold shadow-lg hover:bg-white/90 hover:scale-105 active:scale-[0.98] transition-all"
                 >
-                  Ver catalogo
+                  Ver catálogo
                   <ArrowRight size={20} />
                 </Link>
                 <Link
-                  to="/registro"
-                  className="btn-secondary px-8 py-3 text-lg font-semibold hover:scale-105 transition-transform"
+                  to="/moldes-gratis"
+                  className="inline-flex items-center gap-2 px-7 py-3.5 rounded-xl border-2 border-white/70 text-white text-lg font-semibold hover:bg-white/10 hover:scale-105 transition-all"
                 >
-                  Crear cuenta
+                  <Gift size={18} /> Moldes Gratis
                 </Link>
                 <Link
                   to="/diseno-a-pedido"
-                  className="btn-accent px-8 py-3 text-lg font-semibold hover:scale-105 transition-transform"
+                  className="btn-accent px-7 py-3.5 text-lg font-semibold hover:scale-105 transition-transform"
                 >
-                  Diseno a pedido
+                  Diseño a pedido
                 </Link>
               </div>
             </div>
