@@ -7,6 +7,7 @@ import { useSeo } from '../lib/seo';
 import { useLocale } from '../lib/locale';
 import type { Product, ProductCategory } from '../lib/types';
 import { CATEGORIES, FORMATS } from '../lib/types';
+import { isPromoActive } from '../lib/promo';
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc' | 'nombre';
 
@@ -58,7 +59,8 @@ export default function CatalogPage() {
         console.error('Error fetching products:', error);
         setProducts([]);
       } else {
-        setProducts((data as Product[]) || []);
+        // Ocultar del catálogo los productos que están en promo gratis (están en /moldes-gratis)
+        setProducts(((data as Product[]) || []).filter(p => !isPromoActive(p)));
       }
     } catch (err) {
       console.error('Unexpected error fetching products:', err);

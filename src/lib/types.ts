@@ -41,6 +41,7 @@ export interface Product {
   disponible_carton?: boolean;
   disponible_pdf_a4?: boolean;
   mostrar_consulta_otro_formato?: boolean;
+  free_until?: string | null; // si > ahora, está en promo gratis (se muestra en Moldes Gratis)
   main_image_url: string;
   gallery: string[];
   is_active: boolean;

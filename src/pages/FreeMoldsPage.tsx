@@ -3,11 +3,14 @@ import { Link } from 'react-router-dom';
 import { Search, Gift, ShieldCheck, Download, ArrowRight, PackageOpen } from 'lucide-react';
 import { useSeo } from '../lib/seo';
 import { fetchActiveFreeMolds } from '../lib/freeMolds';
+import { fetchPromoProducts, type PromoProduct } from '../lib/promo';
 import { FreeMoldCard } from '../components/ui/FreeMoldCard';
+import { FreePromoCard } from '../components/ui/FreePromoCard';
 import type { FreeMold } from '../lib/types';
 
 export default function FreeMoldsPage() {
   const [molds, setMolds] = useState<FreeMold[]>([]);
+  const [promos, setPromos] = useState<PromoProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
 
@@ -19,11 +22,14 @@ export default function FreeMoldsPage() {
   });
 
   useEffect(() => {
-    fetchActiveFreeMolds().then(data => {
-      setMolds(data);
+    Promise.all([fetchActiveFreeMolds(), fetchPromoProducts()]).then(([m, p]) => {
+      setMolds(m);
+      setPromos(p);
       setLoading(false);
     });
   }, []);
+
+  const showPromos = !search.trim();
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -98,7 +104,7 @@ export default function FreeMoldsPage() {
               </div>
             ))}
           </div>
-        ) : filtered.length === 0 ? (
+        ) : filtered.length === 0 && (!showPromos || promos.length === 0) ? (
           <div className="card max-w-lg mx-auto text-center py-14 px-6">
             <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-petroleum-100 mb-5">
               <PackageOpen className="w-8 h-8 text-petroleum-600" />
@@ -115,6 +121,9 @@ export default function FreeMoldsPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {showPromos && promos.map(p => (
+              <FreePromoCard key={p.product.id} item={p} />
+            ))}
             {filtered.map(m => (
               <FreeMoldCard key={m.id} mold={m} />
             ))}

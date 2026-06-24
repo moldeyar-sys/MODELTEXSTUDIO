@@ -640,6 +640,7 @@ function ProductForm({
     disponible_carton: product?.disponible_carton ?? true,
     disponible_pdf_a4: product?.disponible_pdf_a4 ?? true,
     mostrar_consulta_otro_formato: product?.mostrar_consulta_otro_formato ?? true,
+    free_until: product?.free_until ? product.free_until.slice(0, 16) : '',
     sizes: product?.sizes?.join(', ') || '',
     formats: product?.formats?.join(', ') || '',
     recommended_fabrics: product?.recommended_fabrics?.join(', ') || '',
@@ -712,6 +713,15 @@ function ProductForm({
       if (cur.length >= 3) return prev; // tope de 3
       return { ...prev, categories: [...cur, value] };
     });
+  };
+
+  // Setea la promo gratis a 1 semana desde ahora (formato datetime-local)
+  const setPromoWeek = () => {
+    const d = new Date();
+    d.setDate(d.getDate() + 7);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const v = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    setForm(prev => ({ ...prev, free_until: v }));
   };
 
   const handleMainImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -825,6 +835,7 @@ function ProductForm({
       disponible_carton: form.disponible_carton,
       disponible_pdf_a4: form.disponible_pdf_a4,
       mostrar_consulta_otro_formato: form.mostrar_consulta_otro_formato,
+      free_until: form.free_until ? new Date(form.free_until).toISOString() : null,
     };
     const OPTIONAL_COLS = Object.keys(optionalData);
     const fullData = { ...baseData, ...optionalData };
@@ -983,6 +994,32 @@ function ProductForm({
               <input type="checkbox" name="mostrar_consulta_otro_formato" checked={form.mostrar_consulta_otro_formato} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
               Mostrar opción "¿Necesitás otro formato?" en la ficha
             </label>
+          </div>
+
+          {/* Promo GRATIS: pasar el producto a Moldes Gratis hasta una fecha */}
+          <div className="sm:col-span-2 border border-green-200 rounded-xl p-4 bg-green-50/50">
+            <p className="text-sm font-semibold text-gray-700 mb-1">🎁 Pasar a "Moldes Gratis" (promo)</p>
+            <p className="text-xs text-gray-500 mb-3">Mientras esté activa, el producto sale del catálogo y aparece GRATIS en Moldes Gratis. Al llegar la fecha, vuelve solo al catálogo.</p>
+            <div className="flex flex-wrap items-end gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Gratis hasta</label>
+                <input
+                  name="free_until"
+                  type="datetime-local"
+                  value={form.free_until}
+                  onChange={handleChange}
+                  className="input-field py-2"
+                />
+              </div>
+              <button type="button" onClick={setPromoWeek} className="text-xs font-medium px-3 py-2 bg-green-100 text-green-700 border border-green-200 rounded-lg hover:bg-green-200 transition-colors">
+                + 1 semana
+              </button>
+              {form.free_until && (
+                <button type="button" onClick={() => setForm(prev => ({ ...prev, free_until: '' }))} className="text-xs font-medium px-3 py-2 bg-gray-100 text-gray-500 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors">
+                  Quitar (volver al catálogo)
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="sm:col-span-2">
