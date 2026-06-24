@@ -5,6 +5,7 @@ export type Currency = 'ARS' | 'USD';
 
 const LANG_KEY = 'modeltex_lang';
 const CURRENCY_KEY = 'modeltex_currency';
+const CURRENCY_CHOSEN_KEY = 'modeltex_currency_chosen'; // '1' si el usuario eligió a mano
 const FALLBACK_ARS_PER_USD = 1450; // tasa de respaldo si falla la API
 
 // Diccionario solo para inglés. Si falta la clave (o el idioma es 'es'),
@@ -117,8 +118,29 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     localStorage.setItem(CURRENCY_KEY, currency);
   }, [currency]);
 
+  // Auto-detección de moneda por país (solo si el usuario NO eligió a mano):
+  // Argentina -> ARS, resto del mundo -> USD. Usa /api/geo (geolocalización de Vercel).
+  useEffect(() => {
+    if (localStorage.getItem(CURRENCY_CHOSEN_KEY) === '1') return;
+    let cancelled = false;
+    fetch('/api/geo')
+      .then(r => r.json())
+      .then(d => {
+        if (cancelled) return;
+        const country = (d?.country || '').toUpperCase();
+        if (!country) return; // sin dato -> dejamos el default
+        setCurrencyState(country === 'AR' ? 'ARS' : 'USD');
+      })
+      .catch(() => { /* si falla, queda el default */ });
+    return () => { cancelled = true; };
+  }, []);
+
   const setLang = useCallback((l: Lang) => setLangState(l), []);
-  const setCurrency = useCallback((c: Currency) => setCurrencyState(c), []);
+  // Cuando el usuario elige a mano, lo recordamos y respetamos su elección.
+  const setCurrency = useCallback((c: Currency) => {
+    localStorage.setItem(CURRENCY_CHOSEN_KEY, '1');
+    setCurrencyState(c);
+  }, []);
 
   const t = useCallback((key: string, es: string) => {
     if (lang === 'en' && EN[key]) return EN[key];
