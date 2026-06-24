@@ -42,3 +42,19 @@
     text-wrap: balance;
   }
 }
+
+/* Glow azul que late suave y constante (llamativo pero profesional) */
+@keyframes textGlowPulse {
+  0%, 100% {
+    text-shadow: 0 0 3px rgba(0, 72, 173, 0.20), 0 0 8px rgba(0, 72, 173, 0.12);
+  }
+  50% {
+    text-shadow: 0 0 8px rgba(0, 72, 173, 0.65), 0 0 18px rgba(0, 72, 173, 0.40), 0 0 28px rgba(46, 111, 207, 0.25);
+  }
+}
+.text-glow-pulse {
+  animation: textGlowPulse 2.2s ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .text-glow-pulse { animation: none; }
+}

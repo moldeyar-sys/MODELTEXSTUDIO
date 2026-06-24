@@ -122,8 +122,8 @@ export default function CatalogPage() {
         <div className="container-custom py-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
-              <h1 className="font-display text-3xl md:text-4xl font-bold text-primary-900">
-                {currentCategoryLabel}
+              <h1 className="font-display text-3xl md:text-4xl font-bold text-primary-800 text-glow-pulse tracking-wide">
+                MOLDES APROBADOS CON MUESTRA
               </h1>
               <p className="text-gray-500 mt-2">
                 {loading ? 'Cargando...' : `${products.length} ${products.length === 1 ? 'molde disponible' : 'moldes disponibles'}`}
