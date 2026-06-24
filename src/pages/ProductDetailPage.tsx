@@ -7,6 +7,7 @@ import { useSeo } from '../lib/seo';
 import type { Product } from '../lib/types';
 import { CATEGORIES } from '../lib/types';
 import { FormatOptions } from '../components/ui/FormatOptions';
+import { ReviewsSection } from '../components/ui/ReviewsSection';
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
@@ -235,6 +236,11 @@ export default function ProductDetailPage() {
               </p>
             </div>
           </div>
+        </div>
+
+        {/* Opiniones */}
+        <div className="mt-16 max-w-3xl">
+          <ReviewsSection targetType="product" targetId={product.id} />
         </div>
 
         {/* Related */}

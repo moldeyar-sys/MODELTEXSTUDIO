@@ -1,8 +1,10 @@
-import { Download, MessageCircle, FileDown, Tag, Lock, UserPlus } from 'lucide-react';
+import { useState } from 'react';
+import { Download, MessageCircle, FileDown, Tag, Lock, UserPlus, Star, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { FreeMold } from '../../lib/types';
 import { buildFreeMoldWhatsApp, incrementFreeMoldDownload } from '../../lib/freeMolds';
 import { useAuth } from '../../contexts/AuthContext';
+import { ReviewsSection } from './ReviewsSection';
 
 interface Props {
   mold: FreeMold;
@@ -21,6 +23,7 @@ const categoryLabel = (c: string) => {
 
 export function FreeMoldCard({ mold }: Props) {
   const { user } = useAuth();
+  const [showReviews, setShowReviews] = useState(false);
   const waUrl = buildFreeMoldWhatsApp(mold);
   const files = mold.files || [];
   // Sin cuenta: solo se pueden descargar los archivos marcados "free". Con cuenta: todos.
@@ -138,18 +141,50 @@ export function FreeMoldCard({ mold }: Props) {
 
         <div className="flex-1" />
 
-        {/* Consulta */}
-        <div className="mt-3">
+        {/* Consulta + Opiniones */}
+        <div className="mt-3 grid grid-cols-2 gap-2">
           <a
             href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center justify-center gap-1.5 w-full py-2 text-xs font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
+            className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition-colors"
           >
-            <MessageCircle className="w-3.5 h-3.5" /> Consultar por WhatsApp
+            <MessageCircle className="w-3.5 h-3.5" /> WhatsApp
           </a>
+          <button
+            onClick={() => setShowReviews(true)}
+            className="flex items-center justify-center gap-1.5 py-2 text-xs font-medium text-amber-600 border border-amber-200 rounded-lg hover:bg-amber-50 transition-colors"
+          >
+            <Star className="w-3.5 h-3.5" /> Opiniones
+          </button>
         </div>
       </div>
+
+      {/* Modal de opiniones */}
+      {showReviews && (
+        <div
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+          onClick={() => setShowReviews(false)}
+        >
+          <div
+            className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto"
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
+              <div className="min-w-0">
+                <p className="text-xs text-gray-400">Opiniones de</p>
+                <h3 className="font-semibold text-gray-900 truncate">{mold.title}</h3>
+              </div>
+              <button onClick={() => setShowReviews(false)} aria-label="Cerrar" className="p-1 hover:bg-gray-100 rounded-lg flex-shrink-0">
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+            <div className="p-5">
+              <ReviewsSection targetType="free_mold" targetId={mold.id} compact />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

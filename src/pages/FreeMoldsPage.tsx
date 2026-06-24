@@ -12,9 +12,9 @@ export default function FreeMoldsPage() {
   const [search, setSearch] = useState('');
 
   useSeo({
-    title: 'Moldes Gratis — Descargá y probá la calidad Modeltex',
+    title: 'Moldes Gratis para descargar — Moldería digital gratis',
     description:
-      'Descargá moldes digitales gratuitos de Modeltex y probá la calidad de nuestro trabajo antes de comprar. PDF A4, plotter y más, listos para producir.',
+      'Moldes de ropa GRATIS para descargar: moldería digital gratuita en PDF A4, plotter y más. Probá la calidad Modeltex antes de comprar. Descarga inmediata y nuevos moldes gratis cada semana.',
     path: '/moldes-gratis',
   });
 

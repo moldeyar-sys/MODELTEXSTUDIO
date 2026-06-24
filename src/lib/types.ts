@@ -173,6 +173,18 @@ export const FREE_MOLD_TAGS = [
   'Principiante', 'Producción', 'Verano', 'Invierno', 'Todo el año',
 ];
 
+// ==================== RESEÑAS ====================
+export interface Review {
+  id: string;
+  target_type: 'product' | 'free_mold';
+  target_id: string;
+  user_id: string;
+  author_name: string;
+  rating: number; // 1 a 5
+  comment: string;
+  created_at: string;
+}
+
 // ==================== CONTACTO ====================
 export interface ContactMessage {
   id: string;
