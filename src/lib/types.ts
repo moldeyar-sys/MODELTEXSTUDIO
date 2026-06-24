@@ -174,6 +174,16 @@ export const FREE_MOLD_TAGS = [
   'Principiante', 'Producción', 'Verano', 'Invierno', 'Todo el año',
 ];
 
+// ==================== IMÁGENES DEL HERO (INICIO) ====================
+export interface HeroImage {
+  id: string;
+  image_url: string;
+  alt: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 // ==================== RESEÑAS ====================
 export interface Review {
   id: string;

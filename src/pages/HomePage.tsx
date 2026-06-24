@@ -21,6 +21,7 @@ import {
   Gift,
 } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
+import { HeroCarousel } from '../components/ui/HeroCarousel';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useSeo } from '../lib/seo';
@@ -280,11 +281,12 @@ const HomePage = () => {
               <div className="relative">
                 <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent-500/30 rounded-full blur-3xl" />
                 <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-petroleum-400/30 rounded-full blur-3xl" />
-                <img
-                  src="/brand/modeltex-hero.webp"
-                  alt="Modeltex - Moldería de precisión: patronaje digital profesional"
-                  className="relative w-full rounded-3xl shadow-2xl border border-white/20"
-                />
+                <div className="relative">
+                  <HeroCarousel
+                    fallbackSrc="/brand/modeltex-hero.webp"
+                    fallbackAlt="Modeltex - Moldería de precisión: patronaje digital profesional"
+                  />
+                </div>
                 <div className="relative mt-4 flex flex-wrap justify-center gap-2">
                   {['PDF A4', 'Plotter', 'DXF', 'CDR', 'PLT'].map((f, i) => (
                     <span

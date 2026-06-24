@@ -5,16 +5,17 @@ import {
   Plus, Edit3, Trash2,
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
-  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail
+  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon
 } from 'lucide-react';
-import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage } from '../lib/types';
+import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
 import { fetchAllFreeMolds } from '../lib/freeMolds';
 import { fetchContactMessages } from '../lib/contact';
+import { fetchAllHeroImages } from '../lib/heroImages';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'hero';
 
 export default function AdminPage() {
   useAuth();
@@ -25,6 +26,8 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [freeMolds, setFreeMolds] = useState<FreeMold[]>([]);
   const [contacts, setContacts] = useState<ContactMessage[]>([]);
+  const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
+  const [uploadingHero, setUploadingHero] = useState(false);
   const [loading, setLoading] = useState(true);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
@@ -38,13 +41,14 @@ export default function AdminPage() {
 
   const fetchAll = async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
-    const [prodRes, orderRes, custRes, reqRes, freeRes, contactRes] = await Promise.all([
+    const [prodRes, orderRes, custRes, reqRes, freeRes, contactRes, heroRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('custom_requests').select('*').order('created_at', { ascending: false }),
       fetchAllFreeMolds(), // resiliente: si la tabla no existe, devuelve [] sin romper el admin
       fetchContactMessages(), // resiliente igual
+      fetchAllHeroImages(), // resiliente
     ]);
     setProducts((prodRes.data as Product[]) || []);
     setOrders((orderRes.data as Order[]) || []);
@@ -52,6 +56,7 @@ export default function AdminPage() {
     setRequests((reqRes.data as CustomRequest[]) || []);
     setFreeMolds(freeRes);
     setContacts(contactRes);
+    setHeroImages(heroRes);
     if (showSpinner) setLoading(false);
   };
 
@@ -63,7 +68,44 @@ export default function AdminPage() {
     { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
     { id: 'free', label: 'Moldes Gratis', icon: <Gift className="w-4 h-4" /> },
     { id: 'contacts', label: 'Contactos', icon: <Mail className="w-4 h-4" /> },
+    { id: 'hero', label: 'Inicio (imágenes)', icon: <ImageIcon className="w-4 h-4" /> },
   ];
+
+  const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const list = Array.from(e.target.files || []);
+    e.target.value = '';
+    if (!list.length) return;
+    setUploadingHero(true);
+    try {
+      const base = heroImages.length;
+      for (let i = 0; i < list.length; i++) {
+        const url = await uploadProductImage(list[i]);
+        const { error } = await supabase.from('hero_images').insert({ image_url: url, sort_order: base + i, is_active: true });
+        if (error) throw error;
+      }
+      await fetchAll(false);
+    } catch {
+      alert('Error al subir. Si falla, falta crear la tabla hero_images (SQL).');
+    } finally {
+      setUploadingHero(false);
+    }
+  };
+
+  const toggleHeroActive = async (id: string, is_active: boolean) => {
+    const { error } = await supabase.from('hero_images').update({ is_active }).eq('id', id);
+    if (!error) setHeroImages(prev => prev.map(h => h.id === id ? { ...h, is_active } : h));
+  };
+
+  const updateHeroOrder = async (id: string, sort_order: number) => {
+    const { error } = await supabase.from('hero_images').update({ sort_order }).eq('id', id);
+    if (!error) setHeroImages(prev => prev.map(h => h.id === id ? { ...h, sort_order } : h).sort((a, b) => a.sort_order - b.sort_order));
+  };
+
+  const deleteHeroImage = async (id: string) => {
+    if (!confirm('¿Eliminar esta imagen del inicio?')) return;
+    const { error } = await supabase.from('hero_images').delete().eq('id', id);
+    if (!error) setHeroImages(prev => prev.filter(h => h.id !== id));
+  };
 
   const updateOrderStatus = async (orderId: string, field: 'payment_status' | 'order_status', value: string) => {
     const { error } = await supabase.from('orders').update({ [field]: value }).eq('id', orderId);
@@ -605,6 +647,60 @@ export default function AdminPage() {
                 Todavía no llegaron mensajes.
                 <br />(Si esperabas alguno y no aparece, falta correr el SQL de Contacto en Supabase.)
               </p>
+            )}
+          </div>
+        )}
+
+        {/* Inicio (imágenes del hero) */}
+        {activeTab === 'hero' && (
+          <div>
+            <div className="flex items-center justify-between mb-2 flex-wrap gap-2">
+              <div>
+                <h2 className="font-semibold text-gray-900 text-lg">Imágenes del inicio</h2>
+                <p className="text-sm text-gray-500">Se muestran en un carrusel que rota solo en la portada. Subí varias (5-10) y ordenalas.</p>
+              </div>
+              <label className="btn-primary inline-flex items-center gap-2 cursor-pointer text-sm">
+                {uploadingHero ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
+                {uploadingHero ? 'Subiendo...' : 'Subir imágenes'}
+                <input type="file" accept="image/*" multiple className="hidden" onChange={handleHeroUpload} disabled={uploadingHero} />
+              </label>
+            </div>
+
+            {heroImages.length === 0 ? (
+              <p className="text-gray-500 text-center py-10 text-sm">
+                Todavía no hay imágenes. Subí algunas para el carrusel de la portada.
+                <br />(Mientras no haya, se muestra la imagen por defecto. Si al subir da error, falta correr el SQL de "Inicio".)
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                {heroImages.map(h => (
+                  <div key={h.id} className={`card overflow-hidden ${h.is_active ? '' : 'opacity-50'}`}>
+                    <div className="aspect-square bg-gray-100 overflow-hidden">
+                      <img src={h.image_url} alt="" className="w-full h-full object-cover" />
+                    </div>
+                    <div className="p-3 space-y-2">
+                      <div className="flex items-center justify-between gap-2">
+                        <label className="flex items-center gap-1.5 text-xs text-gray-700">
+                          <input type="checkbox" checked={h.is_active} onChange={() => toggleHeroActive(h.id, !h.is_active)} className="w-4 h-4 rounded border-gray-300 text-primary-600" />
+                          Activa
+                        </label>
+                        <button onClick={() => deleteHeroImage(h.id)} className="p-1.5 text-gray-400 hover:text-red-600 rounded">
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <span>Orden</span>
+                        <input
+                          type="number"
+                          value={h.sort_order}
+                          onChange={e => updateHeroOrder(h.id, parseInt(e.target.value, 10) || 0)}
+                          className="input-field w-16 py-1 text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             )}
           </div>
         )}
