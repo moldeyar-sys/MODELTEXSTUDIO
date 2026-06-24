@@ -39,7 +39,7 @@ export function HeroCarousel({ fallbackSrc, fallbackAlt = 'Modeltex', intervalMs
             src={s.src}
             alt={s.alt}
             loading={i === 0 ? 'eager' : 'lazy'}
-            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${i === idx ? 'opacity-100' : 'opacity-0'}`}
+            className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${i === idx ? 'opacity-100' : 'opacity-0'}`}
           />
         ))}
       </div>

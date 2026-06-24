@@ -285,6 +285,7 @@ const HomePage = () => {
                   <HeroCarousel
                     fallbackSrc="/brand/modeltex-hero.webp"
                     fallbackAlt="Modeltex - Moldería de precisión: patronaje digital profesional"
+                    intervalMs={1000}
                   />
                 </div>
                 <div className="relative mt-4 flex flex-wrap justify-center gap-2">
