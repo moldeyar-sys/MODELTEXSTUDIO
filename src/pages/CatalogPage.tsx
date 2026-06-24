@@ -108,10 +108,10 @@ export default function CatalogPage() {
   const currentCategoryLabel = CATEGORIES.find(c => c.value === category)?.label || 'Todos los productos';
 
   useSeo({
-    title: category ? `Moldes de ${currentCategoryLabel}` : 'Catálogo de moldes digitales',
+    title: category ? `Moldes de ${currentCategoryLabel} — moldería digital` : 'Catálogo de moldería digital y moldes de ropa',
     description: category
-      ? `Moldes digitales de ${currentCategoryLabel.toLowerCase()} en PDF A4, plotter y formatos editables. Descarga inmediata tras el pago.`
-      : 'Explorá todo el catálogo de moldes digitales de ropa: hombre, dama, niños, deportivo, invierno y más. PDF A4, plotter, DXF y CDR.',
+      ? `Moldes de ${currentCategoryLabel.toLowerCase()}: moldería digital y en cartón en PDF A4, plotter, DXF, CDR y PLT. Escalado completo y descarga inmediata.`
+      : 'Catálogo de moldería digital y moldes de ropa: dama, hombre, niños, bebés y unisex. Moldes en cartón y PDF A4, plotter, DXF, CDR y PLT, con escalado completo y descarga inmediata.',
     path: category ? `/catalogo?categoria=${category}` : '/catalogo',
   });
 

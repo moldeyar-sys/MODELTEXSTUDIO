@@ -31,8 +31,8 @@ const HomePage = () => {
   const { user } = useAuth();
   const { t } = useLocale();
   useSeo({
-    title: 'Moldes digitales de ropa para imprimir y producir',
-    description: 'Comprá moldes digitales profesionales en PDF A4, plotter y formatos editables. Descarga inmediata para emprendedores textiles, talleres y diseñadores. Vendemos a todo el mundo.',
+    title: 'Moldería digital y moldes de ropa para producir',
+    description: 'Moldería textil profesional para fabricantes de indumentaria: moldes digitales y en cartón, moldería a pedido y tizado computarizado. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT con escalado completo y descarga inmediata. Vendemos a todo el mundo.',
     path: '/',
   });
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);

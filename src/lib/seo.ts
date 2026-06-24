@@ -12,7 +12,7 @@ interface SeoOptions {
 const SITE_NAME = 'Modeltex';
 const SITE_URL = 'https://modeltex.com.ar';
 const DEFAULT_DESCRIPTION =
-  'Moldes digitales profesionales en PDF A4, plotter y formatos editables. Descarga inmediata. Vendemos a todo el mundo.';
+  'Moldería textil profesional: moldes digitales y en cartón, moldería a pedido y tizado computarizado. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT, con escalado completo y descarga inmediata. Vendemos a todo el mundo.';
 const DEFAULT_IMAGE = 'https://modeltex.com.ar/brand/og-image.png';
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -45,7 +45,7 @@ function setCanonical(href: string) {
  */
 export function useSeo({ title, description, image, path, type = 'website' }: SeoOptions) {
   useEffect(() => {
-    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Moldes digitales de ropa`;
+    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Moldería digital y moldes de ropa`;
     const desc = description || DEFAULT_DESCRIPTION;
     const img = image || DEFAULT_IMAGE;
     const url = path
