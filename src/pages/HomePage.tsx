@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import { ProductCard } from '../components/ui/ProductCard';
 import { HeroCarousel } from '../components/ui/HeroCarousel';
+import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useSeo } from '../lib/seo';
@@ -232,6 +233,9 @@ const HomePage = () => {
         {/* Geometric Patterns */}
         <div className="absolute top-0 right-0 w-96 h-96 bg-petroleum-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-pulse" />
+
+        {/* Floating pattern pieces */}
+        <FloatingPatterns />
 
         {/* Content */}
         <div className="container-custom relative z-10">
