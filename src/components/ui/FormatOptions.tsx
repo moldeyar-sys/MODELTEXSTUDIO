@@ -9,17 +9,39 @@ import {
 } from '../../lib/productFormats';
 import type { Product } from '../../lib/types';
 
+// ─── Lógica de talles predeterminados ────────────────────────────────────────
+// Adultos: curva completa XS–4XL → predeterminados S–2XL
+// Niños:   curva completa 2–18   → predeterminados 4–16
+// Bebés y otros: todos seleccionados por defecto
+const ADULT_LETTERS = new Set(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']);
+const DEFAULT_ADULT = new Set(['S', 'M', 'L', 'XL', '2XL']);
+const DEFAULT_CHILD = new Set(['4', '6', '8', '10', '12', '14', '16']);
+
+function getDefaultSizes(availableSizes: string[]): string[] {
+  if (!availableSizes || availableSizes.length === 0) return [];
+  const hasAdult = availableSizes.some(s => ADULT_LETTERS.has(s));
+  if (hasAdult) {
+    // Adultos: pre-seleccionar S–2XL (los que existen en el producto)
+    const defs = availableSizes.filter(s => DEFAULT_ADULT.has(s));
+    return defs.length > 0 ? defs : availableSizes;
+  }
+  // Niños: pre-seleccionar 4–16 (los que existen en el producto)
+  const defsKid = availableSizes.filter(s => DEFAULT_CHILD.has(s));
+  return defsKid.length > 0 ? defsKid : availableSizes;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 interface FormatOptionsProps {
   product: Product;
 }
 
 /**
- * Las 4 opciones de formato:
+ * Selector de talles + opciones de formato:
+ *  0) Talles (selector con defaults inteligentes)
  *  1) Moldes en Cartón (Solo Argentina)
  *  2) Moldes en PDF-A4 (Global)
  *  3) Moldes en PDF Plóter (3 medidas, mismo precio)
  *  4) ¿Necesitás otro formato? → WhatsApp / Telegram
- * Tocar 1-3 agrega al carrito con su precio.
  */
 export function FormatOptions({ product }: FormatOptionsProps) {
   const { addItem, itemCount } = useCart();
@@ -27,12 +49,28 @@ export function FormatOptions({ product }: FormatOptionsProps) {
   const [ploterSize, setPloterSize] = useState(PLOTER_SIZES[0]);
   const [added, setAdded] = useState<string | null>(null);
 
+  // Talles disponibles del producto
+  const availableSizes: string[] = product.sizes ?? [];
+  const hasSizes = availableSizes.length > 0;
+
+  // Talles seleccionados (defaults inteligentes al montar)
+  const [selectedSizes, setSelectedSizes] = useState<string[]>(() => getDefaultSizes(availableSizes));
+
+  const toggleSize = (size: string) => {
+    setSelectedSizes(prev =>
+      prev.includes(size) ? prev.filter(s => s !== size) : [...prev, size]
+    );
+  };
+
   const carton = cartonPrice(product);
   const pdf = pdfPrice(product);
   const ploter = ploterPrice(product);
 
+  const canAdd = !hasSizes || selectedSizes.length > 0;
+
   const add = (format: string, unitPrice: number) => {
-    addItem(product, { format, unitPrice });
+    if (!canAdd) return;
+    addItem(product, { format, unitPrice, sizes: hasSizes ? selectedSizes : undefined });
     setAdded(format);
     setTimeout(() => setAdded(cur => (cur === format ? null : cur)), 1800);
   };
@@ -46,8 +84,14 @@ export function FormatOptions({ product }: FormatOptionsProps) {
       <button
         type="button"
         onClick={() => add(format, price)}
+        disabled={!canAdd}
+        title={!canAdd ? 'Seleccioná al menos un talle' : undefined}
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-          isAdded ? 'bg-green-500 text-white' : 'bg-primary-800 text-white hover:bg-primary-700'
+          !canAdd
+            ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+            : isAdded
+              ? 'bg-green-500 text-white'
+              : 'bg-primary-800 text-white hover:bg-primary-700'
         }`}
       >
         {isAdded ? <><Check className="w-3.5 h-3.5" /> Agregado</> : <><ShoppingCart className="w-3.5 h-3.5" /> Agregar</>}
@@ -57,6 +101,51 @@ export function FormatOptions({ product }: FormatOptionsProps) {
 
   return (
     <div className="space-y-3">
+
+      {/* 0) Selector de talles */}
+      {hasSizes && (
+        <div className="border border-primary-100 bg-primary-50/40 rounded-xl p-3">
+          <div className="flex items-center justify-between mb-1.5">
+            <p className="text-sm font-semibold text-gray-900">Talles del pedido</p>
+            <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
+              selectedSizes.length > 0
+                ? 'bg-primary-100 text-primary-800'
+                : 'bg-red-100 text-red-600'
+            }`}>
+              {selectedSizes.length > 0 ? `${selectedSizes.length} seleccionado${selectedSizes.length > 1 ? 's' : ''}` : 'Seleccioná al menos 1'}
+            </span>
+          </div>
+          <p className="text-[11px] text-gray-400 mb-2.5">
+            Los azules están incluidos · tocá para agregar o quitar
+          </p>
+          <div className="flex flex-wrap gap-1.5">
+            {availableSizes.map(size => {
+              const isSelected = selectedSizes.includes(size);
+              const isDefault = DEFAULT_ADULT.has(size) || DEFAULT_CHILD.has(size);
+              return (
+                <button
+                  key={size}
+                  type="button"
+                  onClick={() => toggleSize(size)}
+                  className={`text-xs font-semibold px-3 py-1.5 rounded-lg border transition-colors ${
+                    isSelected
+                      ? 'bg-primary-800 text-white border-primary-800 shadow-sm'
+                      : isDefault
+                        ? 'border-primary-200 text-primary-400 hover:bg-primary-50'
+                        : 'border-gray-200 text-gray-400 hover:border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  {size}
+                </button>
+              );
+            })}
+          </div>
+          {!canAdd && (
+            <p className="text-[11px] text-red-500 mt-2">⚠ Seleccioná al menos un talle para poder agregar al carrito.</p>
+          )}
+        </div>
+      )}
+
       {/* 1) Cartón */}
       <div className="flex items-center justify-between gap-3 border border-gray-100 rounded-xl p-3">
         <div className="min-w-0">

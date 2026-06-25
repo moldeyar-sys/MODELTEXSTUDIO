@@ -4,6 +4,7 @@ import type { CartItem, Product } from '../lib/types';
 interface AddOptions {
   format?: string;
   unitPrice?: number;
+  sizes?: string[];
 }
 
 interface CartContextType {
@@ -47,13 +48,15 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const addItem = (product: Product, opts?: AddOptions) => {
     const format = opts?.format;
     const unitPrice = opts?.unitPrice;
+    const sizes = opts?.sizes;
     const key = `${product.id}|${format ?? ''}`;
     setItems(prev => {
       const existing = prev.find(i => cartItemKey(i) === key);
       if (existing) {
-        return prev.map(i => (cartItemKey(i) === key ? { ...i, quantity: i.quantity + 1 } : i));
+        // Al re-agregar el mismo producto+formato, actualiza talles y suma cantidad
+        return prev.map(i => (cartItemKey(i) === key ? { ...i, quantity: i.quantity + 1, sizes } : i));
       }
-      return [...prev, { product, quantity: 1, format, unitPrice }];
+      return [...prev, { product, quantity: 1, format, unitPrice, sizes }];
     });
   };
 

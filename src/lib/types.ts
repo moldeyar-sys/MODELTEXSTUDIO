@@ -115,6 +115,8 @@ export interface CartItem {
   format?: string;
   /** Precio unitario del formato elegido. Si falta, cae al precio del producto. */
   unitPrice?: number;
+  /** Talles seleccionados por el cliente (ej: ["S","M","L","XL","2XL"]). */
+  sizes?: string[];
 }
 
 export const CATEGORIES: { value: ProductCategory; label: string }[] = [

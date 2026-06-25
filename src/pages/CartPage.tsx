@@ -61,6 +61,16 @@ export default function CartPage() {
                           {item.format}
                         </span>
                       )}
+                      {item.sizes && item.sizes.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          <span className="text-[10px] text-gray-400 self-center">Talles:</span>
+                          {item.sizes.map(s => (
+                            <span key={s} className="text-[10px] font-semibold bg-primary-50 text-primary-700 border border-primary-100 px-1.5 py-0.5 rounded">
+                              {s}
+                            </span>
+                          ))}
+                        </div>
+                      )}
 
                       <div className="flex items-center justify-between mt-4">
                         <div className="flex items-baseline gap-2">
