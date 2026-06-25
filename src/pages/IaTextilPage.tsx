@@ -58,7 +58,8 @@ export default function IaTextilPage() {
       </section>
 
       {/* Grid de cards */}
-      <section className="container-custom py-12 md:py-16">
+      <section className="relative overflow-hidden container-custom py-12 md:py-16">
+        <FloatingPatterns variant="dark" />
         <div className="max-w-2xl mb-10">
           <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-900">
             ¿Con qué te ayudo hoy?
@@ -93,7 +94,8 @@ export default function IaTextilPage() {
       </section>
 
       {/* CTA final */}
-      <section className="container-custom pb-16 md:pb-20">
+      <section className="relative overflow-hidden container-custom pb-16 md:pb-20">
+        <FloatingPatterns variant="dark" />
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-900 to-petroleum-800 text-white px-6 py-12 md:px-12 md:py-14 text-center">
           <div className="absolute inset-0 opacity-20 pointer-events-none"
             style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, rgba(203,110,231,0.4), transparent 45%)' }}

@@ -44,10 +44,10 @@ export default function FreeMoldsPage() {
   }, [molds, search]);
 
   return (
-    <div className="relative min-h-screen bg-petroleum-50 overflow-hidden">
-      <FloatingPatterns variant="dark" />
+    <div className="min-h-screen bg-petroleum-50">
       {/* Hero oscuro premium */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-900 text-white">
+        <FloatingPatterns variant="white" />
         <div
           className="absolute inset-0 opacity-20 pointer-events-none"
           style={{ backgroundImage: 'radial-gradient(circle at 15% 20%, rgba(255,255,255,0.25), transparent 40%), radial-gradient(circle at 85% 0%, rgba(203,110,231,0.35), transparent 45%)' }}
@@ -79,7 +79,8 @@ export default function FreeMoldsPage() {
       </section>
 
       {/* Contenido */}
-      <section className="container-custom py-10 md:py-14">
+      <section className="relative overflow-hidden container-custom py-10 md:py-14">
+        <FloatingPatterns variant="dark" />
         {/* Buscador */}
         <div className="max-w-md mb-8">
           <div className="relative">

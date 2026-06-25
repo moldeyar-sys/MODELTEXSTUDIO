@@ -119,10 +119,10 @@ export default function CatalogPage() {
   });
 
   return (
-    <div className="relative min-h-screen bg-petroleum-50 overflow-hidden">
-      <FloatingPatterns variant="dark" />
+    <div className="min-h-screen bg-petroleum-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-100">
+      <div className="relative overflow-hidden bg-white border-b border-gray-100">
+        <FloatingPatterns variant="dark" />
         <div className="container-custom py-8">
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div>
@@ -142,7 +142,8 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <div className="container-custom py-8">
+      <div className="relative overflow-hidden container-custom py-8">
+        <FloatingPatterns variant="dark" />
         {/* Botones de categoría (siempre visibles) */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-5 -mx-1 px-1">
           <button

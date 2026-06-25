@@ -100,8 +100,7 @@ export default function CustomDesignPage() {
 
   if (sent) {
     return (
-      <div className="relative min-h-screen bg-petroleum-50 flex items-center justify-center overflow-hidden">
-        <FloatingPatterns variant="dark" />
+      <div className="min-h-screen bg-petroleum-50 flex items-center justify-center">
         <div className="card p-8 max-w-lg w-full mx-4 text-center">
           <CheckCircle className="w-16 h-16 text-petroleum-500 mx-auto mb-4" />
           <h2 className="font-display text-2xl font-bold text-primary-900 mb-2">
@@ -120,10 +119,10 @@ export default function CustomDesignPage() {
   }
 
   return (
-    <div className="relative min-h-screen bg-petroleum-50 overflow-hidden">
-      <FloatingPatterns variant="dark" />
+    <div className="min-h-screen bg-petroleum-50">
       {/* Header */}
-      <div className="bg-primary-900 text-white">
+      <div className="relative overflow-hidden bg-primary-900 text-white">
+        <FloatingPatterns variant="white" />
         <div className="container-custom py-16">
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">Diseño a pedido</h1>
           <p className="text-primary-200 text-lg max-w-2xl leading-relaxed">
@@ -132,7 +131,8 @@ export default function CustomDesignPage() {
         </div>
       </div>
 
-      <div className="container-custom py-12">
+      <div className="relative overflow-hidden container-custom py-12">
+        <FloatingPatterns variant="dark" />
         <div className="max-w-2xl mx-auto">
           {/* Info */}
           <div className="card p-6 mb-8">

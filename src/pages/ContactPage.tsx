@@ -94,7 +94,8 @@ export default function ContactPage() {
         </div>
       </section>
 
-      <section className="container-custom py-12 md:py-16">
+      <section className="relative overflow-hidden container-custom py-12 md:py-16">
+        <FloatingPatterns variant="dark" />
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Medios de contacto */}
           <div>
