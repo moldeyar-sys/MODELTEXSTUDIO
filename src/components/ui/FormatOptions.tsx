@@ -41,7 +41,7 @@ function getDefaultSizes(availableSizes: string[]): string[] {
 
 // ─── Precio extra/descuento por talle ────────────────────────────────────────
 // Se suma (o descuenta) por cada talle que se agrega (o quita) respecto al default.
-const TALLE_ARS = { carton: 10_000, pdf: 4_000, ploter: 5_000 };
+const TALLE_ARS = { carton: 10_000, pdf: 3_000, ploter: 4_000 };
 const TALLE_USD = { carton: 7,      pdf: 3,     ploter: 5     };
 // ─────────────────────────────────────────────────────────────────────────────
 
