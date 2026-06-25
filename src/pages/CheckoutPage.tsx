@@ -72,6 +72,29 @@ export default function CheckoutPage() {
       setConfirmedTotal(total);
       setOrderId(order.id);
       clearCart();
+
+      // Mercado Pago Checkout Pro: redirigir automáticamente con el monto cargado
+      if (paymentMethod === 'mercadopago') {
+        const mpItems = items.map(item => ({
+          product_id: item.product.id,
+          name: item.product.name,
+          quantity: item.quantity,
+          unit_price: cartUnitPrice(item),
+        }));
+        const prefRes = await fetch('/api/create-preference', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ items: mpItems, orderId: order.id, payerEmail: user.email }),
+        });
+        if (prefRes.ok) {
+          const { init_point } = await prefRes.json();
+          if (init_point) {
+            window.location.href = init_point;
+            return;
+          }
+        }
+        // Si falla la preferencia, igual muestra la pantalla de confirmación manual
+      }
     } catch {
       setError('Hubo un error al procesar tu pedido. Intentá de nuevo.');
     } finally {
