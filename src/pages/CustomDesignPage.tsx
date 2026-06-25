@@ -1,3 +1,4 @@
+import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useState, useEffect } from 'react';
 import { Send, CheckCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
@@ -99,7 +100,8 @@ export default function CustomDesignPage() {
 
   if (sent) {
     return (
-      <div className="min-h-screen bg-petroleum-50 flex items-center justify-center">
+      <div className="relative min-h-screen bg-petroleum-50 flex items-center justify-center overflow-hidden">
+        <FloatingPatterns variant="dark" />
         <div className="card p-8 max-w-lg w-full mx-4 text-center">
           <CheckCircle className="w-16 h-16 text-petroleum-500 mx-auto mb-4" />
           <h2 className="font-display text-2xl font-bold text-primary-900 mb-2">
@@ -118,7 +120,8 @@ export default function CustomDesignPage() {
   }
 
   return (
-    <div className="min-h-screen bg-petroleum-50">
+    <div className="relative min-h-screen bg-petroleum-50 overflow-hidden">
+      <FloatingPatterns variant="dark" />
       {/* Header */}
       <div className="bg-primary-900 text-white">
         <div className="container-custom py-16">

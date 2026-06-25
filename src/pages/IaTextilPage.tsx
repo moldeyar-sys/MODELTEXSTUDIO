@@ -1,3 +1,4 @@
+import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Sparkles, ArrowRight, ShoppingBag, PenTool, MessageCircle } from 'lucide-react';
@@ -19,7 +20,8 @@ export default function IaTextilPage() {
   });
 
   return (
-    <div className="min-h-screen bg-petroleum-50">
+    <div className="relative min-h-screen bg-petroleum-50 overflow-hidden">
+      <FloatingPatterns variant="dark" />
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-800 text-white">
         <div className="absolute inset-0 opacity-20 pointer-events-none"

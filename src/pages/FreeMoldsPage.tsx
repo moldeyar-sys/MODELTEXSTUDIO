@@ -1,3 +1,4 @@
+import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Gift, ShieldCheck, Download, ArrowRight, PackageOpen } from 'lucide-react';
@@ -43,7 +44,8 @@ export default function FreeMoldsPage() {
   }, [molds, search]);
 
   return (
-    <div className="min-h-screen bg-petroleum-50">
+    <div className="relative min-h-screen bg-petroleum-50 overflow-hidden">
+      <FloatingPatterns variant="dark" />
       {/* Hero oscuro premium */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-900 text-white">
         <div

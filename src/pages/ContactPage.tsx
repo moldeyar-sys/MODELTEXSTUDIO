@@ -1,3 +1,4 @@
+import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useState } from 'react';
 import { MessageCircle, Mail, Instagram, MapPin, Clock, Send, Loader2, CheckCircle2, Facebook, Music2 } from 'lucide-react';
 import { useSeo } from '../lib/seo';
@@ -77,7 +78,8 @@ export default function ContactPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-petroleum-50">
+    <div className="relative min-h-screen bg-petroleum-50 overflow-hidden">
+      <FloatingPatterns variant="dark" />
       {/* Hero */}
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-800 text-white">
         <div

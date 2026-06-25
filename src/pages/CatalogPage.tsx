@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Search, SlidersHorizontal, X, PackageOpen, Sparkles } from 'lucide-react';
+import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { supabase } from '../lib/supabase';
 import { ProductCard } from '../components/ui/ProductCard';
 import { useSeo } from '../lib/seo';
@@ -118,7 +119,8 @@ export default function CatalogPage() {
   });
 
   return (
-    <div className="min-h-screen bg-petroleum-50">
+    <div className="relative min-h-screen bg-petroleum-50 overflow-hidden">
+      <FloatingPatterns variant="dark" />
       {/* Header */}
       <div className="bg-white border-b border-gray-100">
         <div className="container-custom py-8">
