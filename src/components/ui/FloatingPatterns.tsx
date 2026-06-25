@@ -49,10 +49,9 @@ const Punho = () => (
 );
 
 /* ── Tipos ── */
-type ShapeName = 'espalda' | 'frente' | 'manga' | 'bolsillo' | 'capucha' | 'pretina' | 'punho';
+type ShapeName = 'frente' | 'manga' | 'bolsillo' | 'capucha' | 'pretina' | 'punho';
 
 const SHAPE_MAP: Record<ShapeName, React.FC> = {
-  espalda:  Espalda,
   frente:   Frente,
   manga:    Manga,
   bolsillo: Bolsillo,
@@ -83,8 +82,8 @@ const PIECES: PieceConfig[] = [
   { shape: 'manga',    x: 14, y: 0, w: 55, rotation: 15,  delay: 1.5,  duration: 14, opacity: 0.19, driftX: 0 },
   { shape: 'bolsillo', x: 14, y: 0, w: 58, rotation: -10, delay: 8,    duration: 14, opacity: 0.17, driftX: 0 },
   // Columna 3
-  { shape: 'espalda',  x: 27, y: 0, w: 70, rotation: -5,  delay: 3,    duration: 13, opacity: 0.18, driftX: 0 },
-  { shape: 'capucha',  x: 27, y: 0, w: 48, rotation: 20,  delay: 9.5,  duration: 13, opacity: 0.16, driftX: 0 },
+  { shape: 'frente',   x: 27, y: 0, w: 68, rotation: -5,  delay: 3,    duration: 13, opacity: 0.18, driftX: 0 },
+  { shape: 'bolsillo', x: 27, y: 0, w: 52, rotation: 20,  delay: 9.5,  duration: 13, opacity: 0.16, driftX: 0 },
   // Columna 4
   { shape: 'capucha',  x: 40, y: 0, w: 50, rotation: -20, delay: 0.5,  duration: 11, opacity: 0.19, driftX: 0 },
   { shape: 'frente',   x: 40, y: 0, w: 68, rotation: 8,   delay: 7,    duration: 11, opacity: 0.17, driftX: 0 },
@@ -93,7 +92,7 @@ const PIECES: PieceConfig[] = [
   { shape: 'manga',    x: 54, y: 0, w: 52, rotation: -15, delay: 9,    duration: 15, opacity: 0.16, driftX: 0 },
   // Columna 6
   { shape: 'punho',    x: 67, y: 0, w: 55, rotation: -8,  delay: 4,    duration: 12, opacity: 0.17, driftX: 0 },
-  { shape: 'espalda',  x: 67, y: 0, w: 65, rotation: 10,  delay: 10.5, duration: 12, opacity: 0.16, driftX: 0 },
+  { shape: 'manga',    x: 67, y: 0, w: 60, rotation: 10,  delay: 10.5, duration: 12, opacity: 0.16, driftX: 0 },
   // Columna 7
   { shape: 'manga',    x: 80, y: 0, w: 56, rotation: -25, delay: 1,    duration: 13, opacity: 0.19, driftX: 0 },
   { shape: 'bolsillo', x: 80, y: 0, w: 52, rotation: 5,   delay: 7.5,  duration: 13, opacity: 0.17, driftX: 0 },
