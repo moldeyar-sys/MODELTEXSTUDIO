@@ -73,39 +73,44 @@ interface PieceConfig {
   driftX: number;
 }
 
+// Lluvia de moldes: x = columna %, rotation = ángulo fijo, delay = escalonado
+// La animación "rain-fall" cae de arriba (-120%) hasta abajo (110%) en loop
 const PIECES: PieceConfig[] = [
-  // Fila superior
-  { shape: 'frente',   x: 0,  y: 0,  w: 75, rotation: -8,  delay: 0,   duration: 18, opacity: 0.18, driftX: 6  },
-  { shape: 'espalda',  x: 30, y: 2,  w: 68, rotation: 5,   delay: 5,   duration: 21, opacity: 0.16, driftX: 8  },
-  { shape: 'capucha',  x: 62, y: 0,  w: 46, rotation: -15, delay: 1,   duration: 17, opacity: 0.17, driftX: -7 },
-  { shape: 'manga',    x: 82, y: 3,  w: 50, rotation: 20,  delay: 2,   duration: 16, opacity: 0.16, driftX: -5 },
-
-  // Fila media
-  { shape: 'bolsillo', x: 5,  y: 42, w: 55, rotation: 12,  delay: 3,   duration: 19, opacity: 0.17, driftX: 5  },
-  { shape: 'pretina',  x: 28, y: 50, w: 72, rotation: -4,  delay: 1.5, duration: 15, opacity: 0.15, driftX: 7  },
-  { shape: 'manga',    x: 72, y: 42, w: 46, rotation: -22, delay: 4,   duration: 20, opacity: 0.16, driftX: -6 },
-
-  // Fila inferior
-  { shape: 'capucha',  x: 0,  y: 72, w: 40, rotation: 18,  delay: 0.5, duration: 22, opacity: 0.15, driftX: -4 },
-  { shape: 'frente',   x: 22, y: 68, w: 60, rotation: -12, delay: 7,   duration: 18, opacity: 0.15, driftX: 6  },
-  { shape: 'bolsillo', x: 55, y: 75, w: 42, rotation: -20, delay: 3.5, duration: 16, opacity: 0.15, driftX: -8 },
-  { shape: 'punho',    x: 76, y: 80, w: 48, rotation: 8,   delay: 6,   duration: 14, opacity: 0.14, driftX: 9  },
-
-  // Extras para densidad
-  { shape: 'espalda',  x: 48, y: 35, w: 52, rotation: -30, delay: 2.5, duration: 19, opacity: 0.14, driftX: 5  },
-  { shape: 'pretina',  x: 60, y: 60, w: 60, rotation: 10,  delay: 4.5, duration: 17, opacity: 0.13, driftX: -6 },
+  // Columna 1
+  { shape: 'frente',   x: 0,  y: 0, w: 72, rotation: -8,  delay: 0,    duration: 12, opacity: 0.20, driftX: 0 },
+  { shape: 'pretina',  x: 0,  y: 0, w: 65, rotation: 5,   delay: 6,    duration: 12, opacity: 0.17, driftX: 0 },
+  // Columna 2
+  { shape: 'manga',    x: 14, y: 0, w: 55, rotation: 15,  delay: 1.5,  duration: 14, opacity: 0.19, driftX: 0 },
+  { shape: 'bolsillo', x: 14, y: 0, w: 58, rotation: -10, delay: 8,    duration: 14, opacity: 0.17, driftX: 0 },
+  // Columna 3
+  { shape: 'espalda',  x: 27, y: 0, w: 70, rotation: -5,  delay: 3,    duration: 13, opacity: 0.18, driftX: 0 },
+  { shape: 'capucha',  x: 27, y: 0, w: 48, rotation: 20,  delay: 9.5,  duration: 13, opacity: 0.16, driftX: 0 },
+  // Columna 4
+  { shape: 'capucha',  x: 40, y: 0, w: 50, rotation: -20, delay: 0.5,  duration: 11, opacity: 0.19, driftX: 0 },
+  { shape: 'frente',   x: 40, y: 0, w: 68, rotation: 8,   delay: 7,    duration: 11, opacity: 0.17, driftX: 0 },
+  // Columna 5
+  { shape: 'bolsillo', x: 54, y: 0, w: 60, rotation: 12,  delay: 2,    duration: 15, opacity: 0.18, driftX: 0 },
+  { shape: 'manga',    x: 54, y: 0, w: 52, rotation: -15, delay: 9,    duration: 15, opacity: 0.16, driftX: 0 },
+  // Columna 6
+  { shape: 'punho',    x: 67, y: 0, w: 55, rotation: -8,  delay: 4,    duration: 12, opacity: 0.17, driftX: 0 },
+  { shape: 'espalda',  x: 67, y: 0, w: 65, rotation: 10,  delay: 10.5, duration: 12, opacity: 0.16, driftX: 0 },
+  // Columna 7
+  { shape: 'manga',    x: 80, y: 0, w: 56, rotation: -25, delay: 1,    duration: 13, opacity: 0.19, driftX: 0 },
+  { shape: 'bolsillo', x: 80, y: 0, w: 52, rotation: 5,   delay: 7.5,  duration: 13, opacity: 0.17, driftX: 0 },
+  // Columna 8
+  { shape: 'capucha',  x: 88, y: 0, w: 46, rotation: 18,  delay: 5,    duration: 14, opacity: 0.18, driftX: 0 },
+  { shape: 'frente',   x: 88, y: 0, w: 70, rotation: -12, delay: 11,   duration: 14, opacity: 0.16, driftX: 0 },
 ];
 
 export function FloatingPatterns() {
   return (
     <>
       <style>{`
-        @keyframes float-molde {
-          0%   { transform: translateY(0px)   translateX(0px)                       rotate(var(--rot)); }
-          30%  { transform: translateY(-14px) translateX(var(--dx))                 rotate(calc(var(--rot) + 3deg)); }
-          60%  { transform: translateY(-24px) translateX(0px)                       rotate(var(--rot)); }
-          80%  { transform: translateY(-10px) translateX(calc(var(--dx) * -0.5))    rotate(calc(var(--rot) - 2deg)); }
-          100% { transform: translateY(0px)   translateX(0px)                       rotate(var(--rot)); }
+        @keyframes rain-fall {
+          0%   { transform: translateY(-120px) rotate(var(--rot)); opacity: 0; }
+          8%   { opacity: var(--op); }
+          88%  { opacity: var(--op); }
+          100% { transform: translateY(110vh)  rotate(var(--rot)); opacity: 0; }
         }
       `}</style>
 
@@ -118,13 +123,13 @@ export function FloatingPatterns() {
               className="absolute text-white"
               style={{
                 left:    `${p.x}%`,
-                top:     `${p.y}%`,
+                top:     0,
                 width:   p.w,
-                opacity: p.opacity,
+                opacity: 0,
                 // @ts-ignore
                 '--rot': `${p.rotation}deg`,
-                '--dx':  `${p.driftX}px`,
-                animation: `float-molde ${p.duration}s ease-in-out ${p.delay}s infinite`,
+                '--op':  p.opacity,
+                animation: `rain-fall ${p.duration}s linear ${p.delay}s infinite`,
               }}
             >
               <Shape />

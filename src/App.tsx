@@ -69,7 +69,6 @@ function AppLayout() {
       <Footer />
 
       <TelegramButton />
-      <ChatWidget />
     </div>
   );
 }
