@@ -17,7 +17,7 @@ export default function CheckoutPage() {
   const { user } = useAuth();
   const { formatPrice } = useLocale();
   const navigate = useNavigate();
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('transfer');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mercadopago');
   const [processing, setProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [error, setError] = useState('');
