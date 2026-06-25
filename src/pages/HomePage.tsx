@@ -234,6 +234,9 @@ const HomePage = () => {
         <div className="absolute top-0 right-0 w-96 h-96 bg-petroleum-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-pulse" />
 
+        {/* Lluvia de moldes — fondo oscuro → variante blanca */}
+        <FloatingPatterns variant="white" />
+
 
         {/* Content */}
         <div className="container-custom relative z-10">
@@ -335,7 +338,8 @@ const HomePage = () => {
       </section>
 
       {/* BENEFITS SECTION */}
-      <section className="py-20 bg-gray-50">
+      <section className="relative py-20 bg-gray-50 overflow-hidden">
+        <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {benefits.map((benefit, index) => {
@@ -355,7 +359,8 @@ const HomePage = () => {
       </section>
 
       {/* FEATURED PRODUCTS SECTION */}
-      <section className="py-24 bg-white">
+      <section className="relative py-24 bg-white overflow-hidden">
+        <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.featured.title', 'Productos destacados')}</h2>
@@ -395,7 +400,8 @@ const HomePage = () => {
       </section>
 
       {/* HOW IT WORKS SECTION */}
-      <section className="py-24 bg-gradient-to-br from-petroleum-50 to-primary-50">
+      <section className="relative py-24 bg-gradient-to-br from-petroleum-50 to-primary-50 overflow-hidden">
+        <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">¿Cómo funciona?</h2>
@@ -439,7 +445,8 @@ const HomePage = () => {
       </section>
 
       {/* FORMATS SECTION */}
-      <section className="py-24 bg-white">
+      <section className="relative py-24 bg-white overflow-hidden">
+        <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">Formatos disponibles</h2>
@@ -472,7 +479,8 @@ const HomePage = () => {
       </section>
 
       {/* TESTIMONIALS SECTION */}
-      <section className="py-24 bg-white">
+      <section className="relative py-24 bg-white overflow-hidden">
+        <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.testimonials.title', 'Lo que dicen nuestros clientes')}</h2>
@@ -502,7 +510,8 @@ const HomePage = () => {
       </section>
 
       {/* FAQ SECTION */}
-      <section className="py-24 bg-gray-50">
+      <section className="relative py-24 bg-gray-50 overflow-hidden">
+        <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-16">
             <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">Preguntas frecuentes</h2>

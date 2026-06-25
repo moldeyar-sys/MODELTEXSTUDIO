@@ -133,7 +133,13 @@ const PIECES: PieceConfig[] = [
   { shape: 'punho',     x: 87, y: 0, w: 58, rotation: -12, delay: 11.5, duration: 14, opacity: 0.16, driftX: 0 },
 ];
 
-export function FloatingPatterns() {
+interface FloatingPatternsProps {
+  /** 'white' para fondos oscuros, 'dark' para fondos claros/blancos */
+  variant?: 'white' | 'dark';
+}
+
+export function FloatingPatterns({ variant = 'white' }: FloatingPatternsProps) {
+  const colorClass = variant === 'dark' ? 'text-primary-800' : 'text-white';
   return (
     <>
       <style>{`
@@ -147,7 +153,6 @@ export function FloatingPatterns() {
 
       <div
         className="absolute inset-0 overflow-hidden pointer-events-none z-0"
-        style={{ mixBlendMode: 'overlay' }}
         aria-hidden="true"
       >
         {PIECES.map((p, i) => {
@@ -155,7 +160,7 @@ export function FloatingPatterns() {
           return (
             <div
               key={i}
-              className="absolute text-white"
+              className={`absolute ${colorClass}`}
               style={{
                 left:    `${p.x}%`,
                 top:     0,
