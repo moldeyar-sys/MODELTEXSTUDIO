@@ -12,22 +12,38 @@ import type { Product } from '../../lib/types';
 // ─── Lógica de talles predeterminados ────────────────────────────────────────
 // Adultos: curva completa XS–4XL → predeterminados S–2XL
 // Niños:   curva completa 2–18   → predeterminados 4–16
-// Bebés y otros: todos seleccionados por defecto
+// Bebés:   curva completa 1–9    → predeterminados 1–5
 const ADULT_LETTERS = new Set(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']);
 const DEFAULT_ADULT = new Set(['S', 'M', 'L', 'XL', '2XL']);
 const DEFAULT_CHILD = new Set(['4', '6', '8', '10', '12', '14', '16']);
+const DEFAULT_BABY  = new Set(['1', '2', '3', '4', '5']);
+// Tamaños que solo aparecen en niños (no en bebés): 10, 12, 14, 16, 18
+const CHILD_ONLY    = new Set(['10', '12', '14', '16', '18']);
 
 function getDefaultSizes(availableSizes: string[]): string[] {
   if (!availableSizes || availableSizes.length === 0) return [];
-  const hasAdult = availableSizes.some(s => ADULT_LETTERS.has(s));
-  if (hasAdult) {
-    // Adultos: pre-seleccionar S–2XL (los que existen en el producto)
+
+  // Adultos: tiene letras (S, M, XL, etc.)
+  if (availableSizes.some(s => ADULT_LETTERS.has(s))) {
     const defs = availableSizes.filter(s => DEFAULT_ADULT.has(s));
     return defs.length > 0 ? defs : availableSizes;
   }
-  // Niños: pre-seleccionar 4–16 (los que existen en el producto)
-  const defsKid = availableSizes.filter(s => DEFAULT_CHILD.has(s));
-  return defsKid.length > 0 ? defsKid : availableSizes;
+
+  // Niños: tiene talles de dos dígitos (10, 12, 14, 16, 18)
+  if (availableSizes.some(s => CHILD_ONLY.has(s))) {
+    const defs = availableSizes.filter(s => DEFAULT_CHILD.has(s));
+    return defs.length > 0 ? defs : availableSizes;
+  }
+
+  // Bebés: todos numéricos y el mayor es ≤ 9
+  const allNumeric = availableSizes.every(s => /^\d+$/.test(s));
+  if (allNumeric && Math.max(...availableSizes.map(Number)) <= 9) {
+    const defs = availableSizes.filter(s => DEFAULT_BABY.has(s));
+    return defs.length > 0 ? defs : availableSizes;
+  }
+
+  // Fallback: todos seleccionados
+  return availableSizes;
 }
 // ─────────────────────────────────────────────────────────────────────────────
 
