@@ -1,10 +1,38 @@
 import React from 'react';
 
 /*
-  Figuras extraídas directamente del DXF real "BUZO OVER 011-M"
-  Coordenadas normalizadas de los POLYLINE de cada pieza.
+  Figuras extraídas de los DXF reales:
+  - "BUZO OVER 011-M": frente buzo, manga buzo, bolsillo, capucha, pretina, puño
+  - "REMERA 01": frente remera, espalda remera, manga remera, cuello
   fill="none" stroke="currentColor" → silueta limpia tipo plano técnico.
 */
+
+/* ── REMERA 01 ── */
+const RemeraFrente = () => (
+  <svg viewBox="0 0 100 144" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
+    <polygon points="33.85,0.00 35.04,4.26 35.89,6.76 36.22,7.58 37.19,9.62 37.57,10.27 38.39,11.46 39.35,12.54 40.60,13.60 41.98,14.48 43.48,15.19 45.05,15.71 46.68,16.02 50.00,16.31 53.32,16.02 54.95,15.71 56.52,15.19 58.02,14.48 59.40,13.60 60.65,12.54 61.61,11.46 62.43,10.27 63.48,8.27 63.78,7.58 64.69,5.10 65.92,0.86 66.15,0.00 91.71,6.14 90.10,15.07 89.36,20.46 88.99,24.64 88.89,27.16 88.94,31.51 89.12,34.13 89.44,36.78 89.79,38.53 90.03,39.38 90.55,40.81 90.89,41.49 91.67,42.63 92.14,43.13 92.75,43.63 93.41,44.05 95.01,44.78 97.48,45.57 100.00,46.21 99.45,78.26 99.34,92.40 99.34,96.22 99.53,116.28 99.99,139.21 99.88,144.00 50.00,144.00 0.12,144.00 0.01,139.21 0.57,109.60 0.66,96.22 0.66,92.40 0.44,69.78 0.00,46.21 3.35,45.33 4.99,44.78 6.59,44.05 7.25,43.63 7.86,43.13 8.33,42.63 9.11,41.49 9.73,40.10 9.97,39.38 10.40,37.66 10.80,35.01 10.88,34.13 11.12,29.77 11.12,27.16 10.89,22.97 10.64,20.46 9.90,15.07 8.29,6.14" />
+  </svg>
+);
+
+const RemeraEspalda = () => (
+  <svg viewBox="0 0 100 147" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
+    <polygon points="99.90,147.00 50.00,147.00 0.10,147.00 0.01,142.23 0.48,109.90 0.54,99.44 0.54,96.73 0.54,94.24 0.32,69.52 0.00,49.55 3.36,48.68 5.00,48.13 6.61,47.40 7.27,46.98 7.88,46.48 8.35,45.99 9.12,44.85 9.74,43.47 9.98,42.75 10.41,41.03 10.81,38.39 10.91,37.50 11.20,33.08 11.24,29.54 11.06,25.29 10.78,21.90 9.97,15.62 8.30,5.80 33.25,0.00 36.14,1.99 37.66,2.86 39.33,3.63 40.19,3.95 41.98,4.47 42.89,4.67 45.52,5.04 46.41,5.11 50.00,5.24 53.60,5.11 56.24,4.82 57.11,4.67 58.92,4.24 59.81,3.95 61.52,3.27 62.35,2.86 64.59,1.51 66.75,0.00 91.70,5.80 90.03,15.62 89.23,21.90 88.84,26.99 88.76,29.54 88.84,33.96 89.09,37.50 89.43,40.15 89.79,41.90 90.02,42.75 90.54,44.17 90.88,44.85 91.65,45.99 92.12,46.48 92.73,46.98 93.39,47.40 95.00,48.13 97.48,48.91 100.00,49.55 99.52,82.83 99.46,94.24 99.46,96.73 99.46,99.44 99.67,123.21 99.99,142.23" />
+  </svg>
+);
+
+const RemeraManga = () => (
+  <svg viewBox="0 0 100 64" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
+    <polygon points="100.00,35.42 94.86,57.84 96.28,64.00 3.74,64.00 5.15,57.84 0.00,35.35 5.53,33.35 7.69,32.44 10.71,30.93 12.56,29.76 13.44,29.11 15.16,27.59 15.96,26.76 18.24,24.04 21.90,18.81 22.50,17.93 25.69,13.46 26.37,12.60 28.53,10.08 30.88,7.75 33.37,5.70 34.25,5.08 37.01,3.37 37.96,2.87 40.93,1.57 41.95,1.22 45.07,0.44 46.12,0.28 50.03,0.00 53.86,0.27 57.09,0.84 58.16,1.11 61.30,2.13 62.32,2.54 65.32,3.96 66.29,4.49 69.11,6.23 70.01,6.86 72.74,9.00 75.27,11.37 77.58,13.95 79.65,16.73 82.83,21.94 83.46,22.98 85.36,25.88 86.74,27.60 87.50,28.39 89.09,29.77 89.93,30.39 92.73,32.08 96.84,34.07" />
+  </svg>
+);
+
+const Cuello = () => (
+  <svg viewBox="0 0 100 11" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
+    <polygon points="100.00,0.00 100.00,5.50 100.00,11.00 78.48,11.00 50.00,11.00 21.52,11.00 0.00,11.00 0.00,5.50 0.00,0.00 21.52,0.00 50.00,0.00 78.48,0.00" />
+  </svg>
+);
+
+/* ── BUZO OVER 011-M ── */
 
 const Espalda = () => (
   <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
@@ -49,9 +77,14 @@ const Punho = () => (
 );
 
 /* ── Tipos ── */
-type ShapeName = 'frente' | 'manga' | 'bolsillo' | 'capucha' | 'pretina' | 'punho';
+type ShapeName = 'frente' | 'manga' | 'bolsillo' | 'capucha' | 'pretina' | 'punho'
+  | 'r-frente' | 'r-espalda' | 'r-manga' | 'cuello';
 
 const SHAPE_MAP: Record<ShapeName, React.FC> = {
+  'r-frente':  RemeraFrente,
+  'r-espalda': RemeraEspalda,
+  'r-manga':   RemeraManga,
+  'cuello':    Cuello,
   frente:   Frente,
   manga:    Manga,
   bolsillo: Bolsillo,
@@ -72,33 +105,32 @@ interface PieceConfig {
   driftX: number;
 }
 
-// Lluvia de moldes: x = columna %, rotation = ángulo fijo, delay = escalonado
-// La animación "rain-fall" cae de arriba (-120%) hasta abajo (110%) en loop
+// Lluvia de moldes — mezcla piezas del BUZO OVER y la REMERA 01
 const PIECES: PieceConfig[] = [
   // Columna 1
-  { shape: 'frente',   x: 0,  y: 0, w: 72, rotation: -8,  delay: 0,    duration: 12, opacity: 0.20, driftX: 0 },
-  { shape: 'pretina',  x: 0,  y: 0, w: 65, rotation: 5,   delay: 6,    duration: 12, opacity: 0.17, driftX: 0 },
+  { shape: 'r-frente',  x: 0,  y: 0, w: 70, rotation: -8,  delay: 0,    duration: 13, opacity: 0.19, driftX: 0 },
+  { shape: 'pretina',   x: 0,  y: 0, w: 65, rotation: 5,   delay: 7,    duration: 13, opacity: 0.16, driftX: 0 },
   // Columna 2
-  { shape: 'manga',    x: 14, y: 0, w: 55, rotation: 15,  delay: 1.5,  duration: 14, opacity: 0.19, driftX: 0 },
-  { shape: 'bolsillo', x: 14, y: 0, w: 58, rotation: -10, delay: 8,    duration: 14, opacity: 0.17, driftX: 0 },
+  { shape: 'manga',     x: 13, y: 0, w: 55, rotation: 15,  delay: 1.5,  duration: 14, opacity: 0.18, driftX: 0 },
+  { shape: 'r-espalda', x: 13, y: 0, w: 65, rotation: -10, delay: 8.5,  duration: 14, opacity: 0.17, driftX: 0 },
   // Columna 3
-  { shape: 'frente',   x: 27, y: 0, w: 68, rotation: -5,  delay: 3,    duration: 13, opacity: 0.18, driftX: 0 },
-  { shape: 'bolsillo', x: 27, y: 0, w: 52, rotation: 20,  delay: 9.5,  duration: 13, opacity: 0.16, driftX: 0 },
+  { shape: 'frente',    x: 26, y: 0, w: 68, rotation: -5,  delay: 3,    duration: 12, opacity: 0.18, driftX: 0 },
+  { shape: 'bolsillo',  x: 26, y: 0, w: 55, rotation: 20,  delay: 9.5,  duration: 12, opacity: 0.16, driftX: 0 },
   // Columna 4
-  { shape: 'capucha',  x: 40, y: 0, w: 50, rotation: -20, delay: 0.5,  duration: 11, opacity: 0.19, driftX: 0 },
-  { shape: 'frente',   x: 40, y: 0, w: 68, rotation: 8,   delay: 7,    duration: 11, opacity: 0.17, driftX: 0 },
+  { shape: 'capucha',   x: 39, y: 0, w: 50, rotation: -20, delay: 0.5,  duration: 11, opacity: 0.19, driftX: 0 },
+  { shape: 'r-manga',   x: 39, y: 0, w: 62, rotation: 8,   delay: 7,    duration: 11, opacity: 0.17, driftX: 0 },
   // Columna 5
-  { shape: 'bolsillo', x: 54, y: 0, w: 60, rotation: 12,  delay: 2,    duration: 15, opacity: 0.18, driftX: 0 },
-  { shape: 'manga',    x: 54, y: 0, w: 52, rotation: -15, delay: 9,    duration: 15, opacity: 0.16, driftX: 0 },
+  { shape: 'bolsillo',  x: 52, y: 0, w: 58, rotation: 12,  delay: 2,    duration: 15, opacity: 0.18, driftX: 0 },
+  { shape: 'r-frente',  x: 52, y: 0, w: 68, rotation: -15, delay: 9,    duration: 15, opacity: 0.16, driftX: 0 },
   // Columna 6
-  { shape: 'punho',    x: 67, y: 0, w: 55, rotation: -8,  delay: 4,    duration: 12, opacity: 0.17, driftX: 0 },
-  { shape: 'manga',    x: 67, y: 0, w: 60, rotation: 10,  delay: 10.5, duration: 12, opacity: 0.16, driftX: 0 },
+  { shape: 'cuello',    x: 63, y: 0, w: 68, rotation: -6,  delay: 4,    duration: 12, opacity: 0.16, driftX: 0 },
+  { shape: 'manga',     x: 63, y: 0, w: 58, rotation: 10,  delay: 10.5, duration: 12, opacity: 0.17, driftX: 0 },
   // Columna 7
-  { shape: 'manga',    x: 80, y: 0, w: 56, rotation: -25, delay: 1,    duration: 13, opacity: 0.19, driftX: 0 },
-  { shape: 'bolsillo', x: 80, y: 0, w: 52, rotation: 5,   delay: 7.5,  duration: 13, opacity: 0.17, driftX: 0 },
+  { shape: 'r-manga',   x: 76, y: 0, w: 58, rotation: -25, delay: 1,    duration: 13, opacity: 0.18, driftX: 0 },
+  { shape: 'r-espalda', x: 76, y: 0, w: 65, rotation: 5,   delay: 8,    duration: 13, opacity: 0.16, driftX: 0 },
   // Columna 8
-  { shape: 'capucha',  x: 88, y: 0, w: 46, rotation: 18,  delay: 5,    duration: 14, opacity: 0.18, driftX: 0 },
-  { shape: 'frente',   x: 88, y: 0, w: 70, rotation: -12, delay: 11,   duration: 14, opacity: 0.16, driftX: 0 },
+  { shape: 'capucha',   x: 87, y: 0, w: 46, rotation: 18,  delay: 5,    duration: 14, opacity: 0.18, driftX: 0 },
+  { shape: 'punho',     x: 87, y: 0, w: 58, rotation: -12, delay: 11.5, duration: 14, opacity: 0.16, driftX: 0 },
 ];
 
 export function FloatingPatterns() {
