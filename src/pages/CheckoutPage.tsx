@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet } from 'lucide-react';
+import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet, Copy, Check } from 'lucide-react';
 import { useCart, cartUnitPrice, cartItemKey } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../lib/locale';
@@ -21,6 +21,14 @@ export default function CheckoutPage() {
   const [processing, setProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [copied, setCopied] = useState(false);
+  const [confirmedTotal, setConfirmedTotal] = useState(0);
+
+  const copyAmount = () => {
+    navigator.clipboard.writeText(confirmedTotal.toFixed(2));
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleCheckout = async () => {
     if (!user) {
@@ -61,6 +69,7 @@ export default function CheckoutPage() {
       }
       if (itemsError) throw itemsError;
 
+      setConfirmedTotal(total);
       setOrderId(order.id);
       clearCart();
     } catch {
@@ -69,6 +78,20 @@ export default function CheckoutPage() {
       setProcessing(false);
     }
   };
+
+  const AmountBox = () => (
+    <div className="bg-white border-2 border-primary-200 rounded-xl p-4 mb-4 text-center">
+      <p className="text-xs text-gray-500 mb-1">Monto exacto a pagar</p>
+      <p className="text-3xl font-bold text-primary-900 mb-3">{formatPrice(confirmedTotal)}</p>
+      <button
+        onClick={copyAmount}
+        className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-800 text-sm font-medium transition-colors"
+      >
+        {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+        {copied ? '¡Copiado!' : 'Copiar monto'}
+      </button>
+    </div>
+  );
 
   if (items.length === 0 && !orderId) {
     return (
@@ -100,13 +123,14 @@ export default function CheckoutPage() {
           {isManual && paymentMethod === 'transfer' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6 text-left">
               <h3 className="font-semibold text-gray-900 mb-3">Datos para transferencia</h3>
-              <div className="space-y-2 text-sm text-gray-600">
+              <AmountBox />
+              <div className="space-y-2 text-sm text-gray-600 mb-3">
                 <p><span className="font-medium text-gray-700">Alias:</span> MOLDEY.DIGITAL</p>
                 <p><span className="font-medium text-gray-700">Titular:</span> Modeltex</p>
                 <p><span className="font-medium text-gray-700">Banco:</span> (Por confirmar)</p>
                 <p><span className="font-medium text-gray-700">CBU/CVU:</span> (Por confirmar)</p>
               </div>
-              <p className="mt-3 text-xs text-petroleum-600">
+              <p className="text-xs text-petroleum-600">
                 Una vez realizada la transferencia, envianos el comprobante por WhatsApp para agilizar la confirmación.
               </p>
             </div>
@@ -115,11 +139,17 @@ export default function CheckoutPage() {
           {isManual && paymentMethod === 'binance' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6 text-left">
               <h3 className="font-semibold text-gray-900 mb-3">Pago con criptomonedas</h3>
-              <div className="space-y-2 text-sm text-gray-600">
+              <AmountBox />
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-3">
+                <p className="text-xs text-amber-800 font-medium">
+                  ⚠️ El monto en pesos es referencial. Convertilo al equivalente en USDT antes de enviar.
+                </p>
+              </div>
+              <div className="space-y-2 text-sm text-gray-600 mb-3">
                 <p><span className="font-medium text-gray-700">Wallet:</span> (Por confirmar)</p>
                 <p><span className="font-medium text-gray-700">Red:</span> BSC (BEP20)</p>
               </div>
-              <p className="mt-3 text-xs text-petroleum-600">
+              <p className="text-xs text-petroleum-600">
                 Una vez realizado el pago, envianos el hash de la transacción por WhatsApp para confirmar.
               </p>
             </div>
@@ -127,9 +157,15 @@ export default function CheckoutPage() {
 
           {isManual && paymentMethod === 'paypal' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <h3 className="font-semibold text-gray-900 mb-1">Pagá con PayPal</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Escaneá el código con la app de PayPal o tu cámara, y pagá el total de <span className="font-semibold text-primary-900">{formatPrice(total)}</span>.
+              <h3 className="font-semibold text-gray-900 mb-3">Pagá con PayPal</h3>
+              <AmountBox />
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
+                <p className="text-xs text-amber-800 font-medium">
+                  ⚠️ El monto en pesos es referencial. Ingresá el equivalente en USD al escanear el QR.
+                </p>
+              </div>
+              <p className="text-sm text-gray-600 mb-4 text-center">
+                Escaneá el código con la app de PayPal o tu cámara para pagar.
               </p>
               <img
                 src="/brand/paypal-qr.png"
@@ -144,17 +180,23 @@ export default function CheckoutPage() {
 
           {isManual && paymentMethod === 'mercadopago' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <h3 className="font-semibold text-gray-900 mb-1">Pagá con Mercado Pago</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Abrí el link y pagá el total de <span className="font-semibold text-primary-900">{formatPrice(total)}</span>.
-              </p>
+              <h3 className="font-semibold text-gray-900 mb-3">Pagá con Mercado Pago</h3>
+
+              <AmountBox />
+
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
+                <p className="text-xs text-amber-800 font-medium">
+                  ⚠️ Al abrir el link de Mercado Pago, ingresá exactamente <strong>{formatPrice(confirmedTotal)}</strong> como monto a pagar.
+                </p>
+              </div>
+
               <a
                 href={MP_PAYMENT_LINK}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary w-full inline-flex items-center justify-center gap-2"
               >
-                <Wallet className="w-4 h-4" /> Pagar con Mercado Pago
+                <Wallet className="w-4 h-4" /> Abrir Mercado Pago
               </a>
               <p className="mt-4 text-xs text-petroleum-600">
                 Después de pagar, envianos el comprobante por WhatsApp para confirmar tu compra y habilitar la descarga.
