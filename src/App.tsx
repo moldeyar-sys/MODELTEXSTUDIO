@@ -5,7 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
-import { WhatsAppButton } from './components/layout/WhatsAppButton';
+// WhatsAppButton removido a pedido del usuario
 import { TelegramButton } from './components/layout/TelegramButton';
 import { ChatWidget } from './components/chat/ChatWidget';
 import { ProtectedRoute, AdminRoute } from './components/layout/ProtectedRoute';
@@ -67,7 +67,7 @@ function AppLayout() {
         </Suspense>
       </main>
       <Footer />
-      <WhatsAppButton />
+
       <TelegramButton />
       <ChatWidget />
     </div>

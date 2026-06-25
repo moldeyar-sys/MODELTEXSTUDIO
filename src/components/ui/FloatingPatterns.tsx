@@ -74,17 +74,26 @@ interface PieceConfig {
 }
 
 const PIECES: PieceConfig[] = [
-  { shape: 'frente',   x: 2,  y: 2,  w: 72, rotation: -8,  delay: 0,   duration: 18, opacity: 0.10, driftX: 6  },
-  { shape: 'manga',    x: 20, y: 48, w: 48, rotation: 20,  delay: 2,   duration: 16, opacity: 0.09, driftX: -5 },
-  { shape: 'espalda',  x: 40, y: 10, w: 64, rotation: 5,   delay: 5,   duration: 21, opacity: 0.08, driftX: 8  },
-  { shape: 'capucha',  x: 70, y: 5,  w: 42, rotation: -15, delay: 1,   duration: 17, opacity: 0.09, driftX: -7 },
-  { shape: 'bolsillo', x: 58, y: 55, w: 52, rotation: 12,  delay: 3,   duration: 19, opacity: 0.09, driftX: 5  },
-  { shape: 'pretina',  x: 4,  y: 72, w: 70, rotation: -4,  delay: 1.5, duration: 15, opacity: 0.08, driftX: 7  },
-  { shape: 'manga',    x: 80, y: 50, w: 44, rotation: -22, delay: 4,   duration: 20, opacity: 0.08, driftX: -6 },
-  { shape: 'punho',    x: 55, y: 82, w: 44, rotation: 8,   delay: 6,   duration: 14, opacity: 0.07, driftX: 9  },
-  { shape: 'capucha',  x: 10, y: 28, w: 36, rotation: 18,  delay: 0.5, duration: 22, opacity: 0.07, driftX: -4 },
-  { shape: 'frente',   x: 75, y: 28, w: 58, rotation: -12, delay: 7,   duration: 18, opacity: 0.07, driftX: 6  },
-  { shape: 'bolsillo', x: 30, y: 80, w: 38, rotation: -20, delay: 3.5, duration: 16, opacity: 0.07, driftX: -8 },
+  // Fila superior
+  { shape: 'frente',   x: 0,  y: 0,  w: 75, rotation: -8,  delay: 0,   duration: 18, opacity: 0.18, driftX: 6  },
+  { shape: 'espalda',  x: 30, y: 2,  w: 68, rotation: 5,   delay: 5,   duration: 21, opacity: 0.16, driftX: 8  },
+  { shape: 'capucha',  x: 62, y: 0,  w: 46, rotation: -15, delay: 1,   duration: 17, opacity: 0.17, driftX: -7 },
+  { shape: 'manga',    x: 82, y: 3,  w: 50, rotation: 20,  delay: 2,   duration: 16, opacity: 0.16, driftX: -5 },
+
+  // Fila media
+  { shape: 'bolsillo', x: 5,  y: 42, w: 55, rotation: 12,  delay: 3,   duration: 19, opacity: 0.17, driftX: 5  },
+  { shape: 'pretina',  x: 28, y: 50, w: 72, rotation: -4,  delay: 1.5, duration: 15, opacity: 0.15, driftX: 7  },
+  { shape: 'manga',    x: 72, y: 42, w: 46, rotation: -22, delay: 4,   duration: 20, opacity: 0.16, driftX: -6 },
+
+  // Fila inferior
+  { shape: 'capucha',  x: 0,  y: 72, w: 40, rotation: 18,  delay: 0.5, duration: 22, opacity: 0.15, driftX: -4 },
+  { shape: 'frente',   x: 22, y: 68, w: 60, rotation: -12, delay: 7,   duration: 18, opacity: 0.15, driftX: 6  },
+  { shape: 'bolsillo', x: 55, y: 75, w: 42, rotation: -20, delay: 3.5, duration: 16, opacity: 0.15, driftX: -8 },
+  { shape: 'punho',    x: 76, y: 80, w: 48, rotation: 8,   delay: 6,   duration: 14, opacity: 0.14, driftX: 9  },
+
+  // Extras para densidad
+  { shape: 'espalda',  x: 48, y: 35, w: 52, rotation: -30, delay: 2.5, duration: 19, opacity: 0.14, driftX: 5  },
+  { shape: 'pretina',  x: 60, y: 60, w: 60, rotation: 10,  delay: 4.5, duration: 17, opacity: 0.13, driftX: -6 },
 ];
 
 export function FloatingPatterns() {
