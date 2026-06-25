@@ -145,7 +145,11 @@ export function FloatingPatterns() {
         }
       `}</style>
 
-      <div className="absolute inset-0 overflow-hidden pointer-events-none z-0" aria-hidden="true">
+      <div
+        className="absolute inset-0 overflow-hidden pointer-events-none z-0"
+        style={{ mixBlendMode: 'overlay' }}
+        aria-hidden="true"
+      >
         {PIECES.map((p, i) => {
           const Shape = SHAPE_MAP[p.shape];
           return (

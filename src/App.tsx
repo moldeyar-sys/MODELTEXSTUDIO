@@ -8,6 +8,7 @@ import { Footer } from './components/layout/Footer';
 // WhatsAppButton removido a pedido del usuario
 import { TelegramButton } from './components/layout/TelegramButton';
 import { ChatWidget } from './components/chat/ChatWidget';
+import { FloatingPatterns } from './components/ui/FloatingPatterns';
 import { ProtectedRoute, AdminRoute } from './components/layout/ProtectedRoute';
 
 // HomePage se carga de inmediato (landing). El resto se carga on-demand
@@ -41,7 +42,11 @@ function PageLoader() {
 
 function AppLayout() {
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen relative">
+      {/* Lluvia de moldes global — mix-blend-mode:overlay se adapta a cualquier fondo */}
+      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <FloatingPatterns />
+      </div>
       <Navbar />
       <main className="flex-1">
         <Suspense fallback={<PageLoader />}>
