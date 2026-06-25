@@ -286,11 +286,11 @@ const HomePage = () => {
 
                 {/* Text */}
                 <div className="flex-1 min-w-0">
-                  <p className="text-amber-300 text-xs font-medium uppercase tracking-widest mb-0.5">
-                    ¡Probá antes de comprar!
-                  </p>
-                  <p className="text-white text-xl font-extrabold leading-tight">
+                  <p className="text-amber-300 text-xl font-extrabold leading-tight">
                     Moldes Gratis
+                  </p>
+                  <p className="text-white/70 text-xs font-medium uppercase tracking-widest mt-0.5">
+                    ¡Probá antes de comprar!
                   </p>
                   <p className="text-white/70 text-sm leading-snug mt-0.5">
                     Descargá moldes reales sin pagar nada
