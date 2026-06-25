@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
-import { Search, SlidersHorizontal, X, PackageOpen, Sparkles } from 'lucide-react';
+import { Search, SlidersHorizontal, X, PackageOpen, Sparkles, Sun, Snowflake, CalendarDays } from 'lucide-react';
 import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { supabase } from '../lib/supabase';
 import { ProductCard } from '../components/ui/ProductCard';
@@ -24,6 +24,7 @@ export default function CatalogPage() {
   const format = searchParams.get('formato') || '';
   const sort = (searchParams.get('orden') || 'reciente') as SortOption;
   const busqueda = searchParams.get('busqueda') || '';
+  const temporada = searchParams.get('temporada') || ''; // '', 'verano', 'invierno', 'todo-el-anio'
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
@@ -106,7 +107,18 @@ export default function CatalogPage() {
     setSearchParams({}, { replace: true });
   };
 
-  const hasActiveFilters = category || format || busqueda;
+  const hasActiveFilters = category || format || busqueda || temporada;
+
+  // Filtro por temporada (cliente). Regla: los moldes "todo el año" se muestran
+  // SIEMPRE (en Todas, Verano e Invierno). Si la columna `season` aún no existe,
+  // los productos sin temporada se tratan como "todo el año".
+  const seasonMatches = (p: Product): boolean => {
+    if (!temporada) return true; // "Todas"
+    const s = p.season || 'todo-el-anio';
+    if (temporada === 'todo-el-anio') return s === 'todo-el-anio';
+    return s === temporada || s === 'todo-el-anio';
+  };
+  const visibleProducts = products.filter(seasonMatches);
 
   const currentCategoryLabel = CATEGORIES.find(c => c.value === category)?.label || 'Todos los productos';
 
@@ -130,7 +142,7 @@ export default function CatalogPage() {
                 MOLDES APROBADOS CON MUESTRA
               </h1>
               <p className="text-gray-500 mt-2">
-                {loading ? 'Cargando...' : `${products.length} ${products.length === 1 ? 'molde disponible' : 'moldes disponibles'}`}
+                {loading ? 'Cargando...' : `${visibleProducts.length} ${visibleProducts.length === 1 ? 'molde disponible' : 'moldes disponibles'}`}
               </p>
             </div>
             {hasActiveFilters && (
@@ -144,6 +156,26 @@ export default function CatalogPage() {
 
       <div className="relative overflow-hidden container-custom py-8">
         <FloatingPatterns variant="dark" />
+        {/* Botones de temporada (siempre visibles) */}
+        <div className="flex gap-2 overflow-x-auto pb-2 mb-3 -mx-1 px-1">
+          {([
+            { value: '', label: 'Todas', Icon: CalendarDays },
+            { value: 'verano', label: 'Verano', Icon: Sun },
+            { value: 'invierno', label: 'Invierno', Icon: Snowflake },
+            { value: 'todo-el-anio', label: 'Todo el año', Icon: CalendarDays },
+          ] as const).map(({ value, label, Icon }) => (
+            <button
+              key={value || 'todas'}
+              onClick={() => updateFilter('temporada', value)}
+              className={`flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
+                temporada === value ? 'bg-petroleum-600 text-white border-petroleum-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              }`}
+            >
+              <Icon className="w-4 h-4" /> {label}
+            </button>
+          ))}
+        </div>
+
         {/* Botones de categoría (siempre visibles) */}
         <div className="flex gap-2 overflow-x-auto pb-2 mb-5 -mx-1 px-1">
           <button
@@ -264,7 +296,7 @@ export default function CatalogPage() {
               </div>
             ))}
           </div>
-        ) : products.length === 0 ? (
+        ) : visibleProducts.length === 0 ? (
           hasActiveFilters ? (
             <div className="card max-w-lg mx-auto text-center py-14 px-6">
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-petroleum-100 mb-5">
@@ -301,7 +333,7 @@ export default function CatalogPage() {
           )
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {products.map(product => (
+            {visibleProducts.map(product => (
               <ProductCard key={product.id} product={product} />
             ))}
           </div>

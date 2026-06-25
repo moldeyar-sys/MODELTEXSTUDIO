@@ -46,6 +46,7 @@ export interface Product {
   precio_usd_pdf_a4?: number | null;
   precio_usd_pdf_ploter?: number | null;
   free_until?: string | null; // si > ahora, está en promo gratis (se muestra en Moldes Gratis)
+  season?: string; // 'verano' | 'invierno' | 'todo-el-anio' (los de "todo el año" se muestran en todas las temporadas)
   main_image_url: string;
   gallery: string[];
   is_active: boolean;
@@ -127,6 +128,14 @@ export const CATEGORIES: { value: ProductCategory; label: string }[] = [
 ];
 
 export const FORMATS = ['PDF A4', 'PDF Plotter', 'PLT', 'DXF', 'CDR', 'Sublimación'];
+
+// Temporadas del catálogo. "todo-el-anio" se muestra en TODAS las temporadas
+// (en Todas, Verano e Invierno).
+export const SEASONS: { value: string; label: string }[] = [
+  { value: 'verano', label: 'Verano' },
+  { value: 'invierno', label: 'Invierno' },
+  { value: 'todo-el-anio', label: 'Todo el año' },
+];
 
 // Grupos de talles listos para cargar de una con un clic (en el panel admin).
 export const SIZE_GROUPS: { label: string; sizes: string[] }[] = [

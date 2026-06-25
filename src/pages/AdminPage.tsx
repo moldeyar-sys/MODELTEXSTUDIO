@@ -8,7 +8,7 @@ import {
   Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon
 } from 'lucide-react';
 import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage } from '../lib/types';
-import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS } from '../lib/types';
+import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
 import { fetchAllFreeMolds } from '../lib/freeMolds';
 import { fetchContactMessages } from '../lib/contact';
@@ -741,6 +741,7 @@ function ProductForm({
     disponible_pdf_a4: product?.disponible_pdf_a4 ?? true,
     mostrar_consulta_otro_formato: product?.mostrar_consulta_otro_formato ?? true,
     free_until: product?.free_until ? product.free_until.slice(0, 16) : '',
+    season: product?.season || 'todo-el-anio',
     sizes: product?.sizes?.join(', ') || '',
     formats: product?.formats?.join(', ') || '',
     recommended_fabrics: product?.recommended_fabrics?.join(', ') || '',
@@ -940,6 +941,7 @@ function ProductForm({
       disponible_pdf_a4: form.disponible_pdf_a4,
       mostrar_consulta_otro_formato: form.mostrar_consulta_otro_formato,
       free_until: form.free_until ? new Date(form.free_until).toISOString() : null,
+      season: form.season,
     };
     const OPTIONAL_COLS = Object.keys(optionalData);
     const fullData = { ...baseData, ...optionalData };
@@ -1061,6 +1063,15 @@ function ProductForm({
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1.5">Código</label>
             <input name="codigo" value={form.codigo} onChange={handleChange} className="input-field" placeholder="Ej: 99-M" />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Temporada</label>
+            <select name="season" value={form.season} onChange={handleChange} className="input-field">
+              {SEASONS.map(s => (
+                <option key={s.value} value={s.value}>{s.label}</option>
+              ))}
+            </select>
+            <p className="text-xs text-gray-400 mt-1">Los moldes de "Todo el año" aparecen en Verano, Invierno y Todas.</p>
           </div>
 
           {/* Formatos y precios comerciales (se ven en catálogo y ficha) */}
