@@ -734,6 +734,9 @@ function ProductForm({
     precio_pdf_a4: product?.precio_pdf_a4 != null ? String(product.precio_pdf_a4) : '',
     precio_pdf_ploter: product?.precio_pdf_ploter != null ? String(product.precio_pdf_ploter) : '',
     precio_usd: product?.precio_usd != null ? String(product.precio_usd) : '',
+    precio_usd_carton: product?.precio_usd_carton != null ? String(product.precio_usd_carton) : '',
+    precio_usd_pdf_a4: product?.precio_usd_pdf_a4 != null ? String(product.precio_usd_pdf_a4) : '',
+    precio_usd_pdf_ploter: product?.precio_usd_pdf_ploter != null ? String(product.precio_usd_pdf_ploter) : '',
     disponible_carton: product?.disponible_carton ?? true,
     disponible_pdf_a4: product?.disponible_pdf_a4 ?? true,
     mostrar_consulta_otro_formato: product?.mostrar_consulta_otro_formato ?? true,
@@ -930,6 +933,9 @@ function ProductForm({
       precio_pdf_a4: form.precio_pdf_a4 ? parseFloat(form.precio_pdf_a4) : null,
       precio_pdf_ploter: form.precio_pdf_ploter ? parseFloat(form.precio_pdf_ploter) : null,
       precio_usd: form.precio_usd ? parseFloat(form.precio_usd) : null,
+      precio_usd_carton: form.precio_usd_carton ? parseFloat(form.precio_usd_carton) : null,
+      precio_usd_pdf_a4: form.precio_usd_pdf_a4 ? parseFloat(form.precio_usd_pdf_a4) : null,
+      precio_usd_pdf_ploter: form.precio_usd_pdf_ploter ? parseFloat(form.precio_usd_pdf_ploter) : null,
       disponible_carton: form.disponible_carton,
       disponible_pdf_a4: form.disponible_pdf_a4,
       mostrar_consulta_otro_formato: form.mostrar_consulta_otro_formato,
@@ -1088,14 +1094,31 @@ function ProductForm({
                 <input name="precio_pdf_ploter" type="number" step="0.01" value={form.precio_pdf_ploter} onChange={handleChange} className="input-field" placeholder="Vacío = Consultar" />
               </div>
               <div className="sm:col-span-2 border-t border-gray-200 pt-4 mt-1">
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                  💵 Precio en USD <span className="text-gray-400 font-normal">(para clientes internacionales — Chile, Brasil, etc.)</span>
-                </label>
-                <div className="flex items-center gap-2">
-                  <span className="text-gray-500 font-medium">USD</span>
-                  <input name="precio_usd" type="number" step="0.01" value={form.precio_usd} onChange={handleChange} className="input-field flex-1" placeholder="Ej: 12.00 — vacío = no mostrar precio USD" />
+                <p className="text-sm font-semibold text-gray-700 mb-3">💵 Precios en USD <span className="text-gray-400 font-normal">(clientes internacionales — Chile, Brasil, etc.)</span></p>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Cartón (USD)</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-400 text-xs">$</span>
+                      <input name="precio_usd_carton" type="number" step="0.01" value={form.precio_usd_carton} onChange={handleChange} className="input-field" placeholder="Ej: 25.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">PDF-A4 (USD)</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-400 text-xs">$</span>
+                      <input name="precio_usd_pdf_a4" type="number" step="0.01" value={form.precio_usd_pdf_a4} onChange={handleChange} className="input-field" placeholder="Ej: 10.00" />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">PDF Plóter (USD)</label>
+                    <div className="flex items-center gap-1">
+                      <span className="text-gray-400 text-xs">$</span>
+                      <input name="precio_usd_pdf_ploter" type="number" step="0.01" value={form.precio_usd_pdf_ploter} onChange={handleChange} className="input-field" placeholder="Ej: 18.00" />
+                    </div>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-400 mt-1">Los clientes fuera de Argentina ven este precio en dólares. Si está vacío, ven el precio en pesos.</p>
+                <p className="text-xs text-gray-400 mt-2">Los clientes fuera de Argentina ven estos precios en dólares. Vacío = no se muestra.</p>
               </div>
             </div>
             <label className="flex items-center gap-2 text-xs text-gray-600 mt-3">

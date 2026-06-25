@@ -42,6 +42,9 @@ export interface Product {
   disponible_pdf_a4?: boolean;
   mostrar_consulta_otro_formato?: boolean;
   precio_usd?: number | null;
+  precio_usd_carton?: number | null;
+  precio_usd_pdf_a4?: number | null;
+  precio_usd_pdf_ploter?: number | null;
   free_until?: string | null; // si > ahora, está en promo gratis (se muestra en Moldes Gratis)
   main_image_url: string;
   gallery: string[];

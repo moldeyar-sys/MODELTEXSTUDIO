@@ -22,7 +22,7 @@ export function ProductCard({ product }: ProductCardProps) {
 
   const carton = cartonPrice(product);
   const pdf = pdfPrice(product);
-  const showUsd = !isArgentina && product.precio_usd != null;
+  const showUsd = !isArgentina && (product.precio_usd_carton != null || product.precio_usd_pdf_a4 != null || product.precio_usd_pdf_ploter != null);
 
   return (
     <div className="card group overflow-hidden flex flex-col">
@@ -63,11 +63,27 @@ export function ProductCard({ product }: ProductCardProps) {
         {/* Precios por formato */}
         <div className="mt-3 text-sm space-y-1">
           {showUsd ? (
-            // Cliente internacional: mostrar precio en USD
-            <div className="flex items-baseline justify-between gap-2">
-              <span className="text-gray-500">Precio</span>
-              <span className="font-bold text-green-700 text-base">USD {product.precio_usd!.toFixed(2)}</span>
-            </div>
+            // Cliente internacional: mostrar precios en USD por formato
+            <>
+              {product.precio_usd_carton != null && (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-gray-500">Moldes en Cartón</span>
+                  <span className="font-bold text-green-700">USD {product.precio_usd_carton.toFixed(2)}</span>
+                </div>
+              )}
+              {product.precio_usd_pdf_a4 != null && (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-gray-500">Digital - PDF-A4</span>
+                  <span className="font-bold text-green-700">USD {product.precio_usd_pdf_a4.toFixed(2)}</span>
+                </div>
+              )}
+              {product.precio_usd_pdf_ploter != null && (
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="text-gray-500">PDF Plóter</span>
+                  <span className="font-bold text-green-700">USD {product.precio_usd_pdf_ploter.toFixed(2)}</span>
+                </div>
+              )}
+            </>
           ) : (
             // Cliente Argentina: mostrar precios en ARS por formato
             <>
