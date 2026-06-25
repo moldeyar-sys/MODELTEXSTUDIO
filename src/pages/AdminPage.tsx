@@ -733,6 +733,7 @@ function ProductForm({
     precio_carton: product?.precio_carton != null ? String(product.precio_carton) : '',
     precio_pdf_a4: product?.precio_pdf_a4 != null ? String(product.precio_pdf_a4) : '',
     precio_pdf_ploter: product?.precio_pdf_ploter != null ? String(product.precio_pdf_ploter) : '',
+    precio_usd: product?.precio_usd != null ? String(product.precio_usd) : '',
     disponible_carton: product?.disponible_carton ?? true,
     disponible_pdf_a4: product?.disponible_pdf_a4 ?? true,
     mostrar_consulta_otro_formato: product?.mostrar_consulta_otro_formato ?? true,
@@ -928,6 +929,7 @@ function ProductForm({
       precio_carton: form.precio_carton ? parseFloat(form.precio_carton) : null,
       precio_pdf_a4: form.precio_pdf_a4 ? parseFloat(form.precio_pdf_a4) : null,
       precio_pdf_ploter: form.precio_pdf_ploter ? parseFloat(form.precio_pdf_ploter) : null,
+      precio_usd: form.precio_usd ? parseFloat(form.precio_usd) : null,
       disponible_carton: form.disponible_carton,
       disponible_pdf_a4: form.disponible_pdf_a4,
       mostrar_consulta_otro_formato: form.mostrar_consulta_otro_formato,
@@ -1084,6 +1086,16 @@ function ProductForm({
                   Precio Moldes en PDF Plóter <span className="text-gray-400 font-normal">(mismo precio para 90 / 120 / 150 cm)</span>
                 </label>
                 <input name="precio_pdf_ploter" type="number" step="0.01" value={form.precio_pdf_ploter} onChange={handleChange} className="input-field" placeholder="Vacío = Consultar" />
+              </div>
+              <div className="sm:col-span-2 border-t border-gray-200 pt-4 mt-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                  💵 Precio en USD <span className="text-gray-400 font-normal">(para clientes internacionales — Chile, Brasil, etc.)</span>
+                </label>
+                <div className="flex items-center gap-2">
+                  <span className="text-gray-500 font-medium">USD</span>
+                  <input name="precio_usd" type="number" step="0.01" value={form.precio_usd} onChange={handleChange} className="input-field flex-1" placeholder="Ej: 12.00 — vacío = no mostrar precio USD" />
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Los clientes fuera de Argentina ven este precio en dólares. Si está vacío, ven el precio en pesos.</p>
               </div>
             </div>
             <label className="flex items-center gap-2 text-xs text-gray-600 mt-3">

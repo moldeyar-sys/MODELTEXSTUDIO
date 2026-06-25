@@ -7,6 +7,7 @@ import { useLocale } from '../../lib/locale';
 import { cartonPrice, pdfPrice } from '../../lib/productFormats';
 import { ConsultButtons } from './ConsultButtons';
 import { FormatOptions } from './FormatOptions';
+import { useCountry } from '../../hooks/useCountry';
 
 interface ProductCardProps {
   product: Product;
@@ -14,12 +15,14 @@ interface ProductCardProps {
 
 export function ProductCard({ product }: ProductCardProps) {
   const { formatPrice } = useLocale();
+  const { isArgentina } = useCountry();
   const [showOptions, setShowOptions] = useState(false);
   const categoryLabel =
     CATEGORIES.find(c => c.value === product.category)?.label || product.category.replace('-', ' ');
 
   const carton = cartonPrice(product);
   const pdf = pdfPrice(product);
+  const showUsd = !isArgentina && product.precio_usd != null;
 
   return (
     <div className="card group overflow-hidden flex flex-col">
@@ -57,16 +60,27 @@ export function ProductCard({ product }: ProductCardProps) {
           <p className="text-sm text-gray-500 mt-1 line-clamp-2">{product.short_description}</p>
         )}
 
-        {/* Precios por formato (etiqueta a la izquierda, precio alineado a la derecha) */}
+        {/* Precios por formato */}
         <div className="mt-3 text-sm space-y-1">
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-gray-500">Moldes en Cartón</span>
-            <span className="font-bold text-primary-900">{carton !== null ? formatPrice(carton) : 'Consultar'}</span>
-          </div>
-          <div className="flex items-baseline justify-between gap-2">
-            <span className="text-gray-500">Digital - PDF-A4</span>
-            <span className="font-bold text-primary-900">{pdf !== null ? formatPrice(pdf) : 'Consultar'}</span>
-          </div>
+          {showUsd ? (
+            // Cliente internacional: mostrar precio en USD
+            <div className="flex items-baseline justify-between gap-2">
+              <span className="text-gray-500">Precio</span>
+              <span className="font-bold text-green-700 text-base">USD {product.precio_usd!.toFixed(2)}</span>
+            </div>
+          ) : (
+            // Cliente Argentina: mostrar precios en ARS por formato
+            <>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-gray-500">Moldes en Cartón</span>
+                <span className="font-bold text-primary-900">{carton !== null ? formatPrice(carton) : 'Consultar'}</span>
+              </div>
+              <div className="flex items-baseline justify-between gap-2">
+                <span className="text-gray-500">Digital - PDF-A4</span>
+                <span className="font-bold text-primary-900">{pdf !== null ? formatPrice(pdf) : 'Consultar'}</span>
+              </div>
+            </>
+          )}
         </div>
 
         {/* Comprar (despliega opciones) */}
