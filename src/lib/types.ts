@@ -41,7 +41,6 @@ export interface Product {
   disponible_carton?: boolean;
   disponible_pdf_a4?: boolean;
   mostrar_consulta_otro_formato?: boolean;
-  precio_usd?: number | null;
   precio_usd_carton?: number | null;
   precio_usd_pdf_a4?: number | null;
   precio_usd_pdf_ploter?: number | null;

@@ -50,7 +50,7 @@ export default function CheckoutPage() {
           user_id: user.id,
           total,
           payment_method: paymentMethod,
-          payment_status: paymentMethod === 'transfer' || paymentMethod === 'binance' ? 'pendiente' : 'pendiente',
+          payment_status: 'pendiente',
           order_status: 'pendiente',
         })
         .select()
