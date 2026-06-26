@@ -69,11 +69,8 @@ export default function CheckoutPage() {
       }
       if (itemsError) throw itemsError;
 
-      setConfirmedTotal(total);
-      setOrderId(order.id);
-      clearCart();
-
-      // Mercado Pago Checkout Pro: redirigir automáticamente con el monto cargado
+      // Mercado Pago: intentar redirigir ANTES de mostrar cualquier pantalla.
+      // Solo si falla la API se muestra la pantalla de pago manual.
       if (paymentMethod === 'mercadopago') {
         const mpItems = items.map(item => ({
           product_id: item.product.id,
@@ -81,20 +78,27 @@ export default function CheckoutPage() {
           quantity: item.quantity,
           unit_price: cartUnitPrice(item),
         }));
-        const prefRes = await fetch('/api/create-preference', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ items: mpItems, orderId: order.id, payerEmail: user.email }),
-        });
-        if (prefRes.ok) {
-          const { init_point } = await prefRes.json();
-          if (init_point) {
-            window.location.href = init_point;
-            return;
+        try {
+          const prefRes = await fetch('/api/create-preference', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ items: mpItems, orderId: order.id, payerEmail: user.email }),
+          });
+          if (prefRes.ok) {
+            const { init_point } = await prefRes.json();
+            if (init_point) {
+              clearCart();
+              window.location.href = init_point; // redirige sin mostrar pantalla de éxito
+              return;
+            }
           }
-        }
-        // Si falla la preferencia, igual muestra la pantalla de confirmación manual
+        } catch { /* si la API de preferencia falla, caemos al flujo manual */ }
       }
+
+      // Para todos los demás métodos (o si MP falló): mostrar pantalla de confirmación
+      setConfirmedTotal(total);
+      setOrderId(order.id);
+      clearCart();
     } catch {
       setError('Hubo un error al procesar tu pedido. Intentá de nuevo.');
     } finally {
