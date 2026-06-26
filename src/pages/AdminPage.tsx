@@ -194,7 +194,14 @@ export default function AdminPage() {
           {tabs.map(tab => (
             <button
               key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
+              onClick={() => {
+                // Al cambiar de tab, cerrar cualquier formulario abierto
+                setShowProductForm(false);
+                setEditingProduct(null);
+                setShowFreeForm(false);
+                setEditingFree(null);
+                setActiveTab(tab.id);
+              }}
               className={`flex items-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap transition-colors flex-shrink-0 ${
                 activeTab === tab.id
                   ? 'bg-primary-800 text-white'
