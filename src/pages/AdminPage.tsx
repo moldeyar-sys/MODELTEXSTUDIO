@@ -77,8 +77,8 @@ export default function AdminPage() {
     { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
     { id: 'free', label: 'Moldes Gratis', icon: <Gift className="w-4 h-4" /> },
     { id: 'contacts', label: 'Contactos', icon: <Mail className="w-4 h-4" /> },
-    { id: 'hero', label: 'Inicio (imágenes)', icon: <ImageIcon className="w-4 h-4" /> },
-    { id: 'payments', label: 'Medios de pago', icon: <CreditCard className="w-4 h-4" /> },
+    { id: 'hero', label: 'Hero', icon: <ImageIcon className="w-4 h-4" /> },
+    { id: 'payments', label: 'Pagos', icon: <CreditCard className="w-4 h-4" /> },
   ];
 
   const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -200,7 +200,7 @@ export default function AdminPage() {
         <p className="text-gray-500 mb-8">Gestioná productos, pedidos y clientes de Modeltex</p>
 
         {/* Tabs */}
-        <div className="flex gap-1 bg-white rounded-xl p-1 border border-gray-200 mb-8 overflow-x-auto">
+        <div className="flex flex-wrap gap-1 bg-white rounded-xl p-1 border border-gray-200 mb-8">
           {tabs.map(tab => (
             <button
               key={tab.id}
