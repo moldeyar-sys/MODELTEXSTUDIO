@@ -5,7 +5,7 @@ import {
   Plus, Edit3, Trash2,
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
-  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon
+  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save
 } from 'lucide-react';
 import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
@@ -14,8 +14,10 @@ import { fetchAllFreeMolds } from '../lib/freeMolds';
 import { fetchContactMessages } from '../lib/contact';
 import { fetchAllHeroImages } from '../lib/heroImages';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
+import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
+import type { PaymentSettings } from '../lib/paymentSettings';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'hero';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'hero' | 'payments';
 
 export default function AdminPage() {
   useAuth();
@@ -29,6 +31,10 @@ export default function AdminPage() {
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [uploadingHero, setUploadingHero] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [paySettings, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
+  const [payForm, setPayForm] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
+  const [paySaving, setPaySaving] = useState(false);
+  const [paySaved, setPaySaved] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showFreeForm, setShowFreeForm] = useState(false);
@@ -57,6 +63,9 @@ export default function AdminPage() {
     setFreeMolds(freeRes);
     setContacts(contactRes);
     setHeroImages(heroRes);
+    const ps = await fetchPaymentSettings();
+    setPaySettings(ps);
+    setPayForm(ps);
     if (showSpinner) setLoading(false);
   };
 
@@ -69,6 +78,7 @@ export default function AdminPage() {
     { id: 'free', label: 'Moldes Gratis', icon: <Gift className="w-4 h-4" /> },
     { id: 'contacts', label: 'Contactos', icon: <Mail className="w-4 h-4" /> },
     { id: 'hero', label: 'Inicio (imágenes)', icon: <ImageIcon className="w-4 h-4" /> },
+    { id: 'payments', label: 'Medios de pago', icon: <CreditCard className="w-4 h-4" /> },
   ];
 
   const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -659,6 +669,113 @@ export default function AdminPage() {
         )}
 
         {/* Inicio (imágenes del hero) */}
+        {/* ── Medios de pago ─────────────────────────────────────────── */}
+        {activeTab === 'payments' && (
+          <div className="max-w-2xl">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1">Medios de pago</h2>
+            <p className="text-sm text-gray-500 mb-6">Editá los datos que se muestran al cliente en el checkout. Los cambios se guardan en la base de datos.</p>
+
+            {/* Mercado Pago */}
+            <div className="card p-5 mb-4">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-sky-100 flex items-center justify-center text-sky-700 text-xs font-bold">MP</span>
+                Mercado Pago
+              </h3>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Link de pago</label>
+              <input
+                type="url"
+                value={payForm.mp_payment_link}
+                onChange={e => setPayForm(f => ({ ...f, mp_payment_link: e.target.value }))}
+                className="input-field"
+                placeholder="https://link.mercadopago.com.ar/..."
+              />
+              <p className="text-xs text-gray-400 mt-1">El cliente verá un botón "Abrir Mercado Pago" que abre este link.</p>
+            </div>
+
+            {/* Transferencia */}
+            <div className="card p-5 mb-4">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-green-100 flex items-center justify-center text-green-700 text-xs font-bold">TF</span>
+                Transferencia bancaria
+              </h3>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Alias</label>
+                  <input type="text" value={payForm.transfer_alias} onChange={e => setPayForm(f => ({ ...f, transfer_alias: e.target.value }))} className="input-field" placeholder="MOLDEY.DIGITAL" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Titular</label>
+                  <input type="text" value={payForm.transfer_holder} onChange={e => setPayForm(f => ({ ...f, transfer_holder: e.target.value }))} className="input-field" placeholder="Nombre del titular" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Banco</label>
+                  <input type="text" value={payForm.transfer_bank} onChange={e => setPayForm(f => ({ ...f, transfer_bank: e.target.value }))} className="input-field" placeholder="Ej: Banco Galicia" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">CBU / CVU</label>
+                  <input type="text" value={payForm.transfer_cbu} onChange={e => setPayForm(f => ({ ...f, transfer_cbu: e.target.value }))} className="input-field" placeholder="22 dígitos" />
+                </div>
+              </div>
+            </div>
+
+            {/* PayPal */}
+            <div className="card p-5 mb-4">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold">PP</span>
+                PayPal
+              </h3>
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Link de pago PayPal (opcional)</label>
+                  <input type="url" value={payForm.paypal_link} onChange={e => setPayForm(f => ({ ...f, paypal_link: e.target.value }))} className="input-field" placeholder="https://paypal.me/..." />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">URL del QR de PayPal</label>
+                  <input type="text" value={payForm.paypal_qr_url} onChange={e => setPayForm(f => ({ ...f, paypal_qr_url: e.target.value }))} className="input-field" placeholder="/brand/paypal-qr.png" />
+                  {payForm.paypal_qr_url && (
+                    <img src={payForm.paypal_qr_url} alt="QR PayPal" className="mt-2 w-28 h-28 object-contain border border-gray-200 rounded-lg" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  )}
+                  <p className="text-xs text-gray-400 mt-1">Subí el QR al bucket de imágenes y pegá la URL acá.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Binance */}
+            <div className="card p-5 mb-6">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-amber-100 flex items-center justify-center text-amber-700 text-xs font-bold">BN</span>
+                Binance / Criptomonedas
+              </h3>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div className="sm:col-span-2">
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Dirección de wallet</label>
+                  <input type="text" value={payForm.binance_wallet} onChange={e => setPayForm(f => ({ ...f, binance_wallet: e.target.value }))} className="input-field font-mono text-xs" placeholder="0x..." />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Red / Network</label>
+                  <input type="text" value={payForm.binance_network} onChange={e => setPayForm(f => ({ ...f, binance_network: e.target.value }))} className="input-field" placeholder="BSC (BEP20)" />
+                </div>
+              </div>
+            </div>
+
+            {/* Guardar */}
+            <button
+              type="button"
+              disabled={paySaving}
+              onClick={async () => {
+                setPaySaving(true);
+                const ok = await savePaymentSettings(payForm);
+                if (ok) { setPaySettings(payForm); setPaySaved(true); setTimeout(() => setPaySaved(false), 2500); }
+                setPaySaving(false);
+              }}
+              className="btn-primary flex items-center gap-2 disabled:opacity-50"
+            >
+              {paySaving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</> : paySaved ? '✓ Guardado' : <><Save className="w-4 h-4" /> Guardar cambios</>}
+            </button>
+            {paySaved && <p className="text-sm text-green-600 mt-2">✓ Los cambios se aplicaron al checkout.</p>}
+          </div>
+        )}
+
         {activeTab === 'hero' && (
           <div>
             <div className="flex items-center justify-between mb-2 flex-wrap gap-2">

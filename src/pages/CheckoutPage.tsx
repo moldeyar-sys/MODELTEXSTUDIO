@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet, Copy, Check } from 'lucide-react';
 import { useCart, cartUnitPrice, cartItemKey } from '../contexts/CartContext';
@@ -8,9 +8,8 @@ import { supabase } from '../lib/supabase';
 import type { PaymentMethod } from '../lib/types';
 import { PAYMENT_METHODS } from '../lib/types';
 import { WhatsAppConsultButton } from '../components/ui/WhatsAppConsultButton';
-
-// Link de pago de Mercado Pago (monto fijo). Cambialo acá si lo regenerás.
-const MP_PAYMENT_LINK = 'https://link.mercadopago.com.ar/modeltex';
+import { fetchPaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
+import type { PaymentSettings } from '../lib/paymentSettings';
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
@@ -23,6 +22,11 @@ export default function CheckoutPage() {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
   const [confirmedTotal, setConfirmedTotal] = useState(0);
+  const [paySettings, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
+
+  useEffect(() => {
+    fetchPaymentSettings().then(s => setPaySettings(s));
+  }, []);
 
   const copyAmount = () => {
     navigator.clipboard.writeText(confirmedTotal.toFixed(2));
@@ -152,10 +156,10 @@ export default function CheckoutPage() {
               <h3 className="font-semibold text-gray-900 mb-3">Datos para transferencia</h3>
               <AmountBox />
               <div className="space-y-2 text-sm text-gray-600 mb-3">
-                <p><span className="font-medium text-gray-700">Alias:</span> MOLDEY.DIGITAL</p>
-                <p><span className="font-medium text-gray-700">Titular:</span> Modeltex</p>
-                <p><span className="font-medium text-gray-700">Banco:</span> (Por confirmar)</p>
-                <p><span className="font-medium text-gray-700">CBU/CVU:</span> (Por confirmar)</p>
+                {paySettings.transfer_alias  && <p><span className="font-medium text-gray-700">Alias:</span> {paySettings.transfer_alias}</p>}
+                {paySettings.transfer_holder && <p><span className="font-medium text-gray-700">Titular:</span> {paySettings.transfer_holder}</p>}
+                {paySettings.transfer_bank   && <p><span className="font-medium text-gray-700">Banco:</span> {paySettings.transfer_bank}</p>}
+                {paySettings.transfer_cbu    && <p><span className="font-medium text-gray-700">CBU/CVU:</span> {paySettings.transfer_cbu}</p>}
               </div>
               <p className="text-xs text-petroleum-600">
                 Una vez realizada la transferencia, envianos el comprobante por WhatsApp para agilizar la confirmación.
@@ -173,8 +177,8 @@ export default function CheckoutPage() {
                 </p>
               </div>
               <div className="space-y-2 text-sm text-gray-600 mb-3">
-                <p><span className="font-medium text-gray-700">Wallet:</span> (Por confirmar)</p>
-                <p><span className="font-medium text-gray-700">Red:</span> BSC (BEP20)</p>
+                {paySettings.binance_wallet  && <p><span className="font-medium text-gray-700">Wallet:</span> <span className="font-mono text-xs break-all">{paySettings.binance_wallet}</span></p>}
+                {paySettings.binance_network && <p><span className="font-medium text-gray-700">Red:</span> {paySettings.binance_network}</p>}
               </div>
               <p className="text-xs text-petroleum-600">
                 Una vez realizado el pago, envianos el hash de la transacción por WhatsApp para confirmar.
@@ -194,11 +198,18 @@ export default function CheckoutPage() {
               <p className="text-sm text-gray-600 mb-4 text-center">
                 Escaneá el código con la app de PayPal o tu cámara para pagar.
               </p>
-              <img
-                src="/brand/paypal-qr.png"
-                alt="QR de PayPal para pagar a Modeltex"
-                className="w-56 max-w-full mx-auto rounded-xl border border-gray-200"
-              />
+              {paySettings.paypal_qr_url && (
+                <img
+                  src={paySettings.paypal_qr_url}
+                  alt="QR de PayPal para pagar a Modeltex"
+                  className="w-56 max-w-full mx-auto rounded-xl border border-gray-200"
+                />
+              )}
+              {paySettings.paypal_link && (
+                <a href={paySettings.paypal_link} target="_blank" rel="noopener noreferrer" className="btn-primary inline-flex items-center justify-center gap-2 mt-3 w-full">
+                  Pagar con PayPal
+                </a>
+              )}
               <p className="mt-4 text-xs text-petroleum-600">
                 Después de pagar, envianos el comprobante por WhatsApp para confirmar tu compra y habilitar la descarga.
               </p>
@@ -218,7 +229,7 @@ export default function CheckoutPage() {
               </div>
 
               <a
-                href={MP_PAYMENT_LINK}
+                href={paySettings.mp_payment_link}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="btn-primary w-full inline-flex items-center justify-center gap-2"
