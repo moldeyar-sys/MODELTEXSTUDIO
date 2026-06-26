@@ -44,10 +44,14 @@ export function ProductCard({ product }: ProductCardProps) {
       </Link>
 
       <div className="p-4 flex flex-col flex-1">
-        <div className="flex items-center gap-2 mb-1.5">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           <span className="text-xs font-medium text-petroleum-600 bg-petroleum-50 px-2 py-0.5 rounded-md capitalize">
             {categoryLabel}
           </span>
+          {product.entrega_inmediata
+            ? <span className="text-[10px] font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-md">⚡ Descarga inmediata</span>
+            : <span className="text-[10px] font-medium text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-md">🕐 Disponible en 24 hs</span>
+          }
         </div>
 
         <Link to={`/producto/${product.slug}`}>

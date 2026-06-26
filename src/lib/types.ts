@@ -46,7 +46,8 @@ export interface Product {
   precio_usd_pdf_a4?: number | null;
   precio_usd_pdf_ploter?: number | null;
   free_until?: string | null; // si > ahora, está en promo gratis (se muestra en Moldes Gratis)
-  season?: string; // 'verano' | 'invierno' | 'todo-el-anio' (los de "todo el año" se muestran en todas las temporadas)
+  season?: string;
+  entrega_inmediata?: boolean; // true = descarga al instante; false/undefined = listo en 24 hs // 'verano' | 'invierno' | 'todo-el-anio' (los de "todo el año" se muestran en todas las temporadas)
   main_image_url: string;
   gallery: string[];
   is_active: boolean;

@@ -155,6 +155,16 @@ export function FormatOptions({ product }: FormatOptionsProps) {
   return (
     <div className="space-y-3">
 
+      {/* Badge de entrega */}
+      {product.entrega_inmediata
+        ? <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs font-semibold text-green-700">
+            <span>⚡</span> Descarga inmediata
+          </div>
+        : <div className="flex items-center gap-2 px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-xs font-medium text-amber-700">
+            <span>🕐</span> Moldes en preparación · disponible en 24 hs
+          </div>
+      }
+
       {/* 0) Selector de talles */}
       {hasSizes && (
         <div className="border border-primary-100 bg-primary-50/40 rounded-xl p-3">
