@@ -8,42 +8,8 @@ import { ConsultButtons } from './ConsultButtons';
 import {
   cartonPrice, pdfPrice, ploterPrice, cartonAvailable, pdfAvailable, showOtroFormato, PLOTER_SIZES,
 } from '../../lib/productFormats';
+import { getDefaultSizes, TALLE_ARS, TALLE_USD } from '../../lib/sizeUtils';
 import type { Product } from '../../lib/types';
-
-// ─── Lógica de talles predeterminados ────────────────────────────────────────
-// Adultos: curva completa XS–4XL → predeterminados S–2XL
-// Niños:   curva completa 2–18   → predeterminados 4–16
-// Bebés:   curva completa 1–9    → predeterminados 1–5
-const ADULT_LETTERS = new Set(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']);
-const DEFAULT_ADULT = new Set(['S', 'M', 'L', 'XL', '2XL']);
-const DEFAULT_CHILD = new Set(['4', '6', '8', '10', '12', '14', '16']);
-const DEFAULT_BABY  = new Set(['1', '2', '3', '4', '5']);
-const CHILD_ONLY    = new Set(['10', '12', '14', '16', '18']); // sólo en niños, no en bebés
-
-function getDefaultSizes(availableSizes: string[]): string[] {
-  if (!availableSizes || availableSizes.length === 0) return [];
-  if (availableSizes.some(s => ADULT_LETTERS.has(s))) {
-    const defs = availableSizes.filter(s => DEFAULT_ADULT.has(s));
-    return defs.length > 0 ? defs : availableSizes;
-  }
-  if (availableSizes.some(s => CHILD_ONLY.has(s))) {
-    const defs = availableSizes.filter(s => DEFAULT_CHILD.has(s));
-    return defs.length > 0 ? defs : availableSizes;
-  }
-  const allNumeric = availableSizes.every(s => /^\d+$/.test(s));
-  if (allNumeric && Math.max(...availableSizes.map(Number)) <= 9) {
-    const defs = availableSizes.filter(s => DEFAULT_BABY.has(s));
-    return defs.length > 0 ? defs : availableSizes;
-  }
-  return availableSizes;
-}
-// ─────────────────────────────────────────────────────────────────────────────
-
-// ─── Precio extra/descuento por talle ────────────────────────────────────────
-// Se suma (o descuenta) por cada talle que se agrega (o quita) respecto al default.
-const TALLE_ARS = { carton: 10_000, pdf: 3_000, ploter: 4_000 };
-const TALLE_USD = { carton: 7,      pdf: 3,     ploter: 5     };
-// ─────────────────────────────────────────────────────────────────────────────
 
 interface FormatOptionsProps {
   product: Product;
