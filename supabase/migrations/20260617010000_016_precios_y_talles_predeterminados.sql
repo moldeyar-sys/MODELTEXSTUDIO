@@ -42,7 +42,7 @@ UPDATE products SET
   price                 = 36000,
   disponible_carton     = true,
   disponible_pdf_a4     = true,
-  sizes                 = ARRAY['4','6','8','10','12','14','16']
+  sizes                 = ARRAY['2','4','6','8','10','12','14','16','18']
 WHERE category IN ('nina','nino','ninos-unisex');
 
 -- ── BEBÉS ─────────────────────────────────────────────────────────────

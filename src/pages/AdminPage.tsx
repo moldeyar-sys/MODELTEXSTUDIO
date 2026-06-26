@@ -721,7 +721,7 @@ const PRECIO_DEFECTO = {
   ninos: {
     carton: 80000, pdf: 36000, ploter: 50000,
     usd_carton: 60, usd_pdf: 24, usd_ploter: 40,
-    sizes: '4, 6, 8, 10, 12, 14, 16',
+    sizes: '2, 4, 6, 8, 10, 12, 14, 16, 18',
   },
   bebes: {
     carton: 70000, pdf: 30000, ploter: 45000,
