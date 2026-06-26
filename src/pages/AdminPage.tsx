@@ -724,7 +724,7 @@ const PRECIO_DEFECTO = {
     sizes: '4, 6, 8, 10, 12, 14, 16',
   },
   bebes: {
-    carton: 70000, pdf: 28000, ploter: 45000,   // PDF A4 ARS: 28.000 (estimado — ajustar si es necesario)
+    carton: 70000, pdf: 30000, ploter: 45000,
     usd_carton: 55, usd_pdf: 20, usd_ploter: 35,
     sizes: '1, 2, 3, 4, 5, 6, 7, 8, 9',
   },

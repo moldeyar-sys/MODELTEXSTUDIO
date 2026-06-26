@@ -52,7 +52,7 @@ WHERE category IN ('nina','nino','ninos-unisex');
 -- Talles:  1, 2, 3, 4, 5, 6, 7, 8, 9
 UPDATE products SET
   precio_carton         = 70000,
-  precio_pdf_a4         = 28000,
+  precio_pdf_a4         = 30000,
   precio_pdf_ploter     = 45000,
   precio_usd_carton     = 55,
   precio_usd_pdf_a4     = 20,
