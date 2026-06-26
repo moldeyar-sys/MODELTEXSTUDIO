@@ -709,6 +709,38 @@ export default function AdminPage() {
   );
 }
 
+// ─── Precios predeterminados por grupo de categoría ──────────────────────────
+// Estos son los precios para la curva de talles completa (predeterminada).
+// El ajuste por talle extra/menos se aplica en el frontend (FormatOptions).
+const PRECIO_DEFECTO = {
+  adultos: {
+    carton: 80000, pdf: 30000, ploter: 50000,
+    usd_carton: 60, usd_pdf: 20, usd_ploter: 40,
+    sizes: 'XS, S, M, L, XL, 2XL, 3XL, 4XL',
+  },
+  ninos: {
+    carton: 80000, pdf: 36000, ploter: 50000,
+    usd_carton: 60, usd_pdf: 24, usd_ploter: 40,
+    sizes: '4, 6, 8, 10, 12, 14, 16',
+  },
+  bebes: {
+    carton: 70000, pdf: 28000, ploter: 45000,   // PDF A4 ARS: 28.000 (estimado — ajustar si es necesario)
+    usd_carton: 55, usd_pdf: 20, usd_ploter: 35,
+    sizes: '1, 2, 3, 4, 5, 6, 7, 8, 9',
+  },
+} as const;
+
+type PrecioGroup = keyof typeof PRECIO_DEFECTO;
+
+function getPrecioGroup(categories: string[]): PrecioGroup | null {
+  const cat = categories[0] || '';
+  if (['dama', 'hombre', 'adultos-unisex'].includes(cat)) return 'adultos';
+  if (['nina', 'nino', 'ninos-unisex'].includes(cat))     return 'ninos';
+  if (cat === 'bebes')                                     return 'bebes';
+  return null;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Product Form Component
 function ProductForm({
   product,
@@ -769,6 +801,43 @@ function ProductForm({
     };
     loadFiles();
   }, [currentProduct]);
+
+  // Auto-relleno de precios/talles al cambiar categoría en productos NUEVOS
+  useEffect(() => {
+    if (currentProduct) return; // solo para productos nuevos
+    const group = getPrecioGroup(form.categories);
+    if (!group) return;
+    // Solo rellena si los precios están vacíos
+    if (form.precio_carton || form.precio_pdf_a4 || form.precio_pdf_ploter) return;
+    const d = PRECIO_DEFECTO[group];
+    setForm(prev => ({
+      ...prev,
+      precio_carton:        String(d.carton),
+      precio_pdf_a4:        String(d.pdf),
+      precio_pdf_ploter:    String(d.ploter),
+      precio_usd_carton:    String(d.usd_carton),
+      precio_usd_pdf_a4:    String(d.usd_pdf),
+      precio_usd_pdf_ploter:String(d.usd_ploter),
+      sizes: prev.sizes || d.sizes,
+    }));
+  }, [form.categories]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Aplica precios + talles predeterminados según la categoría actual (botón manual)
+  const applyDefaults = () => {
+    const group = getPrecioGroup(form.categories);
+    if (!group) { alert('Seleccioná una categoría principal primero.'); return; }
+    const d = PRECIO_DEFECTO[group];
+    setForm(prev => ({
+      ...prev,
+      precio_carton:        String(d.carton),
+      precio_pdf_a4:        String(d.pdf),
+      precio_pdf_ploter:    String(d.ploter),
+      precio_usd_carton:    String(d.usd_carton),
+      precio_usd_pdf_a4:    String(d.usd_pdf),
+      precio_usd_pdf_ploter:String(d.usd_ploter),
+      sizes: d.sizes,
+    }));
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -1074,7 +1143,17 @@ function ProductForm({
 
           {/* Formatos y precios comerciales (se ven en catálogo y ficha) */}
           <div className="sm:col-span-2 border border-gray-200 rounded-xl p-4 bg-gray-50/60">
-            <p className="text-sm font-semibold text-gray-700 mb-3">Formatos y precios comerciales</p>
+            <div className="flex items-center justify-between mb-3 flex-wrap gap-2">
+              <p className="text-sm font-semibold text-gray-700">Formatos y precios comerciales</p>
+              <button
+                type="button"
+                onClick={applyDefaults}
+                className="text-xs font-medium px-3 py-1.5 bg-primary-50 text-primary-700 border border-primary-200 rounded-lg hover:bg-primary-100 transition-colors"
+                title="Rellena precios y talles según la categoría (adultos / niños / bebés)"
+              >
+                📋 Usar precios estándar
+              </button>
+            </div>
             <div className="grid sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
