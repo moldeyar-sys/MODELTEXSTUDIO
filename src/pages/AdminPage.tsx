@@ -903,7 +903,6 @@ function ProductForm({
     main_image_url: product?.main_image_url || '',
     is_active: product?.is_active ?? true,
     is_featured: product?.is_featured ?? false,
-    entrega_inmediata: product?.entrega_inmediata ?? false,
   });
   const [gallery, setGallery] = useState<string[]>(product?.gallery || []);
   const [files, setFiles] = useState<ProductFile[]>([]);
@@ -1117,7 +1116,6 @@ function ProductForm({
       gallery,
       is_active: form.is_active,
       is_featured: form.is_featured,
-      entrega_inmediata: form.entrega_inmediata,
     };
     // Campos opcionales: solo se guardan si la columna ya existe en la base.
     const optionalData = {
@@ -1460,18 +1458,23 @@ function ProductForm({
           <textarea name="long_description" value={form.long_description} onChange={handleChange} rows={4} className="input-field resize-none" />
         </div>
 
-        <div className="flex flex-wrap items-center gap-6">
-          <label className="flex items-center gap-2 text-sm text-gray-700">
-            <input type="checkbox" name="is_active" checked={form.is_active} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-            Activo
-          </label>
-          <label className="flex items-center gap-2 text-sm text-gray-700">
+        <div className="flex flex-wrap items-center gap-4">
+          {/* Toggle Visible / Oculto */}
+          <button
+            type="button"
+            onClick={() => setForm(prev => ({ ...prev, is_active: !prev.is_active }))}
+            className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold border-2 transition-colors ${
+              form.is_active
+                ? 'bg-green-50 border-green-400 text-green-700 hover:bg-green-100'
+                : 'bg-gray-100 border-gray-300 text-gray-500 hover:bg-gray-200'
+            }`}
+          >
+            <span className={`w-3 h-3 rounded-full ${form.is_active ? 'bg-green-500' : 'bg-gray-400'}`} />
+            {form.is_active ? '👁 Visible en catálogo' : '🙈 Oculto del catálogo'}
+          </button>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
             <input type="checkbox" name="is_featured" checked={form.is_featured} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
-            Destacado
-          </label>
-          <label className="flex items-center gap-2 text-sm font-medium text-green-700 bg-green-50 border border-green-200 rounded-lg px-3 py-1.5 cursor-pointer hover:bg-green-100 transition-colors">
-            <input type="checkbox" name="entrega_inmediata" checked={form.entrega_inmediata} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
-            ⚡ Descarga inmediata (PDF listo)
+            ⭐ Destacado
           </label>
         </div>
 
