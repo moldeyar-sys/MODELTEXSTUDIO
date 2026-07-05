@@ -64,14 +64,38 @@ export default function CheckoutPage() {
         price: cartUnitPrice(item),
         quantity: item.quantity,
       }));
-      const orderItems = baseItems.map((b, idx) => ({ ...b, formato: items[idx].format ?? null }));
+      // Detalle completo de la compra: formato, talles y nombre (snapshot).
+      const orderItems = baseItems.map((b, idx) => ({
+        ...b,
+        formato: items[idx].format ?? null,
+        sizes: items[idx].sizes ?? [],
+        product_name: items[idx].product.name,
+      }));
 
-      // Resiliente: si la columna 'formato' aún no existe, reintenta sin ella.
+      // Resiliente: si alguna columna nueva (formato/sizes/product_name) aún no
+      // existe en la base, reintenta con solo las columnas básicas para no bloquear la venta.
       let { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError && itemsError.message?.includes('formato')) {
+      if (itemsError && /formato|sizes|product_name|column/i.test(itemsError.message ?? '')) {
         ({ error: itemsError } = await supabase.from('order_items').insert(baseItems));
       }
       if (itemsError) throw itemsError;
+
+      // Avisar al dueño de la nueva compra (WhatsApp + email).
+      // sendBeacon sobrevive a la redirección a Mercado Pago; si no está disponible, cae a fetch.
+      try {
+        const payload = JSON.stringify({ orderId: order.id });
+        const sent = typeof navigator !== 'undefined' && 'sendBeacon' in navigator
+          ? navigator.sendBeacon('/api/notify-order', new Blob([payload], { type: 'application/json' }))
+          : false;
+        if (!sent) {
+          fetch('/api/notify-order', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: payload,
+            keepalive: true,
+          }).catch(() => { /* el aviso es best-effort, nunca bloquea la compra */ });
+        }
+      } catch { /* nunca frenar el checkout por el aviso */ }
 
       // Mercado Pago: intentar redirigir ANTES de mostrar cualquier pantalla.
       // Solo si falla la API se muestra la pantalla de pago manual.

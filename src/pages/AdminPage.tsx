@@ -49,7 +49,7 @@ export default function AdminPage() {
     if (showSpinner) setLoading(true);
     const [prodRes, orderRes, custRes, reqRes, freeRes, contactRes, heroRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
-      supabase.from('orders').select('*, order_items(*)').order('created_at', { ascending: false }),
+      supabase.from('orders').select('*, order_items(*, product:products(name, main_image_url)), buyer:profiles(email, whatsapp, full_name)').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('custom_requests').select('*').order('created_at', { ascending: false }),
       fetchAllFreeMolds(), // resiliente: si la tabla no existe, devuelve [] sin romper el admin
@@ -410,8 +410,49 @@ export default function AdminPage() {
                     <p className="text-sm font-bold text-primary-900">${Number(o.total).toLocaleString('es-AR')}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400">Items</p>
-                    <p className="text-sm text-gray-700">{o.order_items?.length || 0} producto(s)</p>
+                    <p className="text-xs text-gray-400">Comprador</p>
+                    <p className="text-sm font-medium text-gray-700 truncate">{o.buyer?.full_name || o.buyer?.email || '—'}</p>
+                    {o.buyer?.whatsapp && <p className="text-xs text-gray-500">WhatsApp: {o.buyer.whatsapp}</p>}
+                  </div>
+                </div>
+
+                {/* Detalle de lo comprado: artículo, formato y talles */}
+                <div className="bg-gray-50 rounded-xl p-4 mb-4">
+                  <p className="text-xs font-medium text-gray-500 mb-3">Detalle del pedido</p>
+                  <div className="space-y-3">
+                    {(o.order_items ?? []).map(it => (
+                      <div key={it.id} className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {it.product?.main_image_url && (
+                            <img src={it.product.main_image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900">
+                              {it.product?.name || it.product_name || 'Producto eliminado'}
+                            </p>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                              {it.formato && <span className="text-xs text-primary-700">{it.formato}</span>}
+                              <span className="text-xs text-gray-500">Cantidad: {it.quantity}</span>
+                            </div>
+                            {it.sizes && it.sizes.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {it.sizes.map(s => (
+                                  <span key={s} className="text-[11px] font-medium px-2 py-0.5 bg-primary-100 text-primary-800 rounded">
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
+                          ${Number(it.price).toLocaleString('es-AR')}
+                        </span>
+                      </div>
+                    ))}
+                    {(o.order_items?.length ?? 0) === 0 && (
+                      <p className="text-sm text-gray-400">Sin detalle de productos.</p>
+                    )}
                   </div>
                 </div>
 

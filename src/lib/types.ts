@@ -72,6 +72,8 @@ export interface Order {
   order_status: OrderStatus;
   created_at: string;
   order_items?: OrderItem[];
+  /** Datos del comprador (join con profiles en el panel admin). */
+  buyer?: { email?: string; whatsapp?: string; full_name?: string } | null;
 }
 
 export interface OrderItem {
@@ -80,6 +82,12 @@ export interface OrderItem {
   product_id: string;
   price: number;
   quantity: number;
+  /** Formato comercial comprado (ej: "Moldes en Cartón", "PDF Plóter"). */
+  formato?: string | null;
+  /** Talles que eligió el cliente (ej: ["S","M","L"]). */
+  sizes?: string[] | null;
+  /** Nombre del producto al momento de la compra (snapshot, sobrevive a borrados). */
+  product_name?: string | null;
   product?: Product;
 }
 
