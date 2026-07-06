@@ -14,6 +14,21 @@ const WHATSAPP = '5491166531086';
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
 
+// Trae la "memoria" editable del admin (tabla ai_settings, fila default).
+async function getAdminKnowledge(): Promise<string> {
+  try {
+    const url = `${SUPABASE_URL}/rest/v1/ai_settings?select=knowledge&id=eq.default`;
+    const res = await fetch(url, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+    });
+    if (!res.ok) return '';
+    const rows = (await res.json()) as any[];
+    return rows?.[0]?.knowledge?.trim() || '';
+  } catch {
+    return '';
+  }
+}
+
 // Trae un resumen compacto del catalogo activo para que el asistente no invente.
 async function getCatalogSummary(): Promise<string> {
   try {
@@ -41,10 +56,15 @@ async function getCatalogSummary(): Promise<string> {
   }
 }
 
-function buildSystemPrompt(catalog: string): string {
+function buildSystemPrompt(catalog: string, knowledge: string): string {
   return [
     'Sos el asistente virtual de Modeltex, una tienda online que vende MOLDES DIGITALES de ropa para imprimir y producir.',
     'Los productos son archivos digitales (PDF A4, PDF Plotter, DXF, CDR, PLT, sublimacion) con DESCARGA INMEDIATA tras el pago. Se vende a todo el mundo.',
+    '',
+    // Base de conocimiento editable por el admin (rubro textil + info del sitio).
+    ...(knowledge
+      ? ['BASE DE CONOCIMIENTO (info oficial de Modeltex y del rubro textil; usala como fuente principal):', knowledge, '']
+      : []),
     '',
     'TU ESTILO:',
     '- Respondes SIEMPRE en español rioplatense, claro, amable y breve (2-5 frases).',
@@ -92,8 +112,8 @@ export default async function handler(req: any, res: any) {
       .slice(-12)
       .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
 
-    const catalog = await getCatalogSummary();
-    const messages: ChatMessage[] = [{ role: 'system', content: buildSystemPrompt(catalog) }, ...history];
+    const [catalog, knowledge] = await Promise.all([getCatalogSummary(), getAdminKnowledge()]);
+    const messages: ChatMessage[] = [{ role: 'system', content: buildSystemPrompt(catalog, knowledge) }, ...history];
 
     const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

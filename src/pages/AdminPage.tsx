@@ -5,7 +5,7 @@ import {
   Plus, Edit3, Trash2,
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
-  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save
+  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save, Bot
 } from 'lucide-react';
 import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
@@ -16,8 +16,9 @@ import { fetchAllHeroImages } from '../lib/heroImages';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
+import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'hero' | 'payments';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'hero' | 'payments' | 'ia';
 
 export default function AdminPage() {
   useAuth();
@@ -35,6 +36,9 @@ export default function AdminPage() {
   const [payForm, setPayForm] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
   const [paySaving, setPaySaving] = useState(false);
   const [paySaved, setPaySaved] = useState(false);
+  const [aiForm, setAiForm] = useState('');
+  const [aiSaving, setAiSaving] = useState(false);
+  const [aiSaved, setAiSaved] = useState(false);
   const [showProductForm, setShowProductForm] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [showFreeForm, setShowFreeForm] = useState(false);
@@ -66,6 +70,8 @@ export default function AdminPage() {
     const ps = await fetchPaymentSettings();
     setPaySettings(ps);
     setPayForm(ps);
+    const ai = await fetchAISettings();
+    setAiForm(ai.knowledge);
     if (showSpinner) setLoading(false);
   };
 
@@ -79,6 +85,7 @@ export default function AdminPage() {
     { id: 'contacts', label: 'Contactos', icon: <Mail className="w-4 h-4" /> },
     { id: 'hero', label: 'Hero', icon: <ImageIcon className="w-4 h-4" /> },
     { id: 'payments', label: 'Pagos', icon: <CreditCard className="w-4 h-4" /> },
+    { id: 'ia', label: 'IA', icon: <Bot className="w-4 h-4" /> },
   ];
 
   const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -867,6 +874,53 @@ export default function AdminPage() {
                 ))}
               </div>
             )}
+          </div>
+        )}
+
+        {/* IA — memoria / base de conocimiento del asistente */}
+        {activeTab === 'ia' && (
+          <div className="max-w-3xl">
+            <h2 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
+              <Bot className="w-5 h-5 text-primary-700" /> Memoria del asistente IA
+            </h2>
+            <p className="text-sm text-gray-500 mb-4">
+              Este es el conocimiento que usa el asistente para responderles a tus clientes.
+              Escribí acá todo lo que quieras que sepa: info del sitio, del rubro textil, formas
+              de pago, envíos, etc. El catálogo de productos lo agrega solo, no hace falta cargarlo.
+            </p>
+
+            <div className="bg-primary-50 border border-primary-200 rounded-lg px-4 py-3 mb-4 text-sm text-primary-800">
+              💡 Consejo: escribí en frases simples y claras, como si le explicaras a una persona.
+              No inventés precios acá; esos salen del catálogo. Cuanto más completo, mejor responde.
+            </div>
+
+            <label className="block text-sm font-medium text-gray-700 mb-1">Base de conocimiento</label>
+            <textarea
+              value={aiForm}
+              onChange={e => setAiForm(e.target.value)}
+              rows={22}
+              className="input-field font-mono text-sm leading-relaxed"
+              placeholder="Ej: Modeltex vende moldes digitales de ropa. Los formatos son PDF A4, PDF Plóter..."
+            />
+            <p className="text-xs text-gray-400 mt-1">{aiForm.length.toLocaleString('es-AR')} caracteres</p>
+
+            <div className="flex items-center gap-3 mt-4">
+              <button
+                type="button"
+                disabled={aiSaving}
+                onClick={async () => {
+                  setAiSaving(true);
+                  const ok = await saveAISettings(aiForm);
+                  if (ok) { setAiSaved(true); setTimeout(() => setAiSaved(false), 2500); }
+                  else alert('No se pudo guardar. Si es la primera vez, falta correr el SQL de la IA (migración 021) en Supabase.');
+                  setAiSaving(false);
+                }}
+                className="btn-primary flex items-center gap-2 disabled:opacity-50"
+              >
+                {aiSaving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</> : aiSaved ? '✓ Guardado' : <><Save className="w-4 h-4" /> Guardar memoria</>}
+              </button>
+              {aiSaved && <p className="text-sm text-green-600">✓ El asistente ya usa esta información.</p>}
+            </div>
           </div>
         )}
       </div>
