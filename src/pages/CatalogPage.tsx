@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import {
   Search,
@@ -11,7 +11,7 @@ import {
   CalendarDays,
   ArrowUpDown,
   Tag,
-} from 'lucide-react';
+  } from 'lucide-react';
 import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { supabase } from '../lib/supabase';
 import { ProductCard } from '../components/ui/ProductCard';
@@ -22,6 +22,13 @@ import { CATEGORIES, FORMATS } from '../lib/types';
 import { isPromoActive } from '../lib/promo';
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc' | 'nombre';
+type SmartIntent = {
+  category: ProductCategory | '';
+  format: string;
+  season: string;
+  labels: string[];
+  tokens: string[];
+};
 
 const SEASON_OPTIONS = [
   { value: '', label: 'Todas', Icon: CalendarDays },
@@ -35,6 +42,168 @@ const SORT_LABELS: Record<SortOption, string> = {
   precio_asc: 'Menor precio',
   precio_desc: 'Mayor precio',
   nombre: 'Nombre A-Z',
+};
+
+const SMART_SEARCH_EXAMPLES = [
+  'short nina verano',
+  'buzo oversize frisa',
+  'remera hombre pdf a4',
+  'bebe sublimacion',
+  'pantalon nino invierno',
+];
+
+const CATEGORY_ALIASES: Record<ProductCategory, string[]> = {
+  dama: ['dama', 'mujer', 'mujeres', 'femenino'],
+  hombre: ['hombre', 'hombres', 'masculino', 'caballero'],
+  nina: ['nina', 'ninas', 'nena', 'nenas', 'chica', 'chicas'],
+  nino: ['nino', 'ninos', 'nene', 'nenes', 'varon', 'varones'],
+  bebes: ['bebe', 'bebes', 'bb', 'baby'],
+  'adultos-unisex': ['adulto', 'adultos', 'unisex'],
+  'ninos-unisex': ['infantil', 'infantiles', 'unisex ninos', 'unisex nino'],
+};
+
+const FORMAT_ALIASES: Array<{ value: string; aliases: string[] }> = [
+  { value: 'PDF A4', aliases: ['pdf a4', 'a4', 'hoja a4', 'imprimir en casa'] },
+  { value: 'PDF Plotter', aliases: ['plotter', 'ploter', 'pdf plotter', 'pdf ploter', 'rollo'] },
+  { value: 'PLT', aliases: ['plt'] },
+  { value: 'DXF', aliases: ['dxf', 'cad'] },
+  { value: 'CDR', aliases: ['cdr', 'corel', 'coreldraw'] },
+  { value: 'Sublimacion', aliases: ['sublimacion', 'sublimar', 'sublimable'] },
+];
+
+const SEASON_ALIASES = [
+  { value: 'verano', aliases: ['verano', 'calor'] },
+  { value: 'invierno', aliases: ['invierno', 'frio', 'abrigo'] },
+  { value: 'todo-el-anio', aliases: ['todo el ano', 'todo ano', 'todo uso'] },
+];
+
+const normalizeText = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s]/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getLowestPrice = (product: Product) => {
+  const values = [
+    product.sale_price,
+    product.precio_pdf_a4,
+    product.precio_pdf_ploter,
+    product.precio_carton,
+    product.price,
+  ].filter((value): value is number => value != null && value > 0);
+
+  return values.length ? Math.min(...values) : Number.MAX_SAFE_INTEGER;
+};
+
+const inferSmartIntent = (query: string): SmartIntent => {
+  const normalized = normalizeText(query);
+  if (!normalized) {
+    return { category: '', format: '', season: '', labels: [], tokens: [] };
+  }
+
+  const labels: string[] = [];
+  let inferredCategory: ProductCategory | '' = '';
+  let inferredFormat = '';
+  let inferredSeason = '';
+
+  for (const [categoryValue, aliases] of Object.entries(CATEGORY_ALIASES) as Array<[ProductCategory, string[]]>) {
+    if (aliases.some((alias) => normalized.includes(alias))) {
+      inferredCategory = categoryValue;
+      const label = CATEGORIES.find((item) => item.value === categoryValue)?.label;
+      if (label) labels.push(label);
+      break;
+    }
+  }
+
+  for (const item of FORMAT_ALIASES) {
+    if (item.aliases.some((alias) => normalized.includes(alias))) {
+      inferredFormat = item.value;
+      labels.push(item.value);
+      break;
+    }
+  }
+
+  for (const item of SEASON_ALIASES) {
+    if (item.aliases.some((alias) => normalized.includes(alias))) {
+      inferredSeason = item.value;
+      const seasonLabel = SEASON_OPTIONS.find((option) => option.value === item.value)?.label;
+      if (seasonLabel) labels.push(seasonLabel);
+      break;
+    }
+  }
+
+  const tokens = normalized.split(' ').filter((token) => token.length > 1);
+  return { category: inferredCategory, format: inferredFormat, season: inferredSeason, labels, tokens };
+};
+
+const getProductSearchText = (product: Product) => {
+  const categoryAliases = CATEGORY_ALIASES[product.category] || [];
+  return normalizeText([
+    product.name,
+    product.short_description,
+    product.long_description,
+    product.garment_type,
+    product.codigo || '',
+    product.category,
+    categoryAliases.join(' '),
+    (product.categories || []).join(' '),
+    (product.formats || []).join(' '),
+    (product.sizes || []).join(' '),
+    (product.recommended_fabrics || []).join(' '),
+    product.season || '',
+  ].join(' '));
+};
+
+const scoreProduct = (product: Product, query: string, intent: SmartIntent) => {
+  const normalizedQuery = normalizeText(query);
+  if (!normalizedQuery) return 0;
+
+  const normalizedName = normalizeText(product.name);
+  const normalizedGarment = normalizeText(product.garment_type || '');
+  const normalizedDesc = normalizeText(`${product.short_description || ''} ${product.long_description || ''}`);
+  const searchText = getProductSearchText(product);
+
+  let score = 0;
+
+  if (normalizedName.includes(normalizedQuery)) score += 18;
+  if (normalizedGarment.includes(normalizedQuery)) score += 12;
+  if (normalizedDesc.includes(normalizedQuery)) score += 8;
+
+  for (const token of intent.tokens) {
+    if (normalizedName.includes(token)) score += 7;
+    else if (normalizedGarment.includes(token)) score += 5;
+    else if (normalizedDesc.includes(token)) score += 3;
+    else if (searchText.includes(token)) score += 2;
+  }
+
+  if (intent.category && product.category === intent.category) score += 8;
+  if (product.is_featured) score += 4;
+  if (intent.season && (product.season || 'todo-el-anio') === intent.season) score += 6;
+  if (intent.format && (product.formats || []).includes(intent.format)) score += 6;
+
+  return score;
+};
+
+const sortProducts = (items: Product[], sort: SortOption) => {
+  const sorted = [...items];
+  switch (sort) {
+    case 'precio_asc':
+      sorted.sort((a, b) => getLowestPrice(a) - getLowestPrice(b));
+      break;
+    case 'precio_desc':
+      sorted.sort((a, b) => getLowestPrice(b) - getLowestPrice(a));
+      break;
+    case 'nombre':
+      sorted.sort((a, b) => a.name.localeCompare(b.name, 'es'));
+      break;
+    default:
+      sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      break;
+  }
+  return sorted;
 };
 
 export default function CatalogPage() {
@@ -60,24 +229,8 @@ export default function CatalogPage() {
           ? query.or(`categories.cs.{${category}},category.eq.${category}`)
           : query.eq('category', category);
       }
-      if (busqueda) {
-        query = query.or(`name.ilike.%${busqueda}%,short_description.ilike.%${busqueda}%`);
-      }
       if (format) {
         query = query.contains('formats', [format]);
-      }
-      switch (sort) {
-        case 'precio_asc':
-          query = query.order('price', { ascending: true });
-          break;
-        case 'precio_desc':
-          query = query.order('price', { ascending: false });
-          break;
-        case 'nombre':
-          query = query.order('name', { ascending: true });
-          break;
-        default:
-          query = query.order('created_at', { ascending: false });
       }
       return query;
     };
@@ -91,7 +244,7 @@ export default function CatalogPage() {
         console.error('Error fetching products:', error);
         setProducts([]);
       } else {
-        setProducts(((data as Product[]) || []).filter((p) => !isPromoActive(p)));
+        setProducts(((data as Product[]) || []).filter((product) => !isPromoActive(product)));
       }
     } catch (err) {
       console.error('Unexpected error fetching products:', err);
@@ -99,7 +252,7 @@ export default function CatalogPage() {
     } finally {
       setLoading(false);
     }
-  }, [category, format, sort, busqueda]);
+  }, [category, format]);
 
   useEffect(() => {
     fetchProducts();
@@ -108,6 +261,35 @@ export default function CatalogPage() {
   useEffect(() => {
     setSearch(busqueda);
   }, [busqueda]);
+
+  const buildSearchParams = (value: string, replaceDetectedFilters: boolean) => {
+    const params = new URLSearchParams(searchParams);
+    const trimmed = value.trim();
+
+    if (trimmed) {
+      const intent = inferSmartIntent(trimmed);
+      params.set('busqueda', trimmed);
+
+      if (intent.category && (replaceDetectedFilters || !category)) {
+        params.set('categoria', intent.category);
+      }
+      if (intent.format && (replaceDetectedFilters || !format)) {
+        params.set('formato', intent.format);
+      }
+      if (intent.season && (replaceDetectedFilters || !temporada)) {
+        params.set('temporada', intent.season);
+      }
+    } else {
+      params.delete('busqueda');
+      if (replaceDetectedFilters) {
+        params.delete('categoria');
+        params.delete('formato');
+        params.delete('temporada');
+      }
+    }
+
+    return params;
+  };
 
   const updateFilter = (key: string, value: string) => {
     const params = new URLSearchParams(searchParams);
@@ -121,13 +303,12 @@ export default function CatalogPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
-    const params = new URLSearchParams(searchParams);
-    if (search.trim()) {
-      params.set('busqueda', search.trim());
-    } else {
-      params.delete('busqueda');
-    }
-    setSearchParams(params, { replace: true });
+    setSearchParams(buildSearchParams(search, false), { replace: true });
+  };
+
+  const runSuggestedSearch = (value: string) => {
+    setSearch(value);
+    setSearchParams(buildSearchParams(value, true), { replace: true });
   };
 
   const clearFilters = () => {
@@ -138,15 +319,34 @@ export default function CatalogPage() {
   const hasActiveFilters = Boolean(category || format || busqueda || temporada);
   const activeFiltersCount = [category, format, busqueda, temporada].filter(Boolean).length;
 
-  const seasonMatches = (p: Product): boolean => {
+  const seasonMatches = (product: Product): boolean => {
     if (!temporada) return true;
-    const season = p.season || 'todo-el-anio';
+    const season = product.season || 'todo-el-anio';
     if (temporada === 'todo-el-anio') return season === 'todo-el-anio';
     return season === temporada || season === 'todo-el-anio';
   };
 
-  const visibleProducts = products.filter(seasonMatches);
-  const currentCategoryLabel = CATEGORIES.find((c) => c.value === category)?.label || 'Todos los productos';
+  const smartIntent = useMemo(() => inferSmartIntent(busqueda), [busqueda]);
+
+  const visibleProducts = useMemo(() => {
+    const seasonalProducts = products.filter(seasonMatches);
+    const sortedBase = sortProducts(seasonalProducts, sort);
+
+    if (!busqueda.trim()) {
+      return sortedBase;
+    }
+
+    return seasonalProducts
+      .map((product) => ({ product, score: scoreProduct(product, busqueda, smartIntent) }))
+      .filter((item) => item.score > 0)
+      .sort((a, b) => {
+        if (b.score !== a.score) return b.score - a.score;
+        return sortProducts([a.product, b.product], sort)[0].id === a.product.id ? -1 : 1;
+      })
+      .map((item) => item.product);
+  }, [products, busqueda, smartIntent, sort, temporada]);
+
+  const currentCategoryLabel = CATEGORIES.find((item) => item.value === category)?.label || 'Todos los productos';
   const currentSeasonLabel = SEASON_OPTIONS.find((item) => item.value === temporada)?.label || 'Todas';
 
   useSeo({
@@ -209,15 +409,15 @@ export default function CatalogPage() {
           >
             Todos
           </button>
-          {CATEGORIES.map((c) => (
+          {CATEGORIES.map((item) => (
             <button
-              key={c.value}
-              onClick={() => updateFilter('categoria', c.value)}
+              key={item.value}
+              onClick={() => updateFilter('categoria', item.value)}
               className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                category === c.value ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                category === item.value ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
               }`}
             >
-              {c.label}
+              {item.label}
             </button>
           ))}
         </div>
@@ -231,7 +431,7 @@ export default function CatalogPage() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar molde, prenda o uso"
+                  placeholder="Buscar molde, prenda, uso o formato"
                   className="input-field pl-10 pr-10"
                 />
                 {search && (
@@ -247,6 +447,25 @@ export default function CatalogPage() {
               </div>
               <button type="submit" className="btn-primary px-4 shrink-0">Buscar</button>
             </form>
+
+            <div className="flex flex-wrap gap-2">
+              {SMART_SEARCH_EXAMPLES.map((example) => (
+                <button
+                  key={example}
+                  type="button"
+                  onClick={() => runSuggestedSearch(example)}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-white hover:border-primary-200 hover:text-primary-800 transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5" /> {example}
+                </button>
+              ))}
+            </div>
+
+            {busqueda && smartIntent.labels.length > 0 && (
+              <div className="rounded-xl border border-primary-100 bg-primary-50 px-3 py-2.5 text-sm text-primary-900">
+                <span className="font-semibold">Busqueda inteligente:</span> voy a priorizar {smartIntent.labels.join(', ')}.
+              </div>
+            )}
 
             <div className="grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_200px_180px] gap-2.5">
               <button
@@ -366,8 +585,8 @@ export default function CatalogPage() {
                   className="input-field"
                 >
                   <option value="">Todas las categorias</option>
-                  {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
+                  {CATEGORIES.map((item) => (
+                    <option key={item.value} value={item.value}>{item.label}</option>
                   ))}
                 </select>
               </div>
@@ -414,8 +633,8 @@ export default function CatalogPage() {
 
         {loading ? (
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <div key={i} className="card animate-pulse">
+            {Array.from({ length: 8 }).map((_, index) => (
+              <div key={index} className="card animate-pulse">
                 <div className="aspect-square sm:aspect-[4/3] bg-gray-200" />
                 <div className="p-4 space-y-3">
                   <div className="h-4 bg-gray-200 rounded w-1/3" />
@@ -472,3 +691,6 @@ export default function CatalogPage() {
     </div>
   );
 }
+
+
+

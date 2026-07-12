@@ -44,6 +44,7 @@ export default function AdminPage() {
   const [showFreeForm, setShowFreeForm] = useState(false);
   const [editingFree, setEditingFree] = useState<FreeMold | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [featuredFilter, setFeaturedFilter] = useState<'all' | 'featured' | 'regular'>('all');
 
   useEffect(() => {
     fetchAll();
@@ -179,6 +180,23 @@ export default function AdminPage() {
   const paidOrders = orders.filter(o => o.payment_status === 'pagado');
   const pendingOrders = orders.filter(o => o.payment_status === 'pendiente');
   const totalRevenue = paidOrders.reduce((sum, o) => sum + Number(o.total), 0);
+  const normalizedSearchTerm = searchTerm.trim().toLowerCase();
+  const filteredProducts = products
+    .filter((p) => {
+      const matchesSearch = !normalizedSearchTerm || [p.name, p.slug, p.codigo || ''].some((value) =>
+        value.toLowerCase().includes(normalizedSearchTerm)
+      );
+      const matchesFeatured = featuredFilter === 'all'
+        ? true
+        : featuredFilter === 'featured'
+          ? p.is_featured
+          : !p.is_featured;
+      return matchesSearch && matchesFeatured;
+    })
+    .sort((a, b) => {
+      if (a.is_featured !== b.is_featured) return a.is_featured ? -1 : 1;
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+    });
 
   const statusColor = (status: string) => {
     switch (status) {
@@ -322,9 +340,7 @@ export default function AdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50">
-                    {products
-                      .filter(p => !searchTerm || p.name.toLowerCase().includes(searchTerm.toLowerCase()))
-                      .map(p => (
+                    {filteredProducts.map(p => (
                       <tr key={p.id} className="hover:bg-gray-50/50">
                         <td className="px-4 py-3">
                           <div className="flex items-center gap-3">
@@ -1638,4 +1654,5 @@ function ProductForm({
     </div>
   );
 }
+
 
