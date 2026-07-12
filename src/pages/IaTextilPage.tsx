@@ -27,11 +27,11 @@ export default function IaTextilPage() {
         <div className="absolute inset-0 opacity-20 pointer-events-none"
           style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 40%), radial-gradient(circle at 80% 0%, rgba(203,110,231,0.35), transparent 45%)' }}
         />
-        <div className="container-custom relative py-16 md:py-20">
+        <div className="container-custom relative py-10 sm:py-14 md:py-20">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/10 border border-white/20 text-sm font-medium backdrop-blur-sm">
             <Sparkles className="w-4 h-4 text-accent-300" /> IA Textil
           </span>
-          <h1 className="font-display text-3xl md:text-5xl font-bold mt-5 max-w-3xl text-balance">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mt-5 max-w-3xl text-balance">
             IA Textil de Modeltex
           </h1>
           <p className="text-lg md:text-xl text-white/90 mt-5 max-w-2xl font-medium">
@@ -58,7 +58,7 @@ export default function IaTextilPage() {
       </section>
 
       {/* Grid de cards */}
-      <section className="relative overflow-hidden container-custom py-12 md:py-16">
+      <section className="relative overflow-hidden container-custom py-8 md:py-16">
         <FloatingPatterns variant="dark" />
         <div className="max-w-2xl mb-10">
           <h2 className="font-display text-2xl md:text-3xl font-bold text-primary-900">
@@ -94,9 +94,9 @@ export default function IaTextilPage() {
       </section>
 
       {/* CTA final */}
-      <section className="relative overflow-hidden container-custom pb-16 md:pb-20">
+      <section className="relative overflow-hidden container-custom pb-10 md:pb-20">
         <FloatingPatterns variant="dark" />
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-900 to-petroleum-800 text-white px-6 py-12 md:px-12 md:py-14 text-center">
+        <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary-900 to-petroleum-800 text-white px-6 py-12 md:px-12 md:py-14 text-center">
           <div className="absolute inset-0 opacity-20 pointer-events-none"
             style={{ backgroundImage: 'radial-gradient(circle at 80% 20%, rgba(203,110,231,0.4), transparent 45%)' }}
           />

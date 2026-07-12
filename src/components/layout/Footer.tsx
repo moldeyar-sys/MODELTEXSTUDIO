@@ -11,7 +11,7 @@ export function Footer() {
   return (
     <footer className="bg-primary-900 text-white">
       <div className="container-custom py-16">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-10">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 lg:gap-10">
           {/* Brand */}
           <div>
             <div className="mb-4">
@@ -52,6 +52,18 @@ export function Footer() {
               <li><Link to="/diseno-a-pedido" className="text-primary-200 text-sm hover:text-white transition-colors">{t('nav.custom', 'Diseño a pedido')}</Link></li>
               <li><Link to="/registro" className="text-primary-200 text-sm hover:text-white transition-colors">{t('nav.register', 'Crear cuenta')}</Link></li>
               <li><Link to="/login" className="text-primary-200 text-sm hover:text-white transition-colors">{t('nav.signin', 'Iniciar sesión')}</Link></li>
+            </ul>
+          </div>
+
+          {/* Help */}
+          <div>
+            <h4 className="font-semibold text-white mb-4">Ayuda y confianza</h4>
+            <ul className="space-y-2">
+              <li><Link to="/como-funciona" className="text-primary-200 text-sm hover:text-white transition-colors">Cómo funciona</Link></li>
+              <li><Link to="/ayuda-impresion" className="text-primary-200 text-sm hover:text-white transition-colors">Ayuda para imprimir</Link></li>
+              <li><Link to="/politica-descargas" className="text-primary-200 text-sm hover:text-white transition-colors">Descargas y reembolsos</Link></li>
+              <li><Link to="/terminos" className="text-primary-200 text-sm hover:text-white transition-colors">Términos</Link></li>
+              <li><Link to="/privacidad" className="text-primary-200 text-sm hover:text-white transition-colors">Privacidad</Link></li>
             </ul>
           </div>
 

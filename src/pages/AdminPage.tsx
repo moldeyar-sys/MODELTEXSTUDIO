@@ -803,6 +803,13 @@ export default function AdminPage() {
                   <label className="block text-xs font-medium text-gray-600 mb-1">Red / Network</label>
                   <input type="text" value={payForm.binance_network} onChange={e => setPayForm(f => ({ ...f, binance_network: e.target.value }))} className="input-field" placeholder="BSC (BEP20)" />
                 </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">URL del QR de Binance</label>
+                  <input type="text" value={payForm.binance_qr_url} onChange={e => setPayForm(f => ({ ...f, binance_qr_url: e.target.value }))} className="input-field" placeholder="/brand/binance-qr.png" />
+                  {payForm.binance_qr_url && (
+                    <img src={payForm.binance_qr_url} alt="QR Binance" className="mt-2 w-28 h-28 object-contain border border-gray-200 rounded-lg" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
+                  )}
+                </div>
               </div>
             </div>
 
@@ -1631,3 +1638,4 @@ function ProductForm({
     </div>
   );
 }
+

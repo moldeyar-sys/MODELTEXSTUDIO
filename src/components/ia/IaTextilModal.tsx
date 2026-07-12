@@ -84,7 +84,7 @@ export function IaTextilModal({ card, onClose }: Props) {
       aria-label={card.title}
     >
       <div
-        className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[90vh] sm:max-h-[85vh] overflow-hidden"
+        className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl flex flex-col max-h-[92dvh] sm:max-h-[85vh] overflow-hidden"
         onClick={e => e.stopPropagation()}
       >
         {/* Header */}
@@ -178,7 +178,7 @@ export function IaTextilModal({ card, onClose }: Props) {
         </form>
 
         {/* CTAs */}
-        <div className="grid grid-cols-3 gap-2 px-3 pb-3 pt-1">
+        <div className="grid grid-cols-3 gap-2 px-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))] pt-1">
           <Link
             to="/catalogo"
             onClick={onClose}

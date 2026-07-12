@@ -101,7 +101,7 @@ export default function CustomDesignPage() {
   if (sent) {
     return (
       <div className="min-h-screen bg-petroleum-50 flex items-center justify-center">
-        <div className="card p-8 max-w-lg w-full mx-4 text-center">
+        <div className="card p-5 sm:p-8 max-w-lg w-full mx-4 text-center">
           <CheckCircle className="w-16 h-16 text-petroleum-500 mx-auto mb-4" />
           <h2 className="font-display text-2xl font-bold text-primary-900 mb-2">
             Solicitud enviada
@@ -123,7 +123,7 @@ export default function CustomDesignPage() {
       {/* Header */}
       <div className="relative overflow-hidden bg-primary-900 text-white">
         <FloatingPatterns variant="white" />
-        <div className="container-custom py-16">
+        <div className="container-custom py-10 md:py-16">
           <h1 className="font-display text-3xl md:text-4xl font-bold mb-4">Diseño a pedido</h1>
           <p className="text-primary-200 text-lg max-w-2xl leading-relaxed">
             Necesitás un molde personalizado? Contanos qué prenda buscás, los talles y formatos que necesitás, y nuestro equipo de diseño lo prepara para vos.
@@ -131,11 +131,11 @@ export default function CustomDesignPage() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden container-custom py-12">
+      <div className="relative overflow-hidden container-custom py-8 md:py-12">
         <FloatingPatterns variant="dark" />
         <div className="max-w-2xl mx-auto">
           {/* Info */}
-          <div className="card p-6 mb-8">
+          <div className="card p-5 sm:p-6 mb-6 sm:mb-8">
             <h2 className="font-semibold text-gray-900 mb-3">Cómo funciona</h2>
             <ol className="space-y-2 text-sm text-gray-600">
               <li className="flex gap-3">
@@ -158,7 +158,7 @@ export default function CustomDesignPage() {
           </div>
 
           {/* Form */}
-          <form onSubmit={handleSubmit} noValidate className="card p-6">
+          <form onSubmit={handleSubmit} noValidate className="card p-5 sm:p-6">
             <h2 className="font-semibold text-gray-900 text-lg mb-6">Solicitar molde personalizado</h2>
 
             <div className="grid sm:grid-cols-2 gap-4">

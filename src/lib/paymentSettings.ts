@@ -10,6 +10,7 @@ export interface PaymentSettings {
   // Binance / Cripto
   binance_wallet: string;
   binance_network: string;
+  binance_qr_url: string;
   // PayPal
   paypal_link: string;
   paypal_qr_url: string;
@@ -25,7 +26,8 @@ export const PAYMENT_SETTINGS_DEFAULTS: PaymentSettings = {
   transfer_cbu: '',
   binance_wallet: '',
   binance_network: 'BSC (BEP20)',
-  paypal_link: '',
+  binance_qr_url: '/brand/binance-qr.jpeg',
+  paypal_link: 'https://paypal.me/JHONDESPINOZA?locale.x=es_XC&country.x=AR',
   paypal_qr_url: '/brand/paypal-qr.png',
   mp_payment_link: 'https://link.mercadopago.com.ar/modeltex',
 };
@@ -58,3 +60,6 @@ export async function savePaymentSettings(
     return false;
   }
 }
+
+
+

@@ -61,7 +61,7 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
         <span className="absolute top-3 right-3 bg-accent-500 text-white text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm">PROMO</span>
       </Link>
 
-      <div className="p-4 flex flex-col flex-1">
+      <div className="p-3.5 sm:p-4 flex flex-col flex-1">
         <div className="flex items-center gap-2 mb-1.5 flex-wrap">
           {product.category && (
             <span className="text-xs font-medium text-petroleum-600 bg-petroleum-50 px-2 py-0.5 rounded-md">{categoryLabel(product.category)}</span>
@@ -129,7 +129,7 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
               </div>
               <button onClick={() => setShowReviews(false)} aria-label="Cerrar" className="p-1 hover:bg-gray-100 rounded-lg flex-shrink-0"><X className="w-5 h-5 text-gray-500" /></button>
             </div>
-            <div className="p-5"><ReviewsSection targetType="product" targetId={product.id} compact /></div>
+            <div className="p-4 sm:p-5"><ReviewsSection targetType="product" targetId={product.id} compact /></div>
           </div>
         </div>
       )}

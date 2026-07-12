@@ -27,14 +27,14 @@ export function Navbar() {
   return (
     <nav className="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100">
       <div className="container-custom">
-        <div className="flex items-center justify-between h-16">
+        <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group flex-shrink-0 mr-2" onClick={() => setIsOpen(false)} aria-label="Modeltex - Inicio">
             <img
               src="/brand/modeltex-mark-buzo.png?v=1"
               alt="Modeltex"
               draggable={false}
-              className="h-8 sm:h-9 w-auto select-none transition-transform group-hover:scale-[1.03]"
+              className="h-7 sm:h-9 w-auto select-none transition-transform group-hover:scale-[1.03]"
             />
             <span className="font-bold text-lg sm:text-xl tracking-tight text-gray-900 hidden sm:inline">MODELTEX</span>
           </Link>
@@ -164,7 +164,7 @@ export function Navbar() {
 
         {/* Mobile menu */}
         {isOpen && (
-          <div className="md:hidden pb-4 border-t border-gray-100 pt-2">
+          <div className="md:hidden pb-4 border-t border-gray-100 pt-2 max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
             {navLinks.map(link => (
               <Link
                 key={link.to}

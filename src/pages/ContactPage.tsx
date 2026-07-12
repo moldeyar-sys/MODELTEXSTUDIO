@@ -86,15 +86,15 @@ export default function ContactPage() {
           className="absolute inset-0 opacity-20 pointer-events-none"
           style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 40%), radial-gradient(circle at 85% 0%, rgba(203,110,231,0.35), transparent 45%)' }}
         />
-        <div className="container-custom relative py-14 md:py-18">
-          <h1 className="font-display text-3xl md:text-5xl font-bold max-w-3xl text-balance">Contacto</h1>
+        <div className="container-custom relative py-10 md:py-14">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold max-w-3xl text-balance">Contacto</h1>
           <p className="text-lg text-white/90 mt-4 max-w-2xl">
             ¿Tenés una consulta sobre moldes, diseño a pedido o producción? Escribinos y te respondemos a la brevedad.
           </p>
         </div>
       </section>
 
-      <section className="relative overflow-hidden container-custom py-12 md:py-16">
+      <section className="relative overflow-hidden container-custom py-8 md:py-16">
         <FloatingPatterns variant="dark" />
         <div className="grid lg:grid-cols-2 gap-8">
           {/* Medios de contacto */}
@@ -151,7 +151,7 @@ export default function ContactPage() {
           </div>
 
           {/* Formulario */}
-          <div className="card p-6 md:p-8">
+          <div className="card p-5 md:p-8">
             {sent ? (
               <div className="text-center py-10">
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-green-50 mb-5">

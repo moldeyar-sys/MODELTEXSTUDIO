@@ -52,11 +52,11 @@ export default function FreeMoldsPage() {
           className="absolute inset-0 opacity-20 pointer-events-none"
           style={{ backgroundImage: 'radial-gradient(circle at 15% 20%, rgba(255,255,255,0.25), transparent 40%), radial-gradient(circle at 85% 0%, rgba(203,110,231,0.35), transparent 45%)' }}
         />
-        <div className="container-custom relative py-16 md:py-20">
+        <div className="container-custom relative py-10 sm:py-14 md:py-20">
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/20 border border-green-400/30 text-sm font-semibold backdrop-blur-sm">
             <Gift className="w-4 h-4 text-green-300" /> 100% Gratis
           </span>
-          <h1 className="font-display text-3xl md:text-5xl font-bold mt-5 max-w-3xl text-balance">
+          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mt-5 max-w-3xl text-balance">
             Moldes Gratis Modeltex
           </h1>
           <p className="text-lg md:text-xl text-white/90 mt-5 max-w-2xl font-medium">
@@ -79,7 +79,7 @@ export default function FreeMoldsPage() {
       </section>
 
       {/* Contenido */}
-      <section className="relative overflow-hidden container-custom py-10 md:py-14">
+      <section className="relative overflow-hidden container-custom py-8 md:py-14">
         <FloatingPatterns variant="dark" />
         {/* Buscador */}
         <div className="max-w-md mb-8">
@@ -135,8 +135,8 @@ export default function FreeMoldsPage() {
       </section>
 
       {/* CTA final */}
-      <section className="container-custom pb-16">
-        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary-900 to-petroleum-800 text-white px-6 py-12 md:px-12 text-center">
+      <section className="container-custom pb-10 md:pb-16">
+        <div className="relative overflow-hidden rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary-900 to-petroleum-800 text-white px-6 py-12 md:px-12 text-center">
           <h2 className="relative font-display text-2xl md:text-3xl font-bold max-w-2xl mx-auto text-balance">
             ¿Te gustó la calidad? Llevá el catálogo completo de moldes listos para producir.
           </h2>

@@ -271,7 +271,7 @@ export default function MyOrdersPage() {
                         </div>
                       </div>
                       {order.payment_status === 'pendiente' && (order.payment_method === 'transfer' || order.payment_method === 'binance') && (
-                        <p className="text-amber-600 text-xs mt-2"><span className="font-semibold">Pendiente:</span> estamos verificando tu pago (hasta 24 hs).</p>
+                        <p className="text-amber-600 text-xs mt-2"><span className="font-semibold">Pendiente:</span> estamos verificando tu pago.</p>
                       )}
                     </div>
                   ))}
@@ -284,3 +284,4 @@ export default function MyOrdersPage() {
     </div>
   );
 }
+

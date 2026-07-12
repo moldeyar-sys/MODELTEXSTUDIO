@@ -1,5 +1,5 @@
 import { MessageCircle } from 'lucide-react';
-import { WHATSAPP_NUMBER } from '../../lib/whatsapp';
+import { isMobileDevice, whatsappAppLink, whatsappWebLink } from '../../lib/whatsapp';
 
 interface WhatsAppConsultButtonProps {
   /** Mensaje prearmado que se abre en WhatsApp. */
@@ -19,13 +19,21 @@ export function WhatsAppConsultButton({
   className = '',
   label = 'Consultar por WhatsApp',
 }: WhatsAppConsultButtonProps) {
-  const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+  const url = whatsappWebLink(message);
+  const openWhatsApp = (e: React.MouseEvent<HTMLAnchorElement>) => {
+    e.stopPropagation();
+    if (isMobileDevice()) {
+      e.preventDefault();
+      window.location.href = whatsappAppLink(message);
+    }
+  };
+
   return (
     <a
       href={url}
       target="_blank"
       rel="noopener noreferrer"
-      onClick={(e) => e.stopPropagation()}
+      onClick={openWhatsApp}
       className={`flex items-center justify-center gap-1.5 w-full py-1.5 text-xs font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition-colors ${className}`}
     >
       <MessageCircle className="w-3.5 h-3.5" />

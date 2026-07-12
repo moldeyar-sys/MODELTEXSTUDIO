@@ -48,6 +48,7 @@ const HomePage = () => {
         const { data, error } = await supabase
           .from('products')
           .select('*')
+          .eq('is_active', true)
           .eq('is_featured', true)
           .limit(6);
 
@@ -172,7 +173,7 @@ const HomePage = () => {
     {
       question: '¿Qué pasa si pago por transferencia?',
       answer:
-        'Debemos confirmar el pago manualmente, puede demorar hasta 24hs. Una vez confirmado, activamos tu descarga de forma automática.',
+        'Confirmamos el pago manualmente y, apenas queda acreditado, activamos tu descarga de forma automatica.',
     },
     {
       question: '¿Hacen moldes personalizados?',
@@ -226,7 +227,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* HERO SECTION */}
-      <section className="relative pt-16 pb-32 md:pt-20 md:pb-40 overflow-hidden">
+      <section className="relative pt-10 pb-16 sm:pt-16 sm:pb-24 md:pt-20 md:pb-40 overflow-hidden">
         {/* Gradient Background */}
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-600 opacity-95 z-0" />
 
@@ -338,7 +339,7 @@ const HomePage = () => {
       </section>
 
       {/* BENEFITS SECTION */}
-      <section className="relative py-20 bg-gray-50 overflow-hidden">
+      <section className="relative py-12 md:py-20 bg-gray-50 overflow-hidden">
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -359,11 +360,11 @@ const HomePage = () => {
       </section>
 
       {/* FEATURED PRODUCTS SECTION */}
-      <section className="relative py-24 bg-white overflow-hidden">
+      <section className="relative py-14 md:py-24 bg-white overflow-hidden">
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.featured.title', 'Productos destacados')}</h2>
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.featured.title', 'Productos destacados')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
               {t('home.featured.subtitle', 'Descubre nuestros moldes más populares y bestsellers')}
             </p>
@@ -400,11 +401,11 @@ const HomePage = () => {
       </section>
 
       {/* HOW IT WORKS SECTION */}
-      <section className="relative py-24 bg-gradient-to-br from-petroleum-50 to-primary-50 overflow-hidden">
+      <section className="relative py-14 md:py-24 bg-gradient-to-br from-petroleum-50 to-primary-50 overflow-hidden">
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">¿Cómo funciona?</h2>
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">¿Cómo funciona?</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
               5 pasos simples para conseguir tus moldes digitales
             </p>
@@ -445,11 +446,11 @@ const HomePage = () => {
       </section>
 
       {/* FORMATS SECTION */}
-      <section className="relative py-24 bg-white overflow-hidden">
+      <section className="relative py-14 md:py-24 bg-white overflow-hidden">
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">Formatos disponibles</h2>
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">Formatos disponibles</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
               Trabajamos con los mejores formatos para que uses nuestros moldes en tus herramientas preferidas
             </p>
@@ -479,11 +480,11 @@ const HomePage = () => {
       </section>
 
       {/* TESTIMONIALS SECTION */}
-      <section className="relative py-24 bg-white overflow-hidden">
+      <section className="relative py-14 md:py-24 bg-white overflow-hidden">
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.testimonials.title', 'Lo que dicen nuestros clientes')}</h2>
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.testimonials.title', 'Lo que dicen nuestros clientes')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
               {t('home.testimonials.subtitle', 'Emprendedores, talleres y diseñadores de toda Latinoamérica ya producen con Modeltex')}
             </p>
@@ -510,11 +511,11 @@ const HomePage = () => {
       </section>
 
       {/* FAQ SECTION */}
-      <section className="relative py-24 bg-gray-50 overflow-hidden">
+      <section className="relative py-14 md:py-24 bg-gray-50 overflow-hidden">
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
-          <div className="text-center mb-16">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-primary-900 mb-4">Preguntas frecuentes</h2>
+          <div className="text-center mb-10 md:mb-16">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">Preguntas frecuentes</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
               Resolvemos tus dudas sobre nuestros moldes digitales
             </p>
@@ -547,12 +548,12 @@ const HomePage = () => {
       </section>
 
       {/* TRUST / GUARANTEE SECTION */}
-      <section className="relative py-24 overflow-hidden">
+      <section className="relative py-14 md:py-24 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-700 z-0" />
         <div className="absolute top-0 right-0 w-80 h-80 bg-accent-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10" />
         <div className="container-custom relative z-10">
           <div className="text-center mb-14">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-4">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-4">
               {t('trust.title', 'Comprá con confianza')}
             </h2>
             <p className="font-sans text-lg text-primary-100 max-w-2xl mx-auto">
@@ -584,7 +585,7 @@ const HomePage = () => {
       </section>
 
       {/* FINAL CTA SECTION */}
-      <section className="relative py-24 overflow-hidden">
+      <section className="relative py-14 md:py-24 overflow-hidden">
         {/* Background Gradient */}
         <div className="absolute inset-0 bg-gradient-to-r from-primary-900 via-petroleum-600 to-primary-800 z-0" />
 
@@ -595,7 +596,7 @@ const HomePage = () => {
         {/* Content */}
         <div className="container-custom relative z-10">
           <div className="max-w-3xl mx-auto text-center">
-            <h2 className="font-display text-4xl md:text-5xl font-bold text-white mb-6">
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-6">
               {t('home.cta.title', '¿Listo para comenzar?')}
             </h2>
             <p className="font-sans text-lg text-gray-100 mb-10 leading-relaxed">
@@ -640,3 +641,5 @@ const HomePage = () => {
 };
 
 export default HomePage;
+
+

@@ -63,7 +63,7 @@ export default function CartPage() {
 
   if (items.length === 0) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center">
+      <div className="min-h-screen bg-white flex items-center justify-center px-4">
         <div className="text-center">
           <ShoppingBag className="w-16 h-16 text-gray-300 mx-auto mb-4" />
           <h2 className="font-display text-2xl font-bold text-primary-900 mb-2">{t('cart.emptyTitle', 'Tu carrito está vacío')}</h2>
@@ -76,12 +76,12 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-petroleum-50">
-      <div className="container-custom py-8">
+      <div className="container-custom py-5 sm:py-8">
         <Link to="/catalogo" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-800 transition-colors mb-6">
           <ArrowLeft className="w-4 h-4" /> {t('cart.keepShopping', 'Seguir comprando')}
         </Link>
 
-        <h1 className="font-display text-3xl font-bold text-primary-900 mb-8">{t('cart.title', 'Carrito de compras')}</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary-900 mb-8">{t('cart.title', 'Carrito de compras')}</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
           {/* Items */}
@@ -94,11 +94,11 @@ export default function CartPage() {
               const hasSizes = availSz.length > 0;
 
               return (
-                <div key={key} className="card p-4 sm:p-6">
-                  <div className="flex gap-4">
+                <div key={key} className="card p-3.5 sm:p-6">
+                  <div className="flex gap-3 sm:gap-4">
                     {/* Imagen */}
                     <Link to={`/producto/${item.product.slug}`} className="flex-shrink-0">
-                      <div className="w-24 h-24 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-100">
+                      <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-100">
                         {item.product.main_image_url ? (
                           <img src={item.product.main_image_url} alt={item.product.name} loading="lazy" className="w-full h-full object-cover" />
                         ) : (
@@ -156,7 +156,7 @@ export default function CartPage() {
                       )}
 
                       {/* Precio + ajuste + cantidad */}
-                      <div className="flex items-center justify-between mt-4">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
                         <div className="flex flex-col gap-0.5">
                           <span className="text-lg font-bold text-primary-900">{formatPrice(price)}</span>
                           <PriceTag item={item} />
@@ -195,7 +195,7 @@ export default function CartPage() {
 
           {/* Resumen */}
           <div>
-            <div className="card p-6 sticky top-24">
+            <div className="card p-5 sm:p-6 lg:sticky lg:top-24">
               <h3 className="font-semibold text-gray-900 text-lg mb-6">{t('cart.summary', 'Resumen de compra')}</h3>
 
               <div className="space-y-3 mb-6">

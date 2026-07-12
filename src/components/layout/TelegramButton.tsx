@@ -11,7 +11,7 @@ export function TelegramButton() {
       href={`https://t.me/+${CONTACT_INFO.telegram}`}
       target="_blank"
       rel="noopener noreferrer"
-      className="fixed bottom-[5.75rem] right-6 z-50 w-14 h-14 bg-sky-500 hover:bg-sky-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
+      className="fixed bottom-4 right-[4.5rem] sm:bottom-[5.75rem] sm:right-6 z-50 w-12 h-12 sm:w-14 sm:h-14 bg-sky-500 hover:bg-sky-600 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
       aria-label="Contactar por Telegram"
     >
       <Send className="w-6 h-6" />

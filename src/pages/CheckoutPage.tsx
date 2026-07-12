@@ -21,6 +21,7 @@ export default function CheckoutPage() {
   const [orderId, setOrderId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
+  const [copiedWallet, setCopiedWallet] = useState(false);
   const [confirmedTotal, setConfirmedTotal] = useState(0);
   const [paySettings, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
 
@@ -32,6 +33,13 @@ export default function CheckoutPage() {
     navigator.clipboard.writeText(confirmedTotal.toFixed(2));
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyWallet = () => {
+    if (!paySettings.binance_wallet) return;
+    navigator.clipboard.writeText(paySettings.binance_wallet);
+    setCopiedWallet(true);
+    setTimeout(() => setCopiedWallet(false), 2000);
   };
 
   const handleCheckout = async () => {
@@ -137,7 +145,7 @@ export default function CheckoutPage() {
   const AmountBox = () => (
     <div className="bg-white border-2 border-primary-200 rounded-xl p-4 mb-4 text-center">
       <p className="text-xs text-gray-500 mb-1">Monto exacto a pagar</p>
-      <p className="text-3xl font-bold text-primary-900 mb-3">{formatPrice(confirmedTotal)}</p>
+      <p className="text-2xl sm:text-3xl font-bold text-primary-900 mb-3">{formatPrice(confirmedTotal)}</p>
       <button
         onClick={copyAmount}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-800 text-sm font-medium transition-colors"
@@ -150,7 +158,7 @@ export default function CheckoutPage() {
 
   if (items.length === 0 && !orderId) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
           <p className="text-gray-500 mb-4">Tu carrito está vacío</p>
           <Link to="/catalogo" className="btn-primary">Ver catálogo</Link>
@@ -164,7 +172,7 @@ export default function CheckoutPage() {
     const isManual = paymentMethod === 'transfer' || paymentMethod === 'binance' || paymentMethod === 'paypal' || paymentMethod === 'mercadopago';
     return (
       <div className="min-h-screen bg-petroleum-50 flex items-center justify-center">
-        <div className="card p-8 max-w-lg w-full mx-4 text-center">
+        <div className="card p-5 sm:p-8 max-w-lg w-full mx-4 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="font-display text-2xl font-bold text-primary-900 mb-2">
             {isManual ? 'Pedido recibido' : 'Pedido creado'}
@@ -197,6 +205,22 @@ export default function CheckoutPage() {
               <AmountBox />
               <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-3">
                 <p className="text-xs text-amber-800 font-medium">
+              {paySettings.binance_wallet && (
+                <button
+                  onClick={copyWallet}
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-800 text-sm font-medium transition-colors mb-3"
+                >
+                  {copiedWallet ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
+                  {copiedWallet ? 'Wallet copiada' : 'Copiar wallet'}
+                </button>
+              )}
+              {paySettings.binance_qr_url && (
+                <img
+                  src={paySettings.binance_qr_url}
+                  alt="QR de Binance para pagar a Modeltex"
+                  className="w-56 max-w-full rounded-xl border border-gray-200 mb-3"
+                />
+              )}
                   ⚠️ El monto en pesos es referencial. Convertilo al equivalente en USDT antes de enviar.
                 </p>
               </div>
@@ -290,17 +314,17 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-petroleum-50">
-      <div className="container-custom py-8">
+      <div className="container-custom py-5 sm:py-8">
         <Link to="/carrito" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-800 transition-colors mb-6">
           <ArrowLeft className="w-4 h-4" /> Volver al carrito
         </Link>
 
-        <h1 className="font-display text-3xl font-bold text-primary-900 mb-8">Finalizar compra</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary-900 mb-8">Finalizar compra</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* Client info */}
-            <div className="card p-6">
+            <div className="card p-5 sm:p-6">
               <h2 className="font-semibold text-gray-900 text-lg mb-4">Datos del cliente</h2>
               <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4">
                 <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
@@ -316,7 +340,7 @@ export default function CheckoutPage() {
             </div>
 
             {/* Payment method */}
-            <div className="card p-6">
+            <div className="card p-5 sm:p-6">
               <h2 className="font-semibold text-gray-900 text-lg mb-4">Método de pago</h2>
               <div className="space-y-3">
                 {PAYMENT_METHODS.map(method => (
@@ -371,11 +395,11 @@ export default function CheckoutPage() {
             </div>
 
             {/* Order items */}
-            <div className="card p-6">
+            <div className="card p-5 sm:p-6">
               <h2 className="font-semibold text-gray-900 text-lg mb-4">Productos</h2>
               <div className="divide-y divide-gray-100">
                 {items.map(item => (
-                  <div key={cartItemKey(item)} className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
+                  <div key={cartItemKey(item)} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex-shrink-0">
                         {item.product.main_image_url ? (
@@ -401,7 +425,7 @@ export default function CheckoutPage() {
 
           {/* Summary */}
           <div>
-            <div className="card p-6 sticky top-24">
+            <div className="card p-5 sm:p-6 lg:sticky lg:top-24">
               <h3 className="font-semibold text-gray-900 text-lg mb-6">Resumen</h3>
               <div className="flex justify-between items-baseline mb-6">
                 <span className="text-lg font-semibold text-gray-900">Total</span>
@@ -444,3 +468,4 @@ export default function CheckoutPage() {
     </div>
   );
 }
+

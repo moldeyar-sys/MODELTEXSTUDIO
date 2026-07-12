@@ -1,4 +1,4 @@
-import { WHATSAPP_NUMBER } from './whatsapp';
+import { whatsappWebLink } from './whatsapp';
 import type { Product } from './types';
 
 // ===== Configuración central de formatos comerciales y consultas =====
@@ -70,11 +70,15 @@ function buildMessage(
   return `Hola, quiero consultar por este producto:\nProducto: ${p.name}\nCódigo: ${code}${link}`;
 }
 
-/** Link de WhatsApp con mensaje prearmado según el formato. */
-export function whatsappLink(p: Product, fmt: ConsultFormat, fmtPrice: (n: number) => string): string {
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(buildMessage(p, fmt, fmtPrice, true))}`;
+/** Mensaje de WhatsApp con producto, código y enlace prearmado según el formato. */
+export function whatsappMessage(p: Product, fmt: ConsultFormat, fmtPrice: (n: number) => string): string {
+  return buildMessage(p, fmt, fmtPrice, true);
 }
 
+/** Link web de WhatsApp con mensaje prearmado según el formato. */
+export function whatsappLink(p: Product, fmt: ConsultFormat, fmtPrice: (n: number) => string): string {
+  return whatsappWebLink(whatsappMessage(p, fmt, fmtPrice));
+}
 /**
  * Link de Telegram con mensaje prearmado. Telegram no permite prefijar texto a
  * un chat por teléfono, así que usamos el share (t.me/share) que prellena el

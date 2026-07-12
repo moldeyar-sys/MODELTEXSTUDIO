@@ -29,6 +29,7 @@ const CustomDesignPage = lazy(() => import('./pages/CustomDesignPage'));
 const IaTextilPage = lazy(() => import('./pages/IaTextilPage'));
 const FreeMoldsPage = lazy(() => import('./pages/FreeMoldsPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const TrustPage = lazy(() => import('./pages/TrustPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function PageLoader() {
@@ -61,6 +62,11 @@ function AppLayout() {
             <Route path="/ia-textil" element={<IaTextilPage />} />
             <Route path="/moldes-gratis" element={<FreeMoldsPage />} />
             <Route path="/contacto" element={<ContactPage />} />
+            <Route path="/como-funciona" element={<TrustPage variant="como-funciona" />} />
+            <Route path="/ayuda-impresion" element={<TrustPage variant="ayuda-impresion" />} />
+            <Route path="/politica-descargas" element={<TrustPage variant="politica-descargas" />} />
+            <Route path="/terminos" element={<TrustPage variant="terminos" />} />
+            <Route path="/privacidad" element={<TrustPage variant="privacidad" />} />
             <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>
