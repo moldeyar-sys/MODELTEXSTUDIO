@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
 import { ProductCard } from '../components/ui/ProductCard';
-import { useSeo } from '../lib/seo';
+import { useSeo, useStructuredData } from '../lib/seo';
 import type { Product } from '../lib/types';
 import { CATEGORIES } from '../lib/types';
 import { FormatOptions } from '../components/ui/FormatOptions';
@@ -380,3 +380,4 @@ export default function ProductDetailPage() {
     </div>
   );
 }
+

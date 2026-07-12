@@ -8,22 +8,47 @@
   <url>
     <loc>https://modeltex.com.ar/catalogo</loc>
     <changefreq>daily</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://modeltex.com.ar/moldes-pdf</loc>
+    <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://modeltex.com.ar/moldes-gratis</loc>
     <changefreq>weekly</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://modeltex.com.ar/ia-textil</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.85</priority>
   </url>
   <url>
     <loc>https://modeltex.com.ar/diseno-a-pedido</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://modeltex.com.ar/como-funciona</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://modeltex.com.ar/ayuda-impresion</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.75</priority>
+  </url>
+  <url>
+    <loc>https://modeltex.com.ar/politica-descargas</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.65</priority>
+  </url>
+  <url>
+    <loc>https://modeltex.com.ar/privacidad</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.45</priority>
+  </url>
+  <url>
+    <loc>https://modeltex.com.ar/terminos</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.45</priority>
   </url>
   <url>
     <loc>https://modeltex.com.ar/contacto</loc>
@@ -31,13 +56,8 @@
     <priority>0.6</priority>
   </url>
   <url>
-    <loc>https://modeltex.com.ar/registro</loc>
+    <loc>https://modeltex.com.ar/ia-textil</loc>
     <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://modeltex.com.ar/login</loc>
-    <changefreq>monthly</changefreq>
-    <priority>0.3</priority>
+    <priority>0.55</priority>
   </url>
 </urlset>

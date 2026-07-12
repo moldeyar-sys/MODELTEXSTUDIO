@@ -9,9 +9,6 @@ import { WhatsAppButton } from './components/layout/WhatsAppButton';
 import { TelegramButton } from './components/layout/TelegramButton';
 import { ChatWidget } from './components/chat/ChatWidget';
 import { ProtectedRoute, AdminRoute } from './components/layout/ProtectedRoute';
-
-// HomePage se carga de inmediato (landing). El resto se carga on-demand
-// (code-splitting) para aligerar el bundle inicial.
 import HomePage from './pages/HomePage';
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
@@ -30,6 +27,7 @@ const IaTextilPage = lazy(() => import('./pages/IaTextilPage'));
 const FreeMoldsPage = lazy(() => import('./pages/FreeMoldsPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const TrustPage = lazy(() => import('./pages/TrustPage'));
+const MoldesPdfPage = lazy(() => import('./pages/MoldesPdfPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function PageLoader() {
@@ -52,6 +50,7 @@ function AppLayout() {
             <Route path="/registro" element={<RegisterPage />} />
             <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
             <Route path="/catalogo" element={<CatalogPage />} />
+            <Route path="/moldes-pdf" element={<MoldesPdfPage />} />
             <Route path="/producto/:slug" element={<ProductDetailPage />} />
             <Route path="/carrito" element={<CartPage />} />
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
@@ -73,7 +72,6 @@ function AppLayout() {
         </Suspense>
       </main>
       <Footer />
-
       <WhatsAppButton />
       <TelegramButton />
       <ChatWidget />

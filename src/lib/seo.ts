@@ -4,7 +4,6 @@ interface SeoOptions {
   title?: string;
   description?: string;
   image?: string;
-  /** Ruta o URL canónica de la página, ej: "/catalogo" o una URL completa. */
   path?: string;
   type?: 'website' | 'product' | 'article';
 }
@@ -12,7 +11,7 @@ interface SeoOptions {
 const SITE_NAME = 'Modeltex';
 const SITE_URL = 'https://modeltex.com.ar';
 const DEFAULT_DESCRIPTION =
-  'Moldería textil profesional: moldes digitales y en cartón, moldería a pedido y tizado computarizado. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT, con escalado completo y descarga inmediata. Vendemos a todo el mundo.';
+  'Modeltex: moldes PDF, moldes para imprimir y molderia digital para producir. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT, con escalado completo y descarga inmediata.';
 const DEFAULT_IMAGE = 'https://modeltex.com.ar/brand/og-image.png';
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
@@ -35,24 +34,27 @@ function setCanonical(href: string) {
   el.setAttribute('href', href);
 }
 
-/**
- * Actualiza title y meta tags (description, Open Graph, Twitter, canonical)
- * de forma dinámica por página. Sin dependencias externas.
- *
- * Nota: al ser una SPA, esto mejora el SEO en Google (renderiza JS) y la UX
- * (título de pestaña), pero los scrapers de redes sociales no ejecutan JS, así
- * que para previews por producto haría falta prerender/SSR más adelante.
- */
+function setStructuredData(id: string, data: Record<string, unknown> | Array<Record<string, unknown>>) {
+  let el = document.head.querySelector<HTMLScriptElement>(`script[data-seo-schema="${id}"]`);
+  if (!el) {
+    el = document.createElement('script');
+    el.type = 'application/ld+json';
+    el.setAttribute('data-seo-schema', id);
+    document.head.appendChild(el);
+  }
+  el.textContent = JSON.stringify(data);
+}
+
 export function useSeo({ title, description, image, path, type = 'website' }: SeoOptions) {
   useEffect(() => {
-    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Moldería digital y moldes de ropa`;
+    const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Moldes PDF y molderia digital`;
     const desc = description || DEFAULT_DESCRIPTION;
     const img = image || DEFAULT_IMAGE;
     const url = path
       ? path.startsWith('http')
         ? path
         : `${SITE_URL}${path.startsWith('/') ? '' : '/'}${path}`
-      : SITE_URL + '/';
+      : `${SITE_URL}/`;
 
     document.title = fullTitle;
     setMeta('name', 'description', desc);
@@ -66,4 +68,20 @@ export function useSeo({ title, description, image, path, type = 'website' }: Se
     setMeta('name', 'twitter:image', img);
     setCanonical(url);
   }, [title, description, image, path, type]);
+}
+
+export function useStructuredData(
+  data: Record<string, unknown> | Array<Record<string, unknown>> | null,
+  id = 'page-schema',
+) {
+  useEffect(() => {
+    if (!data) return;
+
+    setStructuredData(id, data);
+
+    return () => {
+      const el = document.head.querySelector<HTMLScriptElement>(`script[data-seo-schema="${id}"]`);
+      if (el) el.remove();
+    };
+  }, [data, id]);
 }
