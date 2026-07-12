@@ -11,7 +11,7 @@ import {
   CalendarDays,
   ArrowUpDown,
   Tag,
-  } from 'lucide-react';
+} from 'lucide-react';
 import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { supabase } from '../lib/supabase';
 import { ProductCard } from '../components/ui/ProductCard';
@@ -28,6 +28,14 @@ type SmartIntent = {
   season: string;
   labels: string[];
   tokens: string[];
+  correctedQuery: string;
+  corrected: boolean;
+};
+
+type SearchSuggestion = {
+  label: string;
+  value: string;
+  hint: string;
 };
 
 const SEASON_OPTIONS = [
@@ -55,9 +63,9 @@ const SMART_SEARCH_EXAMPLES = [
 const CATEGORY_ALIASES: Record<ProductCategory, string[]> = {
   dama: ['dama', 'mujer', 'mujeres', 'femenino'],
   hombre: ['hombre', 'hombres', 'masculino', 'caballero'],
-  nina: ['nina', 'ninas', 'nena', 'nenas', 'chica', 'chicas'],
-  nino: ['nino', 'ninos', 'nene', 'nenes', 'varon', 'varones'],
-  bebes: ['bebe', 'bebes', 'bb', 'baby'],
+  nina: ['nina', 'ninas', 'nena', 'nenas', 'chica', 'chicas', 'niia', 'nias'],
+  nino: ['nino', 'ninos', 'nene', 'nenes', 'varon', 'varones', 'nio', 'nios'],
+  bebes: ['bebe', 'bebes', 'bb', 'baby', 'bebesito'],
   'adultos-unisex': ['adulto', 'adultos', 'unisex'],
   'ninos-unisex': ['infantil', 'infantiles', 'unisex ninos', 'unisex nino'],
 };
@@ -68,7 +76,7 @@ const FORMAT_ALIASES: Array<{ value: string; aliases: string[] }> = [
   { value: 'PLT', aliases: ['plt'] },
   { value: 'DXF', aliases: ['dxf', 'cad'] },
   { value: 'CDR', aliases: ['cdr', 'corel', 'coreldraw'] },
-  { value: 'Sublimacion', aliases: ['sublimacion', 'sublimar', 'sublimable'] },
+  { value: 'Sublimacion', aliases: ['sublimacion', 'sublimar', 'sublimable', 'subli'] },
 ];
 
 const SEASON_ALIASES = [
@@ -76,6 +84,20 @@ const SEASON_ALIASES = [
   { value: 'invierno', aliases: ['invierno', 'frio', 'abrigo'] },
   { value: 'todo-el-anio', aliases: ['todo el ano', 'todo ano', 'todo uso'] },
 ];
+
+const TOKEN_CORRECTIONS: Record<string, string> = {
+  ploter: 'plotter',
+  buso: 'buzo',
+  buzos: 'buzo',
+  niia: 'nina',
+  niias: 'ninas',
+  nio: 'nino',
+  nios: 'ninos',
+  bebesito: 'bebe',
+  subimacion: 'sublimacion',
+  subtimacion: 'sublimacion',
+  oversise: 'oversize',
+};
 
 const normalizeText = (value: string) =>
   value
@@ -85,6 +107,15 @@ const normalizeText = (value: string) =>
     .replace(/[^a-z0-9\s]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim();
+
+const applyTokenCorrections = (query: string) => {
+  const normalized = normalizeText(query);
+  if (!normalized) return { correctedQuery: '', corrected: false };
+
+  const correctedTokens = normalized.split(' ').map((token) => TOKEN_CORRECTIONS[token] || token);
+  const correctedQuery = correctedTokens.join(' ').trim();
+  return { correctedQuery, corrected: correctedQuery !== normalized };
+};
 
 const getLowestPrice = (product: Product) => {
   const values = [
@@ -99,9 +130,9 @@ const getLowestPrice = (product: Product) => {
 };
 
 const inferSmartIntent = (query: string): SmartIntent => {
-  const normalized = normalizeText(query);
-  if (!normalized) {
-    return { category: '', format: '', season: '', labels: [], tokens: [] };
+  const { correctedQuery, corrected } = applyTokenCorrections(query);
+  if (!correctedQuery) {
+    return { category: '', format: '', season: '', labels: [], tokens: [], correctedQuery: '', corrected: false };
   }
 
   const labels: string[] = [];
@@ -110,7 +141,7 @@ const inferSmartIntent = (query: string): SmartIntent => {
   let inferredSeason = '';
 
   for (const [categoryValue, aliases] of Object.entries(CATEGORY_ALIASES) as Array<[ProductCategory, string[]]>) {
-    if (aliases.some((alias) => normalized.includes(alias))) {
+    if (aliases.some((alias) => correctedQuery.includes(alias))) {
       inferredCategory = categoryValue;
       const label = CATEGORIES.find((item) => item.value === categoryValue)?.label;
       if (label) labels.push(label);
@@ -119,7 +150,7 @@ const inferSmartIntent = (query: string): SmartIntent => {
   }
 
   for (const item of FORMAT_ALIASES) {
-    if (item.aliases.some((alias) => normalized.includes(alias))) {
+    if (item.aliases.some((alias) => correctedQuery.includes(alias))) {
       inferredFormat = item.value;
       labels.push(item.value);
       break;
@@ -127,7 +158,7 @@ const inferSmartIntent = (query: string): SmartIntent => {
   }
 
   for (const item of SEASON_ALIASES) {
-    if (item.aliases.some((alias) => normalized.includes(alias))) {
+    if (item.aliases.some((alias) => correctedQuery.includes(alias))) {
       inferredSeason = item.value;
       const seasonLabel = SEASON_OPTIONS.find((option) => option.value === item.value)?.label;
       if (seasonLabel) labels.push(seasonLabel);
@@ -135,8 +166,8 @@ const inferSmartIntent = (query: string): SmartIntent => {
     }
   }
 
-  const tokens = normalized.split(' ').filter((token) => token.length > 1);
-  return { category: inferredCategory, format: inferredFormat, season: inferredSeason, labels, tokens };
+  const tokens = correctedQuery.split(' ').filter((token) => token.length > 1);
+  return { category: inferredCategory, format: inferredFormat, season: inferredSeason, labels, tokens, correctedQuery, corrected };
 };
 
 const getProductSearchText = (product: Product) => {
@@ -158,7 +189,7 @@ const getProductSearchText = (product: Product) => {
 };
 
 const scoreProduct = (product: Product, query: string, intent: SmartIntent) => {
-  const normalizedQuery = normalizeText(query);
+  const normalizedQuery = intent.correctedQuery || normalizeText(query);
   if (!normalizedQuery) return 0;
 
   const normalizedName = normalizeText(product.name);
@@ -268,7 +299,8 @@ export default function CatalogPage() {
 
     if (trimmed) {
       const intent = inferSmartIntent(trimmed);
-      params.set('busqueda', trimmed);
+      const finalQuery = intent.correctedQuery || trimmed;
+      params.set('busqueda', finalQuery);
 
       if (intent.category && (replaceDetectedFilters || !category)) {
         params.set('categoria', intent.category);
@@ -307,7 +339,8 @@ export default function CatalogPage() {
   };
 
   const runSuggestedSearch = (value: string) => {
-    setSearch(value);
+    const intent = inferSmartIntent(value);
+    setSearch(intent.correctedQuery || value);
     setSearchParams(buildSearchParams(value, true), { replace: true });
   };
 
@@ -327,6 +360,7 @@ export default function CatalogPage() {
   };
 
   const smartIntent = useMemo(() => inferSmartIntent(busqueda), [busqueda]);
+  const liveIntent = useMemo(() => inferSmartIntent(search), [search]);
 
   const visibleProducts = useMemo(() => {
     const seasonalProducts = products.filter(seasonMatches);
@@ -345,6 +379,33 @@ export default function CatalogPage() {
       })
       .map((item) => item.product);
   }, [products, busqueda, smartIntent, sort, temporada]);
+
+  const liveSuggestions = useMemo(() => {
+    const query = liveIntent.correctedQuery;
+    if (!query || query.length < 2) return [] as SearchSuggestion[];
+
+    const fromExamples = SMART_SEARCH_EXAMPLES
+      .filter((example) => normalizeText(example).includes(query))
+      .map((example) => ({ label: example, value: example, hint: 'Busqueda sugerida' }));
+
+    const fromProducts = products
+      .map((product) => ({
+        product,
+        score: scoreProduct(product, query, liveIntent),
+      }))
+      .filter((item) => item.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5)
+      .map(({ product }) => ({
+        label: product.name,
+        value: `${product.garment_type || product.name} ${product.category}`,
+        hint: `${product.category.replace('-', ' ')}${product.formats?.[0] ? ` · ${product.formats[0]}` : ''}`,
+      }));
+
+    return [...fromExamples, ...fromProducts]
+      .filter((item, index, list) => list.findIndex((candidate) => candidate.label === item.label) === index)
+      .slice(0, 6);
+  }, [liveIntent, products]);
 
   const currentCategoryLabel = CATEGORIES.find((item) => item.value === category)?.label || 'Todos los productos';
   const currentSeasonLabel = SEASON_OPTIONS.find((item) => item.value === temporada)?.label || 'Todas';
@@ -448,6 +509,44 @@ export default function CatalogPage() {
               <button type="submit" className="btn-primary px-4 shrink-0">Buscar</button>
             </form>
 
+            {search.trim() && (
+              <div className="rounded-xl border border-petroleum-100 bg-petroleum-50 px-3 py-3 space-y-2">
+                <div className="flex flex-wrap items-center gap-2 text-sm text-petroleum-900">
+                  <span className="font-semibold">Estoy entendiendo:</span>
+                  {liveIntent.labels.length > 0 ? liveIntent.labels.map((label) => (
+                    <span key={label} className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-petroleum-700 border border-petroleum-100">
+                      {label}
+                    </span>
+                  )) : (
+                    <span className="text-petroleum-700">voy a buscar por nombre, descripcion y formato.</span>
+                  )}
+                </div>
+                {liveIntent.corrected && (
+                  <p className="text-xs text-petroleum-700">
+                    Corrigiendo busqueda a: <span className="font-semibold">{liveIntent.correctedQuery}</span>
+                  </p>
+                )}
+                {liveSuggestions.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <p className="text-xs font-medium uppercase tracking-wide text-petroleum-600">Sugerencias en vivo</p>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      {liveSuggestions.map((suggestion) => (
+                        <button
+                          key={`${suggestion.label}-${suggestion.value}`}
+                          type="button"
+                          onClick={() => runSuggestedSearch(suggestion.value)}
+                          className="rounded-xl border border-white bg-white px-3 py-2 text-left hover:border-primary-200 hover:bg-primary-50 transition-colors"
+                        >
+                          <span className="block text-sm font-medium text-gray-900">{suggestion.label}</span>
+                          <span className="block text-xs text-gray-500 mt-0.5">{suggestion.hint}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
             <div className="flex flex-wrap gap-2">
               {SMART_SEARCH_EXAMPLES.map((example) => (
                 <button
@@ -463,7 +562,7 @@ export default function CatalogPage() {
 
             {busqueda && smartIntent.labels.length > 0 && (
               <div className="rounded-xl border border-primary-100 bg-primary-50 px-3 py-2.5 text-sm text-primary-900">
-                <span className="font-semibold">Busqueda inteligente:</span> voy a priorizar {smartIntent.labels.join(', ')}.
+                <span className="font-semibold">Busqueda inteligente:</span> estoy priorizando {smartIntent.labels.join(', ')}.
               </div>
             )}
 
@@ -691,6 +790,3 @@ export default function CatalogPage() {
     </div>
   );
 }
-
-
-
