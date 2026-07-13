@@ -33,8 +33,8 @@ const HomePage = () => {
   const { user } = useAuth();
   const { t } = useLocale();
   useSeo({
-    title: 'Moldería digital y moldes de ropa para producir',
-    description: 'Moldería textil profesional para fabricantes de indumentaria: moldes digitales y en cartón, moldería a pedido y tizado computarizado. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT con escalado completo y descarga inmediata. Vendemos a todo el mundo.',
+    title: 'MolderÃ­a digital y moldes de ropa para producir',
+    description: 'MolderÃ­a textil profesional para fabricantes de indumentaria: moldes digitales y en cartÃ³n, molderÃ­a a pedido y tizado computarizado. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT con escalado completo y descarga inmediata. Vendemos a todo el mundo.',
     path: '/',
   });
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
@@ -68,22 +68,22 @@ const HomePage = () => {
   const benefits = [
     {
       icon: Zap,
-      title: 'Descargá instantáneamente',
-      description: 'Después de pagar, obtén tus archivos al instante',
+      title: 'DescargÃ¡ instantÃ¡neamente',
+      description: 'DespuÃ©s de pagar, obtÃ©n tus archivos al instante',
     },
     {
       icon: FileText,
       title: 'Formatos profesionales',
-      description: 'PDF A4, Plotter, CDR, DXF y más',
+      description: 'PDF A4, Plotter, CDR, DXF y mÃ¡s',
     },
     {
       icon: Ruler,
       title: 'Todos los talles incluidos',
-      description: 'Una compra, múltiples tamaños',
+      description: 'Una compra, mÃºltiples tamaÃ±os',
     },
     {
       icon: Globe,
-      title: 'Envío internacional',
+      title: 'EnvÃ­o internacional',
       description: 'Los archivos llegan a todo el mundo por descarga digital',
     },
   ];
@@ -91,27 +91,27 @@ const HomePage = () => {
   const howItWorks = [
     {
       number: 1,
-      title: 'Creá tu cuenta',
+      title: 'CreÃ¡ tu cuenta',
       icon: ShoppingCart,
     },
     {
       number: 2,
-      title: 'Elegí el molde o pack',
+      title: 'ElegÃ­ el molde o pack',
       icon: Package,
     },
     {
       number: 3,
-      title: 'Agregá al carrito',
+      title: 'AgregÃ¡ al carrito',
       icon: ShoppingCart,
     },
     {
       number: 4,
-      title: 'Pagá',
+      title: 'PagÃ¡',
       icon: Zap,
     },
     {
       number: 5,
-      title: 'Descargá tus archivos',
+      title: 'DescargÃ¡ tus archivos',
       icon: Download,
     },
   ];
@@ -143,7 +143,7 @@ const HomePage = () => {
       icon: Palette,
     },
     {
-      name: 'Sublimación',
+      name: 'SublimaciÃ³n',
       description: 'Para impresoras de sublimado',
       icon: FileText,
     },
@@ -151,73 +151,73 @@ const HomePage = () => {
 
   const faqItems = [
     {
-      question: '¿Los moldes son digitales?',
+      question: 'Â¿Los moldes son digitales?',
       answer:
-        'Sí, son archivos digitales que descargás después de comprar. No recibirás nada físico, solo archivos que podrás usar en tu computadora.',
+        'SÃ­, son archivos digitales que descargÃ¡s despuÃ©s de comprar. No recibirÃ¡s nada fÃ­sico, solo archivos que podrÃ¡s usar en tu computadora.',
     },
     {
-      question: '¿Puedo imprimir en A4?',
+      question: 'Â¿Puedo imprimir en A4?',
       answer:
-        'Sí, todos nuestros moldes incluyen una versión PDF A4 lista para imprimir en casa con cualquier impresora.',
+        'SÃ­, todos nuestros moldes incluyen una versiÃ³n PDF A4 lista para imprimir en casa con cualquier impresora.',
     },
     {
-      question: '¿Puedo imprimir en plotter?',
+      question: 'Â¿Puedo imprimir en plotter?',
       answer:
-        'Sí, muchos moldes incluyen versión para plotter (PDF y PLT). Verifica en la descripción del producto si incluye este formato.',
+        'SÃ­, muchos moldes incluyen versiÃ³n para plotter (PDF y PLT). Verifica en la descripciÃ³n del producto si incluye este formato.',
     },
     {
-      question: '¿Cuándo recibo el archivo?',
+      question: 'Â¿CuÃ¡ndo recibo el archivo?',
       answer:
-        'Inmediatamente después de confirmarse el pago. Recibirás un email con los links de descarga y acceso a tu panel de cliente.',
+        'Inmediatamente despuÃ©s de confirmarse el pago. RecibirÃ¡s un email con los links de descarga y acceso a tu panel de cliente.',
     },
     {
-      question: '¿Qué pasa si pago por transferencia?',
+      question: 'Â¿QuÃ© pasa si pago por transferencia?',
       answer:
         'Confirmamos el pago manualmente y, apenas queda acreditado, activamos tu descarga de forma automatica.',
     },
     {
-      question: '¿Hacen moldes personalizados?',
+      question: 'Â¿Hacen moldes personalizados?',
       answer:
-        'Sí, podés solicitar un diseño a pedido. Accedé a nuestra sección de "Diseño a pedido" para conocer más detalles y obtener un presupuesto personalizado.',
+        'SÃ­, podÃ©s solicitar un diseÃ±o a pedido. AccedÃ© a nuestra secciÃ³n de "DiseÃ±o a pedido" para conocer mÃ¡s detalles y obtener un presupuesto personalizado.',
     },
     {
-      question: '¿Venden a otros países?',
+      question: 'Â¿Venden a otros paÃ­ses?',
       answer:
-        'Sí, los archivos digitales llegan a todo el mundo por descarga. No tenemos limitaciones de envío geográfico.',
+        'SÃ­, los archivos digitales llegan a todo el mundo por descarga. No tenemos limitaciones de envÃ­o geogrÃ¡fico.',
     },
     {
-      question: '¿Puedo pedir modificaciones?',
+      question: 'Â¿Puedo pedir modificaciones?',
       answer:
-        'Sí, contactanos por WhatsApp para consultar sobre modificaciones. Evaluaremos tu pedido y te pasaremos un presupuesto.',
+        'SÃ­, contactanos por WhatsApp para consultar sobre modificaciones. Evaluaremos tu pedido y te pasaremos un presupuesto.',
     },
   ];
 
   const testimonials = [
     {
       name: 'Carolina M.',
-      role: 'Emprendedora textil · Argentina',
-      text: 'Arranqué mi marca de indumentaria con los moldes de Modeltex. Los archivos vienen impecables y graduados en todos los talles. Me ahorraron muchísimo tiempo de moldería.',
+      role: 'Emprendedora textil Â· Argentina',
+      text: 'ArranquÃ© mi marca de indumentaria con los moldes de Modeltex. Los archivos vienen impecables y graduados en todos los talles. Me ahorraron muchÃ­simo tiempo de molderÃ­a.',
       rating: 5,
     },
     {
       name: 'Diego R.',
-      role: 'Taller de confección · Uruguay',
-      text: 'Compro packs para producción y la relación precio-calidad es excelente. La descarga es inmediata y el PDF plotter calza perfecto con mi equipo.',
+      role: 'Taller de confecciÃ³n Â· Uruguay',
+      text: 'Compro packs para producciÃ³n y la relaciÃ³n precio-calidad es excelente. La descarga es inmediata y el PDF plotter calza perfecto con mi equipo.',
       rating: 5,
     },
     {
       name: 'Valentina S.',
-      role: 'Diseñadora de indumentaria · Chile',
-      text: 'Lo que más valoro es que tienen formatos editables (DXF y CDR). Puedo ajustar los moldes a mis diseños sin empezar de cero. Súper recomendable.',
+      role: 'DiseÃ±adora de indumentaria Â· Chile',
+      text: 'Lo que mÃ¡s valoro es que tienen formatos editables (DXF y CDR). Puedo ajustar los moldes a mis diseÃ±os sin empezar de cero. SÃºper recomendable.',
       rating: 5,
     },
   ];
 
   const trustItems = [
-    { icon: Zap, title: t('trust.instant.title', 'Descarga inmediata'), desc: t('trust.instant.desc', 'Apenas se confirma el pago, accedés a tus archivos desde tu cuenta.') },
+    { icon: Zap, title: t('trust.instant.title', 'Descarga inmediata'), desc: t('trust.instant.desc', 'Apenas se confirma el pago, accedÃ©s a tus archivos desde tu cuenta.') },
     { icon: BadgeCheck, title: t('trust.pro.title', 'Archivos profesionales'), desc: t('trust.pro.desc', 'Moldes graduados en todos los talles, listos para imprimir y producir.') },
-    { icon: Headphones, title: t('trust.support.title', 'Soporte post-compra'), desc: t('trust.support.desc', 'Te ayudamos por WhatsApp con la impresión y el uso de los moldes.') },
-    { icon: ShieldCheck, title: t('trust.secure.title', 'Compra segura'), desc: t('trust.secure.desc', 'Tus datos y tu pago protegidos. Comprá con tranquilidad.') },
+    { icon: Headphones, title: t('trust.support.title', 'Soporte post-compra'), desc: t('trust.support.desc', 'Te ayudamos por WhatsApp con la impresiÃ³n y el uso de los moldes.') },
+    { icon: ShieldCheck, title: t('trust.secure.title', 'Compra segura'), desc: t('trust.secure.desc', 'Tus datos y tu pago protegidos. ComprÃ¡ con tranquilidad.') },
   ];
 
   const ProductCardSkeleton = () => (
@@ -235,7 +235,7 @@ const HomePage = () => {
         <div className="absolute top-0 right-0 w-96 h-96 bg-petroleum-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
         <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-pulse" />
 
-        {/* Lluvia de moldes — fondo oscuro ? variante blanca */}
+        {/* Lluvia de moldes â€” fondo oscuro ? variante blanca */}
         <FloatingPatterns variant="white" />
 
 
@@ -247,15 +247,15 @@ const HomePage = () => {
               {/* Badge */}
               <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white/90 text-sm font-medium px-4 py-2 rounded-full mb-6 border border-white/10">
                 <ShieldCheck className="w-4 h-4" />
-                <span>{t('home.hero.badge', '18+ años en la industria textil')}</span>
+                <span>{t('home.hero.badge', '18+ aÃ±os en la industria textil')}</span>
               </div>
 
               <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                {t('home.hero.title', 'Moldería textil profesional para fabricantes de indumentaria')}
+                {t('home.hero.title', 'MolderÃ­a textil profesional para fabricantes de indumentaria')}
               </h1>
 
               <p className="font-sans text-lg md:text-xl text-gray-100 mb-10 leading-relaxed">
-                {t('home.hero.subtitle', 'Moldes digitales y en cartón, moldería a pedido y tizado computarizado. Precisión industrial, escalado completo y entrega rápida para que produzcas sin demoras.')}
+                {t('home.hero.subtitle', 'Moldes digitales y en cartÃ³n, molderÃ­a a pedido y tizado computarizado. PrecisiÃ³n industrial, escalado completo y entrega rÃ¡pida para que produzcas sin demoras.')}
               </p>
 
               {/* CTA Buttons */}
@@ -264,14 +264,14 @@ const HomePage = () => {
                   to="/catalogo"
                   className="cta-attention inline-flex items-center gap-2 px-9 py-4 rounded-xl bg-white text-primary-900 text-lg font-bold shadow-lg hover:bg-white/90 hover:scale-105 active:scale-[0.98] transition-all"
                 >
-                  Ver catálogo
+                  Ver catÃ¡logo
                   <ArrowRight size={20} />
                 </Link>
                 <Link
                   to="/diseno-a-pedido"
                   className="btn-accent px-7 py-3.5 text-lg font-semibold hover:scale-105 transition-transform"
                 >
-                  Diseño a pedido
+                  DiseÃ±o a pedido
                 </Link>
               </div>
 
@@ -296,10 +296,10 @@ const HomePage = () => {
                     Moldes Gratis
                   </p>
                   <p className="text-white/70 text-xs font-medium uppercase tracking-widest mt-0.5">
-                    ¡Probá antes de comprar!
+                    Â¡ProbÃ¡ antes de comprar!
                   </p>
                   <p className="text-white/70 text-sm leading-snug mt-0.5">
-                    Descargá moldes reales sin pagar nada
+                    DescargÃ¡ moldes reales sin pagar nada
                   </p>
                 </div>
 
@@ -316,7 +316,7 @@ const HomePage = () => {
                 <div className="relative">
                   <HeroCarousel
                     fallbackSrc="/brand/modeltex-hero.webp"
-                    fallbackAlt="Modeltex - Moldería de precisión: patronaje digital profesional"
+                    fallbackAlt="Modeltex - MolderÃ­a de precisiÃ³n: patronaje digital profesional"
                     intervalMs={1000}
                   />
                 </div>
@@ -366,7 +366,7 @@ const HomePage = () => {
           <div className="text-center mb-10 md:mb-16">
             <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.featured.title', 'Productos destacados')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
-              {t('home.featured.subtitle', 'Descubre nuestros moldes más populares y bestsellers')}
+              {t('home.featured.subtitle', 'Descubre nuestros moldes mÃ¡s populares y bestsellers')}
             </p>
           </div>
 
@@ -393,7 +393,7 @@ const HomePage = () => {
               to="/catalogo"
               className="btn-primary px-8 py-3 text-lg font-semibold inline-flex items-center gap-2 hover:scale-105 transition-transform"
             >
-              Ver catálogo completo
+              Ver catÃ¡logo completo
               <ArrowRight size={20} />
             </Link>
           </div>
@@ -405,7 +405,7 @@ const HomePage = () => {
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-10 md:mb-16">
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">¿Cómo funciona?</h2>
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">Â¿CÃ³mo funciona?</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
               5 pasos simples para conseguir tus moldes digitales
             </p>
@@ -486,7 +486,7 @@ const HomePage = () => {
           <div className="text-center mb-10 md:mb-16">
             <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.testimonials.title', 'Lo que dicen nuestros clientes')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
-              {t('home.testimonials.subtitle', 'Emprendedores, talleres y diseñadores de toda Latinoamérica ya producen con Modeltex')}
+              {t('home.testimonials.subtitle', 'Emprendedores, talleres y diseÃ±adores de toda LatinoamÃ©rica ya producen con Modeltex')}
             </p>
           </div>
 
@@ -554,7 +554,7 @@ const HomePage = () => {
         <div className="container-custom relative z-10">
           <div className="text-center mb-14">
             <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-4">
-              {t('trust.title', 'Comprá con confianza')}
+              {t('trust.title', 'ComprÃ¡ con confianza')}
             </h2>
             <p className="font-sans text-lg text-primary-100 max-w-2xl mx-auto">
               {t('trust.subtitle', 'Moldes digitales para emprendedores, talleres y fabricantes de indumentaria en todo el mundo')}
@@ -597,10 +597,10 @@ const HomePage = () => {
         <div className="container-custom relative z-10">
           <div className="max-w-3xl mx-auto text-center">
             <h2 className="font-display text-3xl md:text-5xl font-bold text-white mb-6">
-              {t('home.cta.title', '¿Listo para comenzar?')}
+              {t('home.cta.title', 'Â¿Listo para comenzar?')}
             </h2>
             <p className="font-sans text-lg text-gray-100 mb-10 leading-relaxed">
-              Únete a miles de fabricantes, emprendedores y diseñadores que confían en Modeltex para sus creaciones.
+              Ãšnete a miles de fabricantes, emprendedores y diseÃ±adores que confÃ­an en Modeltex para sus creaciones.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center items-center flex-wrap">
@@ -608,7 +608,7 @@ const HomePage = () => {
                 to="/catalogo"
                 className="btn-primary px-8 py-3 text-lg font-semibold inline-flex items-center gap-2 hover:scale-105 transition-transform"
               >
-                {t('common.viewCatalog', 'Ver catálogo')}
+                {t('common.viewCatalog', 'Ver catÃ¡logo')}
                 <ArrowRight size={20} />
               </Link>
               {!user ? (
@@ -623,7 +623,7 @@ const HomePage = () => {
                   to="/diseno-a-pedido"
                   className="btn-accent px-8 py-3 text-lg font-semibold hover:scale-105 transition-transform"
                 >
-                  {t('nav.custom', 'Diseño a pedido')}
+                  {t('nav.custom', 'DiseÃ±o a pedido')}
                 </Link>
               )}
             </div>
