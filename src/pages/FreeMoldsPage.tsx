@@ -53,27 +53,61 @@ export default function FreeMoldsPage() {
           style={{ backgroundImage: 'radial-gradient(circle at 15% 20%, rgba(255,255,255,0.25), transparent 40%), radial-gradient(circle at 85% 0%, rgba(203,110,231,0.35), transparent 45%)' }}
         />
         <div className="container-custom relative py-10 sm:py-14 md:py-20">
-          <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/20 border border-green-400/30 text-sm font-semibold backdrop-blur-sm">
-            <Gift className="w-4 h-4 text-green-300" /> 100% Gratis
-          </span>
-          <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mt-5 max-w-3xl text-balance">
-            Moldes Gratis Modeltex
-          </h1>
-          <p className="text-lg md:text-xl text-white/90 mt-5 max-w-2xl font-medium">
-            Descargá moldes gratuitos y probá la calidad de nuestro trabajo antes de comprar.
-          </p>
-          <div className="flex flex-wrap gap-x-6 gap-y-2 mt-6 text-sm text-white/75">
-            <span className="inline-flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-green-300" /> Archivos verificados</span>
-            <span className="inline-flex items-center gap-2"><Download className="w-4 h-4 text-green-300" /> Descarga inmediata</span>
-            <span className="inline-flex items-center gap-2"><Gift className="w-4 h-4 text-green-300" /> Sin registro</span>
-          </div>
-          <div className="flex flex-wrap gap-3 mt-8">
-            <Link
-              to="/catalogo"
-              className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-900 font-semibold rounded-xl hover:bg-white/90 transition-all active:scale-[0.98]"
-            >
-              Ver catálogo completo <ArrowRight className="w-4 h-4" />
-            </Link>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-center">
+            <div>
+              <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/20 border border-green-400/30 text-sm font-semibold backdrop-blur-sm">
+                <Gift className="w-4 h-4 text-green-300" /> 100% Gratis
+              </span>
+              <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold mt-5 max-w-3xl text-balance">
+                Moldes Gratis Modeltex
+              </h1>
+              <p className="text-lg md:text-xl text-white/90 mt-5 max-w-2xl font-medium">
+                Descarg? moldes gratuitos y prob? la calidad de nuestro trabajo antes de comprar.
+              </p>
+              <div className="flex flex-wrap gap-x-6 gap-y-2 mt-6 text-sm text-white/75">
+                <span className="inline-flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-green-300" /> Archivos verificados</span>
+                <span className="inline-flex items-center gap-2"><Download className="w-4 h-4 text-green-300" /> Descarga inmediata</span>
+                <span className="inline-flex items-center gap-2"><Gift className="w-4 h-4 text-green-300" /> Sin registro</span>
+              </div>
+              <div className="flex flex-wrap gap-3 mt-8">
+                <Link
+                  to="/catalogo"
+                  className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-900 font-semibold rounded-xl hover:bg-white/90 transition-all active:scale-[0.98]"
+                >
+                  Ver cat?logo completo <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+            </div>
+
+            <div className="max-w-sm lg:max-w-none">
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-6 backdrop-blur-md shadow-2xl shadow-primary-950/20">
+                <span className="inline-flex items-center gap-2 rounded-full bg-green-400/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-green-200">
+                  <Gift className="h-3.5 w-3.5" /> Nuevo cada semana
+                </span>
+                <h2 className="mt-4 font-display text-2xl font-bold leading-tight text-white">
+                  Nuevos moldes gratis cada semana
+                </h2>
+                <p className="mt-3 text-sm leading-6 text-white/80">
+                  Volv? seguido: sumamos descargas nuevas para que pruebes la calidad Modeltex antes de comprar.
+                </p>
+                <div className="mt-5 space-y-2 text-sm text-white/75">
+                  <div className="inline-flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-green-300" />
+                    Gratis y listos para descargar
+                  </div>
+                  <div className="inline-flex items-center gap-2">
+                    <Download className="h-4 w-4 text-green-300" />
+                    Nuevos archivos para revisar
+                  </div>
+                </div>
+                <Link
+                  to="/moldes-gratis"
+                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-primary-900 transition-all hover:bg-white/90 active:scale-[0.98]"
+                >
+                  Ver moldes nuevos <ArrowRight className="h-4 w-4" />
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
