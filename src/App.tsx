@@ -28,6 +28,9 @@ const FreeMoldsPage = lazy(() => import('./pages/FreeMoldsPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const TrustPage = lazy(() => import('./pages/TrustPage'));
 const MoldesPdfPage = lazy(() => import('./pages/MoldesPdfPage'));
+const MoldesPdfA4Page = lazy(() => import('./pages/MoldesPdfA4Page'));
+const MoldesPlotterPage = lazy(() => import('./pages/MoldesPlotterPage'));
+const MoldesEmprendedoresPage = lazy(() => import('./pages/MoldesEmprendedoresPage'));
 const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 function PageLoader() {
@@ -51,6 +54,9 @@ function AppLayout() {
             <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
             <Route path="/catalogo" element={<CatalogPage />} />
             <Route path="/moldes-pdf" element={<MoldesPdfPage />} />
+            <Route path="/moldes-pdf-a4" element={<MoldesPdfA4Page />} />
+            <Route path="/moldes-para-plotter" element={<MoldesPlotterPage />} />
+            <Route path="/moldes-para-emprendedores" element={<MoldesEmprendedoresPage />} />
             <Route path="/producto/:slug" element={<ProductDetailPage />} />
             <Route path="/carrito" element={<CartPage />} />
             <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
