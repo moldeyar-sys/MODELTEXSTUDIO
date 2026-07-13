@@ -80,17 +80,11 @@ export default function FreeMoldsPage() {
             </div>
 
             <div className="max-w-sm lg:max-w-none">
-              <div className="rounded-2xl border border-white/15 bg-white/10 p-6 backdrop-blur-md shadow-2xl shadow-primary-950/20">
-                <span className="inline-flex items-center gap-2 rounded-full bg-green-400/15 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-green-200">
-                  <Gift className="h-3.5 w-3.5" /> Nuevo cada semana
-                </span>
-                <h2 className="mt-4 font-display text-2xl font-bold leading-tight text-white">
-                  Nuevos moldes gratis cada semana
+              <div className="rounded-2xl border border-white/15 bg-white/10 p-6 md:p-7 backdrop-blur-md shadow-2xl shadow-primary-950/20">
+                <h2 className="font-display text-[2.15rem] leading-[0.95] sm:text-5xl font-bold text-white text-balance">
+                  Nuevos moldes <span className="text-green-300">gratis</span> cada semana
                 </h2>
-                <p className="mt-3 text-sm leading-6 text-white/80">
-                  Volv? seguido: sumamos descargas nuevas para que pruebes la calidad Modeltex antes de comprar.
-                </p>
-                <div className="mt-5 space-y-2 text-sm text-white/75">
+                <div className="mt-6 space-y-2 text-sm text-white/75">
                   <div className="inline-flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-green-300" />
                     Gratis y listos para descargar
@@ -102,7 +96,7 @@ export default function FreeMoldsPage() {
                 </div>
                 <Link
                   to="/moldes-gratis"
-                  className="mt-6 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-primary-900 transition-all hover:bg-white/90 active:scale-[0.98]"
+                  className="mt-7 inline-flex items-center gap-2 rounded-xl bg-white px-5 py-3 text-sm font-semibold text-primary-900 transition-all hover:bg-white/90 active:scale-[0.98]"
                 >
                   Ver moldes nuevos <ArrowRight className="h-4 w-4" />
                 </Link>
