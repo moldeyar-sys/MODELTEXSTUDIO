@@ -22,3 +22,7 @@ dist-ssr
 *.sw?
 .env
 .vercel
+
+# Carpeta APK: releases y credenciales de firma (nunca subir esto)
+apk/releases/
+apk/KEYSTORE-INFO.txt

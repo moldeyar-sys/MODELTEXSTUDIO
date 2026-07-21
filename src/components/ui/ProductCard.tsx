@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { ShoppingCart, X, Eye, Ruler, FileText } from 'lucide-react';
+import { ShoppingCart, X, Ruler, FileText } from 'lucide-react';
 import type { Product } from '../../lib/types';
 import { CATEGORIES } from '../../lib/types';
 import { useLocale } from '../../lib/locale';
@@ -64,16 +64,12 @@ export function ProductCard({ product }: ProductCardProps) {
 
       <div className="p-3 sm:p-4 flex flex-col flex-1">
         <Link to={`/producto/${product.slug}`}>
-          <h3 className="font-semibold text-sm sm:text-base text-gray-900 group-hover:text-primary-800 transition-colors line-clamp-2 min-h-[2.5rem] sm:min-h-[3rem]">
+          <h3 className="font-semibold text-sm sm:text-base text-gray-900 group-hover:text-primary-800 transition-colors line-clamp-2">
             {product.name}
           </h3>
         </Link>
 
-        {product.short_description && (
-          <p className="text-xs sm:text-sm text-gray-500 mt-1 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">{product.short_description}</p>
-        )}
-
-        <div className="mt-3 flex flex-wrap gap-1.5">
+        <div className="mt-2 flex flex-wrap gap-1.5">
           {visibleFormats.map((item) => (
             <span key={item} className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-600">
               <FileText className="w-3 h-3" /> {item}
@@ -91,42 +87,27 @@ export function ProductCard({ product }: ProductCardProps) {
           )}
         </div>
 
-        <div className="mt-3 rounded-2xl border border-primary-100 bg-primary-50/70 px-3 py-2.5">
-          <p className="text-[11px] uppercase tracking-wide text-primary-700/80 font-semibold">Precio desde</p>
-          <div className="flex items-end justify-between gap-3 mt-1">
-            <div>
-              <p className="text-lg sm:text-xl font-bold text-primary-900 leading-none">
-                {startingPrice !== null
-                  ? showUsd
-                    ? `USD ${startingPrice.toFixed(2)}`
-                    : formatPrice(startingPrice)
-                  : 'Consultar'}
-              </p>
-              <p className="text-[11px] text-gray-500 mt-1">PDF A4, plotter o carton segun disponibilidad</p>
-            </div>
-            {product.codigo && (
-              <span className="text-[11px] font-medium text-gray-500 whitespace-nowrap">Cod. {product.codigo}</span>
-            )}
-          </div>
+        <div className="mt-2.5 flex items-center justify-between gap-2">
+          <p className="text-lg sm:text-xl font-bold text-primary-900 leading-none">
+            {startingPrice !== null
+              ? showUsd
+                ? `USD ${startingPrice.toFixed(2)}`
+                : formatPrice(startingPrice)
+              : 'Consultar'}
+          </p>
+          {product.codigo && (
+            <span className="text-[11px] font-medium text-gray-400 whitespace-nowrap">Cod. {product.codigo}</span>
+          )}
         </div>
 
-        <div className="mt-3 grid grid-cols-2 gap-2">
-          <Link
-            to={`/producto/${product.slug}`}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-xs sm:text-sm font-semibold text-gray-700 hover:bg-gray-50 transition-colors"
-          >
-            <Eye className="w-4 h-4" /> Ver ficha
-          </Link>
+        <div className="mt-auto pt-3 flex gap-2">
           <button
             onClick={() => setShowOptions(true)}
-            className="inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary-800 px-3 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-primary-700 transition-colors active:scale-[0.98]"
+            className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary-800 px-3 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-primary-700 transition-colors active:scale-[0.98]"
           >
             <ShoppingCart className="w-4 h-4" /> Comprar
           </button>
-        </div>
-
-        <div className="mt-auto pt-3">
-          <ConsultButtons product={product} format="general" />
+          <ConsultButtons product={product} format="general" variant="icon" />
         </div>
       </div>
 

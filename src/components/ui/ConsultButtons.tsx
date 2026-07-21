@@ -8,10 +8,12 @@ interface ConsultButtonsProps {
   product: Product;
   /** Formato de la consulta: arma el mensaje correspondiente. */
   format?: ConsultFormat;
+  /** 'full' (default): botones WhatsApp + Telegram con texto. 'icon': solo WhatsApp, boton cuadrado sin texto. */
+  variant?: 'full' | 'icon';
 }
 
 /** Par de botones WhatsApp + Telegram con mensaje prearmado según el producto y formato. */
-export function ConsultButtons({ product, format = 'general' }: ConsultButtonsProps) {
+export function ConsultButtons({ product, format = 'general', variant = 'full' }: ConsultButtonsProps) {
   const { formatPrice } = useLocale();
   const message = whatsappMessage(product, format, formatPrice);
   const webLink = whatsappLink(product, format, formatPrice);
@@ -23,6 +25,22 @@ export function ConsultButtons({ product, format = 'general' }: ConsultButtonsPr
       window.location.href = whatsappAppLink(message);
     }
   };
+
+  if (variant === 'icon') {
+    return (
+      <a
+        href={webLink}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={openWhatsApp}
+        aria-label="Consultar por WhatsApp"
+        title="Consultar por WhatsApp"
+        className="flex items-center justify-center flex-shrink-0 w-11 rounded-xl border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
+      >
+        <MessageCircle className="w-5 h-5" />
+      </a>
+    );
+  }
 
   return (
     <div className="grid grid-cols-2 gap-2">
