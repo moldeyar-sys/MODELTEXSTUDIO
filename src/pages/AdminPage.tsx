@@ -220,12 +220,12 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-petroleum-50">
-      <div className="container-custom py-8">
-        <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">Panel de Administración</h1>
-        <p className="text-gray-500 mb-8">Gestioná productos, pedidos y clientes de Modeltex</p>
+      <div className="container-custom py-4 sm:py-8">
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary-900 mb-1 sm:mb-2">Panel de Administración</h1>
+        <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-8">Gestioná productos, pedidos y clientes de Modeltex</p>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap gap-1 bg-white rounded-xl p-1 border border-gray-200 mb-8">
+        {/* Tabs: scroll horizontal en mobile en vez de wrap (evita 3-4 filas en pantalla chica) */}
+        <div className="flex flex-nowrap gap-1 bg-white rounded-xl p-1 border border-gray-200 mb-4 sm:mb-8 overflow-x-auto mobile-scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-1">
           {tabs.map(tab => (
             <button
               key={tab.id}
@@ -303,8 +303,8 @@ export default function AdminPage() {
         {/* Products */}
         {activeTab === 'products' && (
           <div>
-            <div className="flex items-center justify-between mb-6">
-              <div className="relative flex-1 max-w-md">
+            <div className="flex flex-wrap items-center gap-3 mb-6">
+              <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   value={searchTerm}
@@ -313,7 +313,7 @@ export default function AdminPage() {
                   className="input-field pl-10"
                 />
               </div>
-              <button onClick={() => { setEditingProduct(null); setShowProductForm(true); }} className="btn-primary ml-4">
+              <button onClick={() => { setEditingProduct(null); setShowProductForm(true); }} className="btn-primary">
                 <Plus className="w-4 h-4 mr-1" /> Nuevo producto
               </button>
             </div>
@@ -326,14 +326,53 @@ export default function AdminPage() {
               />
             )}
 
-            <div className="card overflow-hidden">
+            {/* Mobile: lista en tarjetas (evita scroll horizontal de tabla con el dedo) */}
+            <div className="sm:hidden space-y-3">
+              {filteredProducts.map(p => (
+                <div key={p.id} className="card p-3 flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                    {p.main_image_url ? (
+                      <img src={p.main_image_url} alt="" className="w-full h-full object-cover" />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">M</div>
+                    )}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">{p.name}</p>
+                    <p className="text-xs text-gray-400 capitalize">{p.category} · ${Number(p.price).toLocaleString('es-AR')}</p>
+                    <div className="flex items-center gap-3 mt-1.5">
+                      <button onClick={() => toggleProductActive(p.id, !p.is_active)} className="flex items-center gap-1 text-xs text-gray-500">
+                        {p.is_active ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-gray-300" />} Activo
+                      </button>
+                      <button onClick={() => toggleProductFeatured(p.id, !p.is_featured)} className="flex items-center gap-1 text-xs text-gray-500">
+                        {p.is_featured ? <CheckCircle className="w-4 h-4 text-amber-500" /> : <XCircle className="w-4 h-4 text-gray-300" />} Destacado
+                      </button>
+                    </div>
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <button onClick={() => { setEditingProduct(p); setShowProductForm(true); }} className="p-2 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-gray-50">
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteProduct(p.id)} className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-50">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {filteredProducts.length === 0 && (
+                <p className="text-gray-500 text-center py-8 text-sm">Sin productos que coincidan.</p>
+              )}
+            </div>
+
+            {/* Desktop / tablet: tabla */}
+            <div className="hidden sm:block card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Producto</th>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Precio</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Categoría</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Categoría</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Activo</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Destacado</th>
                       <th className="px-4 py-3 text-right text-xs font-semibold text-gray-500 uppercase">Acciones</th>
@@ -363,7 +402,7 @@ export default function AdminPage() {
                             <div className="text-xs text-red-500">${Number(p.sale_price).toLocaleString('es-AR')}</div>
                           )}
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 capitalize hidden sm:table-cell">{p.category}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 capitalize">{p.category}</td>
                         <td className="px-4 py-3 text-center">
                           <button onClick={() => toggleProductActive(p.id, !p.is_active)}>
                             {p.is_active ? <CheckCircle className="w-5 h-5 text-green-500 mx-auto" /> : <XCircle className="w-5 h-5 text-gray-300 mx-auto" />}
@@ -513,39 +552,69 @@ export default function AdminPage() {
 
         {/* Customers */}
         {activeTab === 'customers' && (
-          <div className="card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Cliente</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Tipo</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">País</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">WhatsApp</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Rol</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {customers.map(c => (
-                    <tr key={c.id} className="hover:bg-gray-50/50">
-                      <td className="px-4 py-3">
-                        <p className="text-sm font-medium text-gray-900">{c.full_name || 'Sin nombre'}</p>
-                        <p className="text-xs text-gray-400">{c.email}</p>
-                      </td>
-                      <td className="px-4 py-3 text-sm text-gray-600 capitalize hidden sm:table-cell">{c.customer_type}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{c.country || '-'}</td>
-                      <td className="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{c.whatsapp || '-'}</td>
-                      <td className="px-4 py-3">
-                        <span className={`text-xs font-medium px-2 py-0.5 rounded ${
-                          c.role === 'admin' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
-                        }`}>
-                          {c.role}
-                        </span>
-                      </td>
+          <div>
+            {/* Mobile: tarjetas */}
+            <div className="sm:hidden space-y-2">
+              {customers.map(c => (
+                <div key={c.id} className="card p-3">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{c.full_name || 'Sin nombre'}</p>
+                      <p className="text-xs text-gray-400 truncate">{c.email}</p>
+                    </div>
+                    <span className={`text-xs font-medium px-2 py-0.5 rounded flex-shrink-0 ${
+                      c.role === 'admin' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
+                    }`}>
+                      {c.role}
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2 text-xs text-gray-500">
+                    <span className="capitalize">{c.customer_type}</span>
+                    {c.country && <span>{c.country}</span>}
+                    {c.whatsapp && <span>{c.whatsapp}</span>}
+                  </div>
+                </div>
+              ))}
+              {customers.length === 0 && (
+                <p className="text-gray-500 text-center py-8 text-sm">Todavía no hay clientes registrados.</p>
+              )}
+            </div>
+
+            {/* Desktop / tablet: tabla */}
+            <div className="hidden sm:block card overflow-hidden">
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Cliente</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Tipo</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden md:table-cell">País</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden lg:table-cell">WhatsApp</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Rol</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {customers.map(c => (
+                      <tr key={c.id} className="hover:bg-gray-50/50">
+                        <td className="px-4 py-3">
+                          <p className="text-sm font-medium text-gray-900">{c.full_name || 'Sin nombre'}</p>
+                          <p className="text-xs text-gray-400">{c.email}</p>
+                        </td>
+                        <td className="px-4 py-3 text-sm text-gray-600 capitalize">{c.customer_type}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 hidden md:table-cell">{c.country || '-'}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 hidden lg:table-cell">{c.whatsapp || '-'}</td>
+                        <td className="px-4 py-3">
+                          <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                            c.role === 'admin' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
+                          }`}>
+                            {c.role}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
         )}
@@ -602,7 +671,7 @@ export default function AdminPage() {
         {/* Moldes Gratis */}
         {activeTab === 'free' && (
           <div>
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
               <div>
                 <h2 className="font-semibold text-gray-900 text-lg">Moldes Gratis</h2>
                 <p className="text-sm text-gray-500">Se muestran en la sección pública <span className="font-mono">/moldes-gratis</span></p>
@@ -619,13 +688,47 @@ export default function AdminPage() {
               />
             )}
 
-            <div className="card overflow-hidden">
+            {/* Mobile: tarjetas */}
+            <div className="sm:hidden space-y-3">
+              {freeMolds.map(m => (
+                <div key={m.id} className="card p-3 flex items-center gap-3">
+                  <div className="w-14 h-14 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
+                    {m.image_url
+                      ? <img src={m.image_url} alt="" className="w-full h-full object-cover" />
+                      : <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">M</div>}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium text-gray-900 truncate">{m.title}</p>
+                    <p className="text-xs text-gray-400 capitalize">{m.category} · {m.files?.length || 0} archivos · {m.download_count || 0} descargas</p>
+                    <button onClick={() => toggleFreeActive(m.id, !m.is_active)} className="flex items-center gap-1 text-xs text-gray-500 mt-1.5">
+                      {m.is_active ? <CheckCircle className="w-4 h-4 text-green-500" /> : <XCircle className="w-4 h-4 text-gray-300" />} Activo
+                    </button>
+                  </div>
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <button onClick={() => { setEditingFree(m); setShowFreeForm(true); }} className="p-2 text-gray-400 hover:text-primary-600 rounded-lg hover:bg-gray-50">
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    <button onClick={() => deleteFreeMold(m.id)} className="p-2 text-gray-400 hover:text-red-600 rounded-lg hover:bg-gray-50">
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              {freeMolds.length === 0 && (
+                <p className="text-gray-500 text-center py-8 text-sm">
+                  Todavía no hay moldes gratis. Tocá "Nuevo molde gratis" para cargar el primero.
+                </p>
+              )}
+            </div>
+
+            {/* Desktop / tablet: tabla */}
+            <div className="hidden sm:block card overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead className="bg-gray-50 border-b border-gray-100">
                     <tr>
                       <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Molde</th>
-                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase hidden sm:table-cell">Categoría</th>
+                      <th className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase">Categoría</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Archivos</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Descargas</th>
                       <th className="px-4 py-3 text-center text-xs font-semibold text-gray-500 uppercase">Activo</th>
@@ -648,7 +751,7 @@ export default function AdminPage() {
                             </div>
                           </div>
                         </td>
-                        <td className="px-4 py-3 text-sm text-gray-600 capitalize hidden sm:table-cell">{m.category}</td>
+                        <td className="px-4 py-3 text-sm text-gray-600 capitalize">{m.category}</td>
                         <td className="px-4 py-3 text-center text-sm text-gray-700">{m.files?.length || 0}</td>
                         <td className="px-4 py-3 text-center text-sm text-gray-700">{m.download_count || 0}</td>
                         <td className="px-4 py-3 text-center">

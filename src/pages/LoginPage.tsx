@@ -1,12 +1,15 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { BrandLogo } from '../components/brand/BrandLogo';
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signIn } = useAuth();
+  // Si una ruta protegida (ej: /admin) mando aca, volver ahi despues del login.
+  const next = (location.state as { next?: string } | null)?.next ?? '/';
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -25,7 +28,7 @@ export default function LoginPage() {
         ? 'Email o contraseña incorrectos'
         : signInError);
     } else {
-      navigate('/');
+      navigate(next, { replace: true });
     }
     setIsLoading(false);
   };

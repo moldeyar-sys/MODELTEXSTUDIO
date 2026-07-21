@@ -22,7 +22,9 @@ export function ProtectedRoute({ children }: { children: React.ReactNode }) {
 export function AdminRoute({ children }: { children: React.ReactNode }) {
   const { user, profile, loading } = useAuth();
 
-  if (loading) {
+  // El perfil se carga async despues del user: sin este spinner intermedio,
+  // recien logueado rebotaria a la portada antes de saberse si es admin.
+  if (loading || (user && !profile)) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-800" />
@@ -30,7 +32,11 @@ export function AdminRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!user || profile?.role !== 'admin') {
+  if (!user) {
+    return <Navigate to="/login" replace state={{ next: '/admin' }} />;
+  }
+
+  if (profile?.role !== 'admin') {
     return <Navigate to="/" replace />;
   }
 
