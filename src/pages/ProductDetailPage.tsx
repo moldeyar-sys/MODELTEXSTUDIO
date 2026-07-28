@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   ArrowLeft,
@@ -22,7 +22,8 @@ import type { Product } from '../lib/types';
 import { CATEGORIES } from '../lib/types';
 import { FormatOptions } from '../components/ui/FormatOptions';
 import { ReviewsSection } from '../components/ui/ReviewsSection';
-import { productCode } from '../lib/productFormats';
+import { productCode, cartonPrice, pdfPrice, ploterPrice, productUrl } from '../lib/productFormats';
+import { fetchReviews, reviewSummary } from '../lib/reviews';
 
 const formatDescription = (format: string) => {
   const normalized = format.toLowerCase();
@@ -96,6 +97,68 @@ export default function ProductDetailPage() {
     path: slug ? `/producto/${slug}` : '/catalogo',
     type: 'product',
   });
+
+  // Resumen de reseñas: alimenta las estrellas de Google en los resultados de búsqueda.
+  const [ratingSummary, setRatingSummary] = useState({ avg: 0, count: 0 });
+  useEffect(() => {
+    if (!product) return;
+    let cancelled = false;
+    fetchReviews('product', product.id).then(rows => {
+      if (!cancelled) setRatingSummary(reviewSummary(rows));
+    });
+    return () => { cancelled = true; };
+  }, [product?.id]);
+
+  // Ficha de producto para Google (Schema.org). Sin esto el catalogo no muestra
+  // precio, disponibilidad ni estrellas en los resultados de busqueda.
+  const productSchema = useMemo(() => {
+    if (!product) return null;
+
+    const precios = [cartonPrice(product), pdfPrice(product), ploterPrice(product)]
+      .filter((v): v is number => v !== null);
+    const desde = precios.length ? Math.min(...precios) : null;
+
+    const schema: Record<string, unknown> = {
+      '@context': 'https://schema.org',
+      '@type': 'Product',
+      name: product.name,
+      description:
+        product.short_description ||
+        product.long_description ||
+        `Molde digital de ${product.garment_type || product.name} con talles y formatos profesionales.`,
+      sku: productCode(product),
+      category: CATEGORIES.find(c => c.value === product.category)?.label || product.category,
+      url: productUrl(product.slug),
+      brand: { '@type': 'Brand', name: 'Modeltex' },
+    };
+
+    const imagenes = [product.main_image_url, ...(product.gallery || [])].filter(Boolean);
+    if (imagenes.length) schema.image = imagenes;
+
+    if (desde !== null) {
+      schema.offers = {
+        '@type': 'Offer',
+        price: desde,
+        priceCurrency: 'ARS',
+        availability: 'https://schema.org/InStock',
+        itemCondition: 'https://schema.org/NewCondition',
+        url: productUrl(product.slug),
+        seller: { '@type': 'Organization', name: 'Modeltex' },
+      };
+    }
+
+    if (ratingSummary.count > 0) {
+      schema.aggregateRating = {
+        '@type': 'AggregateRating',
+        ratingValue: ratingSummary.avg,
+        reviewCount: ratingSummary.count,
+      };
+    }
+
+    return schema;
+  }, [product, ratingSummary]);
+
+  useStructuredData(productSchema, 'product-schema');
 
   if (loading) {
     return (

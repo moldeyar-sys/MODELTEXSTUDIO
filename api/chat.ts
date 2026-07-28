@@ -29,28 +29,36 @@ async function getAdminKnowledge(): Promise<string> {
   }
 }
 
+// Tope de productos que se le pasan al modelo como contexto.
+// Antes eran 60 sobre un catalogo de ~566: el asistente "no veia" el 89% del
+// catalogo y respondia que no teniamos moldes que si tenemos. Con la linea
+// compacta de abajo, 600 productos entran holgados en la ventana del modelo.
+const CATALOG_LIMIT = 600;
+
 // Trae un resumen compacto del catalogo activo para que el asistente no invente.
 async function getCatalogSummary(): Promise<string> {
   try {
     const url =
       `${SUPABASE_URL}/rest/v1/products` +
-      `?select=name,price,sale_price,category,garment_type,sizes,formats,recommended_fabrics,short_description` +
-      `&is_active=eq.true&order=created_at.desc&limit=60`;
+      `?select=name,codigo,price,sale_price,category,garment_type,sizes,formats,recommended_fabrics` +
+      `&is_active=eq.true&order=name.asc&limit=${CATALOG_LIMIT}`;
     const res = await fetch(url, {
       headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
     });
     if (!res.ok) return '';
     const rows = (await res.json()) as any[];
     if (!Array.isArray(rows) || rows.length === 0) return 'El catalogo no tiene productos activos en este momento.';
-    return rows
-      .map((p) => {
-        const precio = p.sale_price ? `${p.sale_price} (oferta, antes ${p.price})` : `${p.price}`;
-        const talles = (p.sizes || []).join(', ') || 's/d';
-        const formatos = (p.formats || []).join(', ') || 's/d';
-        const telas = (p.recommended_fabrics || []).join(', ') || 's/d';
-        return `- ${p.name} | categoria: ${p.category} | prenda: ${p.garment_type || 's/d'} | precio: ${precio} | talles: ${talles} | formatos: ${formatos} | telas: ${telas}`;
-      })
-      .join('\n');
+
+    const lineas = rows.map((p) => {
+      const precio = p.sale_price ? `${p.sale_price} (oferta, antes ${p.price})` : `${p.price}`;
+      const talles = (p.sizes || []).join('/') || 's/d';
+      const formatos = (p.formats || []).join('/') || 's/d';
+      const telas = (p.recommended_fabrics || []).join('/') || 's/d';
+      const codigo = p.codigo ? ` [${p.codigo}]` : '';
+      return `- ${p.name}${codigo} | ${p.category} | ${p.garment_type || 's/d'} | $${precio} | talles: ${talles} | formatos: ${formatos} | telas: ${telas}`;
+    });
+
+    return `(${rows.length} moldes activos)\n${lineas.join('\n')}`;
   } catch {
     return '';
   }

@@ -425,11 +425,19 @@ export default function CatalogPage() {
         <div className="container-custom py-5 sm:py-8">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="max-w-3xl">
-              <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-primary-800 text-glow-pulse tracking-wide">
-                MOLDES APROBADOS CON MUESTRA
+              <h1 className="font-sans text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary-900 tracking-tight text-balance">
+                Moldes aprobados con muestra
               </h1>
-              <p className="text-gray-500 mt-2 text-sm sm:text-base">
-                {loading ? 'Cargando catalogo...' : `${visibleProducts.length} ${visibleProducts.length === 1 ? 'molde disponible' : 'moldes disponibles'}`}
+              {/* El volumen del catalogo es el mejor argumento de venta: va como dato, no como pie de pagina. */}
+              <p className="mt-2 flex items-baseline gap-2 flex-wrap">
+                <span className="text-2xl sm:text-3xl font-extrabold text-primary-800 tabular-nums">
+                  {loading ? '—' : visibleProducts.length}
+                </span>
+                <span className="text-sm sm:text-base text-gray-500">
+                  {loading
+                    ? 'Cargando catálogo...'
+                    : `${visibleProducts.length === 1 ? 'molde listo' : 'moldes listos'} para producir`}
+                </span>
               </p>
             </div>
             {hasActiveFilters && (

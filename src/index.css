@@ -86,8 +86,34 @@
   animation: ctaPulse 2s ease-out infinite;
 }
 
+/* Igual que .cta-attention pero para fondos CLAROS: el anillo late en azul de marca. */
+@keyframes ctaPulseBlue {
+  0% { box-shadow: 0 0 0 0 rgba(0, 72, 173, 0.45); }
+  70% { box-shadow: 0 0 0 14px rgba(0, 72, 173, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(0, 72, 173, 0); }
+}
+.cta-attention-blue {
+  animation: ctaPulseBlue 2s ease-out infinite;
+}
+
+/*
+  Papel de moldería: la grilla sobre la que se trazan los moldes.
+  Cuadrícula fina cada 8px y línea guía cada 48px, en azul de marca muy tenue.
+  Es la textura propia del oficio, en lugar de un degradado genérico.
+*/
+.pattern-paper {
+  background-color: #f7f9fd;
+  background-image:
+    linear-gradient(rgba(0, 72, 173, 0.055) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 72, 173, 0.055) 1px, transparent 1px),
+    linear-gradient(rgba(0, 72, 173, 0.028) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 72, 173, 0.028) 1px, transparent 1px);
+  background-size: 48px 48px, 48px 48px, 8px 8px, 8px 8px;
+  background-position: -1px -1px, -1px -1px, -1px -1px, -1px -1px;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .text-glow-pulse, .cta-attention { animation: none; }
+  .text-glow-pulse, .cta-attention, .cta-attention-blue { animation: none; }
 }
 
 @layer utilities {

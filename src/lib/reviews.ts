@@ -19,6 +19,26 @@ export async function fetchReviews(targetType: ReviewTarget, targetId: string): 
   }
 }
 
+/**
+ * Trae las mejores reseñas recientes de todo el sitio para la prueba social del home.
+ * Solo 4-5 estrellas con comentario: es una vidriera, no el listado completo.
+ */
+export async function fetchTopReviews(limit = 6): Promise<Review[]> {
+  try {
+    const { data, error } = await supabase
+      .from('reviews')
+      .select('*')
+      .gte('rating', 4)
+      .not('comment', 'is', null)
+      .order('created_at', { ascending: false })
+      .limit(limit);
+    if (error) return [];
+    return ((data as Review[]) || []).filter(r => (r.comment || '').trim().length > 0);
+  } catch {
+    return [];
+  }
+}
+
 export async function submitReview(input: {
   targetType: ReviewTarget;
   targetId: string;

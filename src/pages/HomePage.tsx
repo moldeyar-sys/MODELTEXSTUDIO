@@ -27,7 +27,8 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useSeo } from '../lib/seo';
 import { useLocale } from '../lib/locale';
-import type { Product } from '../lib/types';
+import type { Product, Review } from '../lib/types';
+import { fetchTopReviews } from '../lib/reviews';
 
 const HomePage = () => {
   const { user } = useAuth();
@@ -40,6 +41,13 @@ const HomePage = () => {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedFaqIndex, setExpandedFaqIndex] = useState<number | null>(null);
+  const [realReviews, setRealReviews] = useState<Review[]>([]);
+
+  // Opiniones reales de clientes: en cuanto haya al menos una, reemplaza a los
+  // textos de ejemplo cargados a mano mas abajo.
+  useEffect(() => {
+    fetchTopReviews(3).then(setRealReviews);
+  }, []);
 
   // Fetch featured products
   useEffect(() => {
@@ -213,6 +221,17 @@ const HomePage = () => {
     },
   ];
 
+  // Si ya hay opiniones reales cargadas por clientes, mandan ellas.
+  const displayTestimonials =
+    realReviews.length > 0
+      ? realReviews.map(r => ({
+          name: r.author_name || 'Cliente',
+          role: 'Opinión verificada de un cliente',
+          text: r.comment || '',
+          rating: r.rating,
+        }))
+      : testimonials;
+
   const trustItems = [
     { icon: Zap, title: t('trust.instant.title', 'Descarga inmediata'), desc: t('trust.instant.desc', 'Apenas se confirma el pago, accedés a tus archivos desde tu cuenta.') },
     { icon: BadgeCheck, title: t('trust.pro.title', 'Archivos profesionales'), desc: t('trust.pro.desc', 'Moldes graduados en todos los talles, listos para imprimir y producir.') },
@@ -227,17 +246,12 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* HERO SECTION */}
-      <section className="relative pt-10 pb-16 sm:pt-16 sm:pb-24 md:pt-20 md:pb-40 overflow-hidden">
-        {/* Gradient Background */}
-        <div className="absolute inset-0 bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-600 opacity-95 z-0" />
+      <section className="relative pt-10 pb-14 sm:pt-14 sm:pb-20 md:pt-16 md:pb-28 overflow-hidden pattern-paper">
+        {/* Lluvia de moldes reales (siluetas de los DXF) sobre el papel de molderia */}
+        <FloatingPatterns variant="dark" />
 
-        {/* Geometric Patterns */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-petroleum-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse" />
-        <div className="absolute bottom-0 left-0 w-80 h-80 bg-accent-500 rounded-full mix-blend-multiply filter blur-3xl opacity-15 animate-pulse" />
-
-        {/* Lluvia de moldes — fondo oscuro ? variante blanca */}
-        <FloatingPatterns variant="white" />
-
+        {/* Desvanecido hacia la seccion siguiente */}
+        <div className="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-b from-transparent to-gray-50 z-0" />
 
         {/* Content */}
         <div className="container-custom relative z-10">
@@ -245,88 +259,95 @@ const HomePage = () => {
             {/* Left: Text */}
             <div className="flex-1 max-w-2xl text-center lg:text-left">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-sm text-white/90 text-sm font-medium px-4 py-2 rounded-full mb-6 border border-white/10">
+              <div className="inline-flex items-center gap-2 bg-white text-primary-800 text-sm font-semibold px-4 py-2 rounded-full mb-6 border border-primary-200 shadow-sm">
                 <ShieldCheck className="w-4 h-4" />
                 <span>{t('home.hero.badge', '18+ años en la industria textil')}</span>
               </div>
 
-              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-primary-900 mb-6 leading-tight text-balance">
                 {t('home.hero.title', 'Moldería textil profesional para fabricantes de indumentaria')}
               </h1>
 
-              <p className="font-sans text-lg md:text-xl text-gray-100 mb-10 leading-relaxed">
+              <p className="font-sans text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
                 {t('home.hero.subtitle', 'Moldes digitales y en cartón, moldería a pedido y tizado computarizado. Precisión industrial, escalado completo y entrega rápida para que produzcas sin demoras.')}
               </p>
 
+              {/* Fila de confianza: responde las tres dudas antes de que las pregunten */}
+              <div className="flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 mb-8 text-sm text-gray-600">
+                <span className="inline-flex items-center gap-1.5">
+                  <Zap className="w-4 h-4 text-primary-700" /> Descarga inmediata
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <BadgeCheck className="w-4 h-4 text-primary-700" /> Escalado en todos los talles
+                </span>
+                <span className="inline-flex items-center gap-1.5">
+                  <Headphones className="w-4 h-4 text-primary-700" /> Soporte por WhatsApp
+                </span>
+              </div>
+
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start items-center flex-wrap">
+              <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start items-center flex-wrap">
                 <Link
                   to="/catalogo"
-                  className="cta-attention inline-flex items-center gap-2 px-9 py-4 rounded-xl bg-white text-primary-900 text-lg font-bold shadow-lg hover:bg-white/90 hover:scale-105 active:scale-[0.98] transition-all"
+                  className="cta-attention-blue inline-flex items-center gap-2 px-9 py-4 rounded-xl bg-primary-800 text-white text-lg font-bold shadow-lg hover:bg-primary-700 active:scale-[0.98] transition-all"
                 >
                   Ver catálogo
                   <ArrowRight size={20} />
                 </Link>
                 <Link
                   to="/diseno-a-pedido"
-                  className="btn-accent px-7 py-3.5 text-lg font-semibold hover:scale-105 transition-transform"
+                  className="inline-flex items-center justify-center px-7 py-4 rounded-xl bg-white text-primary-800 text-lg font-semibold border-2 border-primary-200 hover:border-primary-800 hover:bg-primary-50 active:scale-[0.98] transition-all"
                 >
                   Diseño a pedido
                 </Link>
               </div>
 
-              {/* Moldes Gratis Card */}
+              {/* Moldes Gratis: el unico acento magenta de la pagina */}
               <Link
                 to="/moldes-gratis"
-                className="group mt-6 inline-flex w-full max-w-md items-center gap-4 rounded-2xl border border-amber-400/40 bg-gradient-to-r from-amber-400/20 via-yellow-300/10 to-amber-500/15 backdrop-blur-sm px-5 py-4 shadow-lg hover:from-amber-400/30 hover:via-yellow-300/20 hover:to-amber-500/25 hover:scale-[1.02] active:scale-[0.99] transition-all duration-200 cursor-pointer"
+                className="group mt-6 inline-flex w-full max-w-md items-center gap-4 rounded-2xl border-2 border-accent-200 bg-white px-5 py-4 shadow-sm hover:border-accent-400 hover:shadow-md active:scale-[0.99] transition-all duration-200 cursor-pointer"
               >
-                {/* Gift icon */}
                 <div className="relative flex-shrink-0">
-                  <div className="w-14 h-14 rounded-xl bg-amber-400 flex items-center justify-center shadow-md group-hover:rotate-6 transition-transform duration-300">
+                  <div className="w-14 h-14 rounded-xl bg-accent-500 flex items-center justify-center shadow-sm group-hover:rotate-6 transition-transform duration-300">
                     <Gift className="text-white w-7 h-7" />
                   </div>
-                  <span className="absolute -top-2 -right-2 bg-green-400 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full uppercase tracking-wide shadow">
-                    FREE
-                  </span>
                 </div>
 
-                {/* Text */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-amber-300 text-xl font-extrabold leading-tight">
+                <div className="flex-1 min-w-0 text-left">
+                  <p className="text-accent-600 text-xl font-extrabold leading-tight">
                     Moldes Gratis
                   </p>
-                  <p className="text-white/70 text-xs font-medium uppercase tracking-widest mt-0.5">
-                    ¡Probá antes de comprar!
-                  </p>
-                  <p className="text-white/70 text-sm leading-snug mt-0.5">
-                    Descargá moldes reales sin pagar nada
+                  <p className="text-gray-500 text-sm leading-snug mt-0.5">
+                    Descargá moldes reales y probá la calidad antes de comprar
                   </p>
                 </div>
 
-                {/* Arrow */}
-                <ArrowRight className="text-amber-400 w-5 h-5 flex-shrink-0 group-hover:translate-x-1 transition-transform duration-200" />
+                <ArrowRight className="text-accent-500 w-5 h-5 flex-shrink-0 group-hover:translate-x-1 transition-transform duration-200" />
               </Link>
             </div>
 
-            {/* Right: imagen real de Modeltex */}
+            {/* Right: imagen real, montada como una hoja de molde */}
             <div className="flex-shrink-0 w-full max-w-md">
               <div className="relative">
-                <div className="absolute -top-6 -right-6 w-32 h-32 bg-accent-500/30 rounded-full blur-3xl" />
-                <div className="absolute -bottom-6 -left-6 w-28 h-28 bg-petroleum-400/30 rounded-full blur-3xl" />
-                <div className="relative">
+                {/* Marcas de escuadra, como en un plano tecnico */}
+                <span className="absolute -top-2 -left-2 w-6 h-6 border-t-2 border-l-2 border-primary-300 z-10" />
+                <span className="absolute -top-2 -right-2 w-6 h-6 border-t-2 border-r-2 border-primary-300 z-10" />
+                <span className="absolute -bottom-2 -left-2 w-6 h-6 border-b-2 border-l-2 border-primary-300 z-10" />
+                <span className="absolute -bottom-2 -right-2 w-6 h-6 border-b-2 border-r-2 border-primary-300 z-10" />
+
+                <div className="relative bg-white rounded-2xl p-2 shadow-lg border border-primary-100">
                   <HeroCarousel
                     fallbackSrc="/brand/modeltex-hero.webp"
                     fallbackAlt="Modeltex - Moldería de precisión: patronaje digital profesional"
                     intervalMs={1000}
                   />
                 </div>
+
                 <div className="relative mt-4 flex flex-wrap justify-center gap-2">
-                  {['PDF A4', 'Plotter', 'DXF', 'CDR', 'PLT'].map((f, i) => (
+                  {['PDF A4', 'Plotter', 'DXF', 'CDR', 'PLT'].map((f) => (
                     <span
                       key={f}
-                      className={i === 0
-                        ? 'bg-accent-500 text-white text-xs font-semibold px-2.5 py-1 rounded-lg shadow'
-                        : 'bg-white/10 text-white/85 text-xs font-medium px-2.5 py-1 rounded-lg border border-white/15'}
+                      className="bg-white text-primary-800 text-xs font-semibold px-2.5 py-1 rounded-lg border border-primary-200 shadow-sm"
                     >
                       {f}
                     </span>
@@ -491,7 +512,7 @@ const HomePage = () => {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            {testimonials.map((t, index) => (
+            {displayTestimonials.map((t, index) => (
               <div key={index} className="card p-8 flex flex-col h-full border-2 border-gray-100 hover:border-petroleum-200 transition-colors">
                 <Quote className="w-8 h-8 text-petroleum-200 mb-4" />
                 <div className="flex gap-0.5 mb-4">
