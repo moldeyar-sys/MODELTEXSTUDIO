@@ -10,6 +10,13 @@ interface Props {
   mold: FreeMold;
 }
 
+const GENERIC_LABELS = ['PDF', 'DXF', 'CDR', 'ZIP', 'Archivo', 'Plotter (PLT)'];
+
+const fileDisplayName = (f: { label?: string; name?: string }) => {
+  if (f.label && !GENERIC_LABELS.includes(f.label)) return f.label;
+  return f.name || f.label || 'Archivo';
+};
+
 const categoryLabel = (c: string) => {
   switch (c) {
     case 'nino': return 'Niño';
@@ -106,7 +113,7 @@ export function FreeMoldCard({ mold }: Props) {
                     onClick={() => handleDownload(f.url)}
                     className="flex items-center justify-between gap-2 w-full px-2.5 py-1.5 bg-primary-800 text-white border border-primary-800 rounded-lg text-xs font-semibold hover:bg-primary-700 transition-colors"
                   >
-                    <span className="truncate">{f.label || f.name}</span>
+                    <span className="truncate">{fileDisplayName(f)}</span>
                     <Download className="w-3.5 h-3.5 flex-shrink-0" />
                   </button>
                 ) : (
@@ -115,7 +122,7 @@ export function FreeMoldCard({ mold }: Props) {
                     title="Creá tu cuenta para descargar este talle"
                     className="flex items-center justify-between gap-2 w-full px-2.5 py-1.5 bg-gray-100 border border-gray-200 rounded-lg text-xs font-medium text-gray-400 cursor-not-allowed select-none"
                   >
-                    <span className="truncate">{f.label || f.name}</span>
+                    <span className="truncate">{fileDisplayName(f)}</span>
                     <Lock className="w-3.5 h-3.5 flex-shrink-0" />
                   </div>
                 )
