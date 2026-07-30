@@ -231,6 +231,13 @@ export interface ContactMessage {
   created_at: string;
 }
 
+export interface NewsletterSubscriber {
+  id: string;
+  email: string;
+  source: string;
+  created_at: string;
+}
+
 export const CUSTOMER_TYPES: { value: CustomerType; label: string }[] = [
   { value: 'emprendedor', label: 'Emprendedor' },
   { value: 'fabricante', label: 'Fabricante' },

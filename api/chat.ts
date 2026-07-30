@@ -10,9 +10,30 @@ const SUPABASE_ANON_KEY =
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
+const OPENROUTER_EMBED_MODEL = process.env.OPENROUTER_EMBED_MODEL || 'openai/text-embedding-3-small';
 const WHATSAPP = '5491166531086';
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
+type ProductRow = {
+  name: string;
+  codigo?: string;
+  price: number;
+  sale_price?: number | null;
+  category: string;
+  garment_type?: string;
+  sizes?: string[];
+  formats?: string[];
+  recommended_fabrics?: string[];
+};
+
+function formatProductLine(p: ProductRow): string {
+  const precio = p.sale_price ? `${p.sale_price} (oferta, antes ${p.price})` : `${p.price}`;
+  const talles = (p.sizes || []).join('/') || 's/d';
+  const formatos = (p.formats || []).join('/') || 's/d';
+  const telas = (p.recommended_fabrics || []).join('/') || 's/d';
+  const codigo = p.codigo ? ` [${p.codigo}]` : '';
+  return `- ${p.name}${codigo} | ${p.category} | ${p.garment_type || 's/d'} | $${precio} | talles: ${talles} | formatos: ${formatos} | telas: ${telas}`;
+}
 
 // Trae la "memoria" editable del admin (tabla ai_settings, fila default).
 async function getAdminKnowledge(): Promise<string> {
@@ -49,22 +70,66 @@ async function getCatalogSummary(): Promise<string> {
     const rows = (await res.json()) as any[];
     if (!Array.isArray(rows) || rows.length === 0) return 'El catalogo no tiene productos activos en este momento.';
 
-    const lineas = rows.map((p) => {
-      const precio = p.sale_price ? `${p.sale_price} (oferta, antes ${p.price})` : `${p.price}`;
-      const talles = (p.sizes || []).join('/') || 's/d';
-      const formatos = (p.formats || []).join('/') || 's/d';
-      const telas = (p.recommended_fabrics || []).join('/') || 's/d';
-      const codigo = p.codigo ? ` [${p.codigo}]` : '';
-      return `- ${p.name}${codigo} | ${p.category} | ${p.garment_type || 's/d'} | $${precio} | talles: ${talles} | formatos: ${formatos} | telas: ${telas}`;
-    });
-
-    return `(${rows.length} moldes activos)\n${lineas.join('\n')}`;
+    return `(${rows.length} moldes activos)\n${rows.map(formatProductLine).join('\n')}`;
   } catch {
     return '';
   }
 }
 
-function buildSystemPrompt(catalog: string, knowledge: string): string {
+// Busqueda por significado: convierte la ultima pregunta del cliente en un
+// vector y trae los productos mas parecidos (no coincidencia de texto, sino
+// de significado — "algo abrigado" encuentra "campera de frisa"). Requiere
+// que el admin haya generado los embeddings del catalogo (panel admin,
+// pestaña Productos). Si todavia no hay embeddings, devuelve null y el
+// caller cae al catalogo completo de siempre.
+async function getSemanticMatches(query: string, count = 10): Promise<string | null> {
+  try {
+    const embedRes = await fetch('https://openrouter.ai/api/v1/embeddings', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${OPENROUTER_API_KEY}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://modeltex.com.ar',
+        'X-Title': 'Modeltex Asistente',
+      },
+      body: JSON.stringify({ model: OPENROUTER_EMBED_MODEL, input: query.slice(0, 2000) }),
+    });
+    if (!embedRes.ok) {
+      console.warn('semantic search: embeddings API', embedRes.status, '- fallback a catalogo completo');
+      return null;
+    }
+    const embedData = (await embedRes.json()) as { data?: { embedding: number[] }[] };
+    const queryEmbedding = embedData.data?.[0]?.embedding;
+    if (!queryEmbedding) {
+      console.warn('semantic search: respuesta sin embedding - fallback a catalogo completo');
+      return null;
+    }
+
+    const matchRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/match_products`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ query_embedding: queryEmbedding, match_count: count }),
+    });
+    if (!matchRes.ok) {
+      // Caso tipico: la migracion 024 todavia no se corrio (RPC inexistente).
+      console.warn('semantic search: rpc match_products', matchRes.status, '- fallback a catalogo completo');
+      return null;
+    }
+    const rows = (await matchRes.json()) as ProductRow[];
+    if (!Array.isArray(rows) || rows.length === 0) return null; // sin embeddings generados aun
+
+    return rows.map(formatProductLine).join('\n');
+  } catch (err) {
+    console.warn('semantic search: error inesperado - fallback a catalogo completo', err);
+    return null;
+  }
+}
+
+function buildSystemPrompt(catalog: string, knowledge: string, catalogIsPartial: boolean): string {
   return [
     'Sos el asistente virtual de Modeltex, una tienda online que vende MOLDES DIGITALES de ropa para imprimir y producir.',
     'Los productos son archivos digitales (PDF A4, PDF Plotter, DXF, CDR, PLT, sublimacion) con DESCARGA INMEDIATA tras el pago. Se vende a todo el mundo.',
@@ -92,7 +157,9 @@ function buildSystemPrompt(catalog: string, knowledge: string): string {
     '- No pidas datos sensibles (tarjetas, contraseñas).',
     '- Si preguntan por una compra puntual ya realizada, deriva a WhatsApp.',
     '',
-    'CATALOGO ACTUAL:',
+    catalogIsPartial
+      ? 'PRODUCTOS MAS RELEVANTES A LO QUE PREGUNTA EL CLIENTE (busqueda inteligente, no es el catalogo completo — si ninguno encaja bien, decilo y ofrece derivar a WhatsApp o diseño a medida en vez de asumir que no tenemos nada parecido):'
+      : 'CATALOGO ACTUAL:',
     catalog || '(no se pudo cargar el catalogo en este momento)',
   ].join('\n');
 }
@@ -120,8 +187,20 @@ export default async function handler(req: any, res: any) {
       .slice(-12)
       .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
 
-    const [catalog, knowledge] = await Promise.all([getCatalogSummary(), getAdminKnowledge()]);
-    const messages: ChatMessage[] = [{ role: 'system', content: buildSystemPrompt(catalog, knowledge) }, ...history];
+    const lastUserMessage = [...history].reverse().find((m) => m.role === 'user')?.content || '';
+
+    const [semanticMatches, knowledge] = await Promise.all([
+      lastUserMessage ? getSemanticMatches(lastUserMessage) : Promise.resolve(null),
+      getAdminKnowledge(),
+    ]);
+    // Si hubo resultados de busqueda inteligente los usa (mas relevantes y mas
+    // baratos); si no (todavia no se generaron embeddings, o es el primer
+    // saludo sin pregunta), cae al volcado completo del catalogo de siempre.
+    const catalog = semanticMatches ?? (await getCatalogSummary());
+    const messages: ChatMessage[] = [
+      { role: 'system', content: buildSystemPrompt(catalog, knowledge, semanticMatches !== null) },
+      ...history,
+    ];
 
     const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',

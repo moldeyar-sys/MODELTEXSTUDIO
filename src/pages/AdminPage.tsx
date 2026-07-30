@@ -5,20 +5,22 @@ import {
   Plus, Edit3, Trash2,
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
-  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save, Bot
+  Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save, Bot, Users, Copy, Check,
+  Sparkles, RefreshCw
 } from 'lucide-react';
-import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage } from '../lib/types';
+import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage, NewsletterSubscriber } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
 import { fetchAllFreeMolds } from '../lib/freeMolds';
 import { fetchContactMessages } from '../lib/contact';
+import { fetchNewsletterSubscribers, deleteNewsletterSubscriber } from '../lib/newsletter';
 import { fetchAllHeroImages } from '../lib/heroImages';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'hero' | 'payments' | 'ia';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia';
 
 export default function AdminPage() {
   useAuth();
@@ -29,6 +31,10 @@ export default function AdminPage() {
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [freeMolds, setFreeMolds] = useState<FreeMold[]>([]);
   const [contacts, setContacts] = useState<ContactMessage[]>([]);
+  const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
+  const [emailsCopied, setEmailsCopied] = useState(false);
+  const [embedBusy, setEmbedBusy] = useState(false);
+  const [embedStatus, setEmbedStatus] = useState('');
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [uploadingHero, setUploadingHero] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -52,13 +58,14 @@ export default function AdminPage() {
 
   const fetchAll = async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
-    const [prodRes, orderRes, custRes, reqRes, freeRes, contactRes, heroRes] = await Promise.all([
+    const [prodRes, orderRes, custRes, reqRes, freeRes, contactRes, subsRes, heroRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('orders').select('*, order_items(*, product:products(name, main_image_url)), buyer:profiles(email, whatsapp, full_name)').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('custom_requests').select('*').order('created_at', { ascending: false }),
       fetchAllFreeMolds(), // resiliente: si la tabla no existe, devuelve [] sin romper el admin
       fetchContactMessages(), // resiliente igual
+      fetchNewsletterSubscribers(), // resiliente igual
       fetchAllHeroImages(), // resiliente
     ]);
     setProducts((prodRes.data as Product[]) || []);
@@ -67,6 +74,7 @@ export default function AdminPage() {
     setRequests((reqRes.data as CustomRequest[]) || []);
     setFreeMolds(freeRes);
     setContacts(contactRes);
+    setSubscribers(subsRes);
     setHeroImages(heroRes);
     const ps = await fetchPaymentSettings();
     setPaySettings(ps);
@@ -84,6 +92,7 @@ export default function AdminPage() {
     { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
     { id: 'free', label: 'Moldes Gratis', icon: <Gift className="w-4 h-4" /> },
     { id: 'contacts', label: 'Contactos', icon: <Mail className="w-4 h-4" /> },
+    { id: 'newsletter', label: `Novedades (${subscribers.length})`, icon: <Users className="w-4 h-4" /> },
     { id: 'hero', label: 'Hero', icon: <ImageIcon className="w-4 h-4" /> },
     { id: 'payments', label: 'Pagos', icon: <CreditCard className="w-4 h-4" /> },
     { id: 'ia', label: 'IA', icon: <Bot className="w-4 h-4" /> },
@@ -171,10 +180,72 @@ export default function AdminPage() {
     if (!error) setContacts(prev => prev.map(c => c.id === id ? { ...c, is_read } : c));
   };
 
+  // Genera embeddings para la busqueda inteligente del asistente IA. Llama
+  // al endpoint de a tandas hasta que "done" sea true, mostrando progreso.
+  const runEmbedCatalog = async (force: boolean) => {
+    setEmbedBusy(true);
+    setEmbedStatus('Generando...');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        setEmbedStatus('Iniciá sesión de nuevo e intentá otra vez.');
+        return;
+      }
+      let offset = 0;
+      let totalProcessed = 0;
+      // Tope de seguridad: nunca deberia hacer falta mas de 50 tandas para el catalogo actual.
+      for (let round = 0; round < 50; round++) {
+        const res = await fetch('/api/embed-catalog', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ force, offset }),
+        });
+        // 429 = freno anti-abuso del endpoint: esperar un toque y reintentar la misma tanda.
+        if (res.status === 429) {
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || data.error) {
+          setEmbedStatus(data.error || `Error (${res.status}) generando embeddings.`);
+          return;
+        }
+        totalProcessed += data.processed || 0;
+        if (data.done) {
+          setEmbedStatus(
+            totalProcessed > 0
+              ? `Listo: ${totalProcessed} producto${totalProcessed === 1 ? '' : 's'} indexados para búsqueda inteligente.`
+              : 'Ya estaba todo indexado.',
+          );
+          return;
+        }
+        offset = data.nextOffset ?? offset + (data.processed || 0);
+        setEmbedStatus(`Procesados ${totalProcessed}${data.remaining != null ? ` · faltan ${data.remaining}` : ''}...`);
+      }
+      setEmbedStatus(`Procesados ${totalProcessed}. Quedó para otra tanda: volvé a apretar el botón.`);
+    } catch {
+      setEmbedStatus('Error de red generando embeddings.');
+    } finally {
+      setEmbedBusy(false);
+    }
+  };
+
   const deleteContact = async (id: string) => {
     if (!confirm('¿Eliminar este mensaje?')) return;
     const { error } = await supabase.from('contact_messages').delete().eq('id', id);
     if (!error) setContacts(prev => prev.filter(c => c.id !== id));
+  };
+
+  const deleteSubscriber = async (id: string) => {
+    if (!confirm('¿Dar de baja este email?')) return;
+    if (await deleteNewsletterSubscriber(id)) setSubscribers(prev => prev.filter(s => s.id !== id));
+  };
+
+  const copyAllEmails = async () => {
+    await navigator.clipboard.writeText(subscribers.map(s => s.email).join(', '));
+    setEmailsCopied(true);
+    setTimeout(() => setEmailsCopied(false), 2000);
   };
 
   const paidOrders = orders.filter(o => o.payment_status === 'pagado');
@@ -303,6 +374,39 @@ export default function AdminPage() {
         {/* Products */}
         {activeTab === 'products' && (
           <div>
+            {/* Busqueda inteligente (IA): el asistente pasa a entender significado, no solo texto */}
+            <div className="card p-4 mb-5 border-2 border-primary-100 bg-primary-50/40">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary-800 text-white flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">Búsqueda inteligente (IA)</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Para que el asistente encuentre productos por significado (ej: "algo abrigado para nene" → campera de frisa infantil), no solo por palabra exacta.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    <button
+                      onClick={() => runEmbedCatalog(false)}
+                      disabled={embedBusy}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-primary-800 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                    >
+                      {embedBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      Indexar productos nuevos
+                    </button>
+                    <button
+                      onClick={() => runEmbedCatalog(true)}
+                      disabled={embedBusy}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 bg-white text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Regenerar todos
+                    </button>
+                  </div>
+                  {embedStatus && <p className="text-xs text-gray-500 mt-2">{embedStatus}</p>}
+                </div>
+              </div>
+            </div>
+
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -830,6 +934,50 @@ export default function AdminPage() {
               <p className="text-gray-500 text-center py-8 text-sm">
                 Todavía no llegaron mensajes.
                 <br />(Si esperabas alguno y no aparece, falta correr el SQL de Contacto en Supabase.)
+              </p>
+            )}
+          </div>
+        )}
+
+        {/* Novedades (lista de emails de "Moldes Gratis") */}
+        {activeTab === 'newsletter' && (
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+              <div>
+                <h2 className="font-semibold text-gray-900 text-lg">Lista de novedades</h2>
+                <p className="text-sm text-gray-500">Emails que se sumaron desde <span className="font-mono">/moldes-gratis</span> para que les avises de moldes nuevos.</p>
+              </div>
+              {subscribers.length > 0 && (
+                <button onClick={copyAllEmails} className="inline-flex items-center gap-2 text-sm font-medium px-3.5 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 flex-shrink-0">
+                  {emailsCopied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                  {emailsCopied ? 'Copiado' : `Copiar los ${subscribers.length} emails`}
+                </button>
+              )}
+            </div>
+
+            {subscribers.length > 0 && (
+              <div className="card divide-y divide-gray-100">
+                {subscribers.map(s => (
+                  <div key={s.id} className="flex items-center justify-between gap-3 px-5 py-3">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-gray-900 truncate">{s.email}</p>
+                      <p className="text-xs text-gray-400">
+                        {s.created_at && new Date(s.created_at).toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' })}
+                        {s.source ? ` · ${s.source}` : ''}
+                      </p>
+                    </div>
+                    <button onClick={() => deleteSubscriber(s.id)} className="text-xs font-medium px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 flex-shrink-0">
+                      Dar de baja
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {subscribers.length === 0 && (
+              <p className="text-gray-500 text-center py-8 text-sm">
+                Todavía nadie se sumó a la lista.
+                <br />(Si esperabas alguno y no aparece, falta correr el SQL de Novedades en Supabase.)
               </p>
             )}
           </div>

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, MessageCircle, FileDown, Tag, Lock, UserPlus, Star, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, MessageCircle, FileDown, Tag, Lock, UserPlus, Star, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import type { FreeMold } from '../../lib/types';
 import { buildFreeMoldWhatsApp, incrementFreeMoldDownload } from '../../lib/freeMolds';
@@ -28,14 +28,21 @@ const categoryLabel = (c: string) => {
   }
 };
 
+// Cuantos archivos se ven sin expandir: mantiene las tarjetas parejas en la grilla
+// aunque un molde tenga 11 archivos y el de al lado 4.
+const FILES_COLLAPSED = 4;
+
 export function FreeMoldCard({ mold }: Props) {
   const { user } = useAuth();
   const [showReviews, setShowReviews] = useState(false);
+  const [showAllFiles, setShowAllFiles] = useState(false);
   const waUrl = buildFreeMoldWhatsApp(mold);
   const files = mold.files || [];
   // Sin cuenta: solo se pueden descargar los archivos marcados "free". Con cuenta: todos.
   const canDownload = (f: { free?: boolean }) => !!user || !!f.free;
   const hasLocked = !user && files.some(f => !f.free);
+  const visibleFiles = showAllFiles ? files : files.slice(0, FILES_COLLAPSED);
+  const hiddenCount = files.length - FILES_COLLAPSED;
 
   const handleDownload = (url: string) => {
     incrementFreeMoldDownload(mold.id);
@@ -106,7 +113,7 @@ export function FreeMoldCard({ mold }: Props) {
           <p className="text-[11px] font-semibold text-gray-500 mb-1.5">Archivos para descargar</p>
           {files.length > 0 ? (
             <div className="flex flex-col gap-1.5">
-              {files.map((f, i) =>
+              {visibleFiles.map((f, i) =>
                 canDownload(f) ? (
                   <button
                     key={i}
@@ -126,6 +133,19 @@ export function FreeMoldCard({ mold }: Props) {
                     <Lock className="w-3.5 h-3.5 flex-shrink-0" />
                   </div>
                 )
+              )}
+
+              {hiddenCount > 0 && (
+                <button
+                  onClick={() => setShowAllFiles(v => !v)}
+                  className="flex items-center justify-center gap-1 w-full min-h-[2.75rem] sm:min-h-0 py-1.5 text-xs font-semibold text-primary-700 hover:text-primary-900 hover:bg-primary-50 rounded-lg transition-colors"
+                >
+                  {showAllFiles ? (
+                    <>Ver menos <ChevronUp className="w-3.5 h-3.5" /></>
+                  ) : (
+                    <>Ver todos los archivos ({files.length}) <ChevronDown className="w-3.5 h-3.5" /></>
+                  )}
+                </button>
               )}
             </div>
           ) : (

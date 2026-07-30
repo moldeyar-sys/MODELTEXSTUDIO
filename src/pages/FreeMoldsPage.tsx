@@ -7,6 +7,7 @@ import { fetchActiveFreeMolds } from '../lib/freeMolds';
 import { fetchPromoProducts, type PromoProduct } from '../lib/promo';
 import { FreeMoldCard } from '../components/ui/FreeMoldCard';
 import { FreePromoCard } from '../components/ui/FreePromoCard';
+import { NewsletterSignup } from '../components/ui/NewsletterSignup';
 import type { FreeMold } from '../lib/types';
 
 export default function FreeMoldsPage() {
@@ -62,7 +63,7 @@ export default function FreeMoldsPage() {
                 Moldes Gratis Modeltex
               </h1>
               <p className="text-lg md:text-xl text-white/90 mt-5 max-w-2xl font-medium">
-                Descarg? moldes gratuitos y prob? la calidad de nuestro trabajo antes de comprar.
+                Descargá moldes gratuitos y probá la calidad de nuestro trabajo antes de comprar.
               </p>
               <div className="flex flex-wrap gap-x-6 gap-y-2 mt-6 text-sm text-white/75">
                 <span className="inline-flex items-center gap-2"><ShieldCheck className="w-4 h-4 text-green-300" /> Archivos verificados</span>
@@ -74,7 +75,7 @@ export default function FreeMoldsPage() {
                   to="/catalogo"
                   className="inline-flex items-center gap-2 px-6 py-3 bg-white text-primary-900 font-semibold rounded-xl hover:bg-white/90 transition-all active:scale-[0.98]"
                 >
-                  Ver cat?logo completo <ArrowRight className="w-4 h-4" />
+                  Ver catálogo completo <ArrowRight className="w-4 h-4" />
                 </Link>
               </div>
             </div>
@@ -109,6 +110,10 @@ export default function FreeMoldsPage() {
       {/* Contenido */}
       <section className="relative overflow-hidden container-custom py-8 md:py-14">
         <FloatingPatterns variant="dark" />
+
+        {/* Captura de email: lista propia, mas liviana que crear cuenta */}
+        <NewsletterSignup className="mb-8 max-w-2xl" />
+
         {/* Buscador */}
         <div className="max-w-md mb-8">
           <div className="relative">

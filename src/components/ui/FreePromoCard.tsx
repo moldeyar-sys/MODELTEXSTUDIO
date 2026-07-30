@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Download, Lock, UserPlus, FileDown, Clock, Star, X } from 'lucide-react';
+import { ChevronDown, ChevronUp, Download, Lock, UserPlus, FileDown, Clock, Star, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createSignedDownloadUrl, isStoragePath } from '../../lib/storage';
 import { ReviewsSection } from './ReviewsSection';
@@ -17,11 +17,17 @@ const categoryLabel = (c: string) => {
   }
 };
 
+// Archivos visibles sin expandir (misma regla que FreeMoldCard).
+const FILES_COLLAPSED = 4;
+
 export function FreePromoCard({ item }: { item: PromoProduct }) {
   const { user } = useAuth();
   const { product, files } = item;
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [showReviews, setShowReviews] = useState(false);
+  const [showAllFiles, setShowAllFiles] = useState(false);
+  const visibleFiles = showAllFiles ? files : files.slice(0, FILES_COLLAPSED);
+  const hiddenCount = files.length - FILES_COLLAPSED;
 
   const endsAt = product.free_until ? new Date(product.free_until) : null;
 
@@ -84,7 +90,7 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
           <p className="text-[11px] font-semibold text-gray-500 mb-1.5">Archivos para descargar</p>
           {files.length > 0 ? (
             <div className="flex flex-col gap-1.5">
-              {files.map(f =>
+              {visibleFiles.map(f =>
                 user ? (
                   <button key={f.id} onClick={() => handleDownload(f)} disabled={downloadingId === f.id} className="flex items-center justify-between gap-2 w-full px-2.5 py-1.5 bg-primary-800 text-white border border-primary-800 rounded-lg text-xs font-semibold hover:bg-primary-700 transition-colors disabled:opacity-60">
                     <span className="truncate">{f.file_name}</span>
@@ -96,6 +102,19 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
                     <Lock className="w-3.5 h-3.5 flex-shrink-0" />
                   </div>
                 )
+              )}
+
+              {hiddenCount > 0 && (
+                <button
+                  onClick={() => setShowAllFiles(v => !v)}
+                  className="flex items-center justify-center gap-1 w-full min-h-[2.75rem] sm:min-h-0 py-1.5 text-xs font-semibold text-primary-700 hover:text-primary-900 hover:bg-primary-50 rounded-lg transition-colors"
+                >
+                  {showAllFiles ? (
+                    <>Ver menos <ChevronUp className="w-3.5 h-3.5" /></>
+                  ) : (
+                    <>Ver todos los archivos ({files.length}) <ChevronDown className="w-3.5 h-3.5" /></>
+                  )}
+                </button>
               )}
             </div>
           ) : (

@@ -33,8 +33,13 @@ function renderWithLinks(text: string) {
   );
 }
 
-export function ChatWidget() {
-  const [open, setOpen] = useState(false);
+interface ChatWidgetProps {
+  /** Controlado desde ContactDock: el chat ya no tiene burbuja propia. */
+  open: boolean;
+  onClose: () => void;
+}
+
+export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: GREETING }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -78,18 +83,7 @@ export function ChatWidget() {
 
   return (
     <>
-      {/* Boton flotante (arriba del de WhatsApp) */}
-      {!open && (
-        <button
-          onClick={() => setOpen(true)}
-          className="fixed bottom-4 right-[8rem] sm:bottom-[10rem] sm:right-6 z-50 w-12 h-12 sm:w-14 sm:h-14 bg-primary-800 hover:bg-primary-900 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
-          aria-label="Abrir asistente virtual"
-        >
-          <Bot className="w-6 h-6" />
-        </button>
-      )}
-
-      {/* Panel del chat */}
+      {/* Panel del chat (la burbuja de apertura vive en ContactDock) */}
       {open && (
         <div className="fixed inset-x-3 bottom-3 sm:inset-x-auto sm:right-6 sm:bottom-24 z-50 sm:w-[380px] max-w-[calc(100vw-1.5rem)]">
           <div className="flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden h-[70vh] sm:h-[520px]">
@@ -104,7 +98,7 @@ export function ChatWidget() {
                   <p className="text-[11px] text-white/70 leading-tight">Respuestas al instante</p>
                 </div>
               </div>
-              <button onClick={() => setOpen(false)} aria-label="Cerrar" className="p-1 hover:bg-white/15 rounded-lg">
+              <button onClick={onClose} aria-label="Cerrar" className="p-1 hover:bg-white/15 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>

@@ -5,9 +5,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
-import { WhatsAppButton } from './components/layout/WhatsAppButton';
-import { TelegramButton } from './components/layout/TelegramButton';
-import { ChatWidget } from './components/chat/ChatWidget';
+import { ContactDock } from './components/layout/ContactDock';
 import { ProtectedRoute, AdminRoute } from './components/layout/ProtectedRoute';
 import HomePage from './pages/HomePage';
 
@@ -78,9 +76,7 @@ function AppLayout() {
         </Suspense>
       </main>
       <Footer />
-      <WhatsAppButton />
-      <TelegramButton />
-      <ChatWidget />
+      <ContactDock />
     </div>
   );
 }
