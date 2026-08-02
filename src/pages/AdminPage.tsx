@@ -6,7 +6,7 @@ import {
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
   Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save, Bot, Users, Copy, Check,
-  Sparkles, RefreshCw
+  Sparkles, RefreshCw, PenLine
 } from 'lucide-react';
 import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage, NewsletterSubscriber } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
@@ -35,6 +35,11 @@ export default function AdminPage() {
   const [emailsCopied, setEmailsCopied] = useState(false);
   const [embedBusy, setEmbedBusy] = useState(false);
   const [embedStatus, setEmbedStatus] = useState('');
+  const [descDrafts, setDescDrafts] = useState<{ id: string; name: string; text: string; include: boolean }[]>([]);
+  const [descBusy, setDescBusy] = useState(false);
+  const [descSaving, setDescSaving] = useState(false);
+  const [descStatus, setDescStatus] = useState('');
+  const [descRemaining, setDescRemaining] = useState<number | null>(null);
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [uploadingHero, setUploadingHero] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -228,6 +233,82 @@ export default function AdminPage() {
       setEmbedStatus('Error de red generando embeddings.');
     } finally {
       setEmbedBusy(false);
+    }
+  };
+
+  // Genera UNA tanda de borradores y los suma a la lista para revisar. No
+  // guarda nada solo: el admin edita/descarta y recien ahi aprieta "Guardar".
+  const runGenerateDescriptions = async () => {
+    setDescBusy(true);
+    setDescStatus('Generando...');
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) {
+        setDescStatus('Iniciá sesión de nuevo e intentá otra vez.');
+        return;
+      }
+      const res = await fetch('/api/generate-descriptions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({}),
+      });
+      if (res.status === 429) {
+        setDescStatus('Demasiadas llamadas seguidas. Esperá un momento y volvé a apretar.');
+        return;
+      }
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.error) {
+        setDescStatus(data.error || `Error (${res.status}) generando descripciones.`);
+        return;
+      }
+      if (data.done) {
+        setDescStatus('No queda ningún producto sin descripción. ¡Ya están todos!');
+        setDescRemaining(0);
+        return;
+      }
+      type DescItem = { id: string; name: string; text: string };
+      const items: DescItem[] = data.items || [];
+      setDescDrafts(prev => [...prev, ...items.map(i => ({ ...i, include: !!i.text }))]);
+      setDescRemaining(data.remainingBeforeThisBatch ?? null);
+      const missingNote = data.missingCount ? ` (${data.missingCount} sin texto — esos quedan para la próxima tanda)` : '';
+      setDescStatus(`Tanda generada: ${items.length} para revisar${missingNote}.`);
+    } catch {
+      setDescStatus('Error de red generando descripciones.');
+    } finally {
+      setDescBusy(false);
+    }
+  };
+
+  const updateDescDraft = (id: string, text: string) =>
+    setDescDrafts(prev => prev.map(d => (d.id === id ? { ...d, text } : d)));
+  const toggleDescDraft = (id: string) =>
+    setDescDrafts(prev => prev.map(d => (d.id === id ? { ...d, include: !d.include } : d)));
+  const discardDescDraft = (id: string) =>
+    setDescDrafts(prev => prev.filter(d => d.id !== id));
+
+  // Recien aca se escribe en la base: una fila por vez (no upsert masivo, la
+  // misma leccion que embed-catalog) y solo las que el admin dejo tildadas.
+  const saveApprovedDescriptions = async () => {
+    const approved = descDrafts.filter(d => d.include && d.text.trim());
+    if (approved.length === 0) return;
+    setDescSaving(true);
+    try {
+      const results = await Promise.all(
+        approved.map(d => supabase.from('products').update({ short_description: d.text.trim() }).eq('id', d.id)),
+      );
+      const failedIds = new Set(approved.filter((_, i) => results[i].error).map(d => d.id));
+      setDescDrafts(prev => prev.filter(d => failedIds.has(d.id)));
+      setDescStatus(
+        failedIds.size > 0
+          ? `Guardadas ${approved.length - failedIds.size}/${approved.length}. Reintentá las que quedaron en la lista.`
+          : `Guardadas ${approved.length} descripciones.`,
+      );
+      setDescRemaining(prev => (prev != null ? Math.max(prev - (approved.length - failedIds.size), 0) : null));
+    } catch {
+      setDescStatus('Error de red guardando descripciones.');
+    } finally {
+      setDescSaving(false);
     }
   };
 
@@ -1152,6 +1233,80 @@ export default function AdminPage() {
                     </button>
                   </div>
                   {embedStatus && <p className="text-xs text-gray-500 mt-2">{embedStatus}</p>}
+                </div>
+              </div>
+            </div>
+
+            {/* Descripciones SEO (IA): genera borradores, NUNCA guarda solo.
+                El admin edita/descarta y recien ahi aprieta "Guardar aprobadas". */}
+            <div className="card p-4 mb-6 border-2 border-primary-100 bg-primary-50/40">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary-800 text-white flex items-center justify-center flex-shrink-0">
+                  <PenLine className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">Descripciones SEO (IA)</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Genera un texto corto por producto para Google y la ficha del producto, a partir de sus datos (talles, tela, prenda). Nada se publica solo: revisá, editá o descartá cada una y recién ahí guardá.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    <button
+                      onClick={runGenerateDescriptions}
+                      disabled={descBusy}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-primary-800 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                    >
+                      {descBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PenLine className="w-3.5 h-3.5" />}
+                      Generar tanda (15)
+                    </button>
+                    {descRemaining != null && (
+                      <span className="text-xs text-gray-500">
+                        {descRemaining > 0 ? `Faltan ${descRemaining} sin descripción (antes de esta tanda)` : 'Todo el catálogo tiene descripción'}
+                      </span>
+                    )}
+                  </div>
+                  {descStatus && <p className="text-xs text-gray-500 mt-2">{descStatus}</p>}
+
+                  {descDrafts.length > 0 && (
+                    <div className="mt-4 space-y-3">
+                      {descDrafts.map(d => (
+                        <div key={d.id} className={`rounded-xl border p-3 ${d.include ? 'border-gray-200 bg-white' : 'border-gray-100 bg-gray-50 opacity-60'}`}>
+                          <div className="flex items-start justify-between gap-2 mb-1.5">
+                            <label className="flex items-center gap-2 text-sm font-semibold text-gray-800 min-w-0">
+                              <input
+                                type="checkbox"
+                                checked={d.include}
+                                onChange={() => toggleDescDraft(d.id)}
+                                className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500 flex-shrink-0"
+                              />
+                              <span className="truncate">{d.name}</span>
+                            </label>
+                            <button onClick={() => discardDescDraft(d.id)} className="p-1 text-gray-400 hover:text-red-600 rounded flex-shrink-0" title="Descartar">
+                              <X className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                          <textarea
+                            value={d.text}
+                            onChange={e => updateDescDraft(d.id, e.target.value)}
+                            rows={2}
+                            className="input-field text-sm resize-none"
+                            placeholder="La IA no generó texto para este — escribilo a mano o descartalo."
+                          />
+                          <p className={`text-[11px] mt-1 ${d.text.length > 160 ? 'text-amber-600' : 'text-gray-400'}`}>
+                            {d.text.length} caracteres {d.text.length > 160 ? '(un poco largo para Google)' : ''}
+                          </p>
+                        </div>
+                      ))}
+
+                      <button
+                        onClick={saveApprovedDescriptions}
+                        disabled={descSaving || descDrafts.filter(d => d.include && d.text.trim()).length === 0}
+                        className="btn-primary text-sm py-2 disabled:opacity-50"
+                      >
+                        {descSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {' '}Guardar aprobadas ({descDrafts.filter(d => d.include && d.text.trim()).length})
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
