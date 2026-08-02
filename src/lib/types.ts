@@ -68,7 +68,9 @@ export interface ProductFile {
 
 export interface Order {
   id: string;
-  user_id: string;
+  user_id: string | null;
+  /** Email del comprador cuando compró sin crear cuenta (user_id queda null). */
+  guest_email?: string | null;
   total: number;
   payment_method: PaymentMethod;
   payment_status: PaymentStatus;

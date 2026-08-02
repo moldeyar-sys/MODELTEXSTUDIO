@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet, Copy, Check } from 'lucide-react';
 import { useCart, cartUnitPrice, cartItemKey } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -15,7 +15,6 @@ export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
   const { formatPrice } = useLocale();
-  const navigate = useNavigate();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mercadopago');
   const [processing, setProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -24,6 +23,10 @@ export default function CheckoutPage() {
   const [copiedWallet, setCopiedWallet] = useState(false);
   const [confirmedTotal, setConfirmedTotal] = useState(0);
   const [paySettings, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
+  // Email de invitado: solo se usa (y se pide) cuando no hay sesion iniciada.
+  const [guestEmail, setGuestEmail] = useState('');
+  const [guestEmailTouched, setGuestEmailTouched] = useState(false);
+  const guestEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim());
 
   useEffect(() => {
     fetchPaymentSettings().then(s => setPaySettings(s));
@@ -43,8 +46,9 @@ export default function CheckoutPage() {
   };
 
   const handleCheckout = async () => {
-    if (!user) {
-      navigate('/login');
+    if (!user && !guestEmailValid) {
+      setGuestEmailTouched(true);
+      setError('Ingresá un email válido para continuar sin crear cuenta, o iniciá sesión.');
       return;
     }
 
@@ -55,7 +59,8 @@ export default function CheckoutPage() {
       const { data: order, error: orderError } = await supabase
         .from('orders')
         .insert({
-          user_id: user.id,
+          user_id: user?.id ?? null,
+          guest_email: user ? null : guestEmail.trim().toLowerCase(),
           total,
           payment_method: paymentMethod,
           payment_status: 'pendiente',
@@ -118,7 +123,7 @@ export default function CheckoutPage() {
           const prefRes = await fetch('/api/create-preference', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: mpItems, orderId: order.id, payerEmail: user.email }),
+            body: JSON.stringify({ items: mpItems, orderId: order.id, payerEmail: user?.email || guestEmail.trim().toLowerCase() }),
           });
           if (prefRes.ok) {
             const { init_point } = await prefRes.json();
@@ -182,6 +187,19 @@ export default function CheckoutPage() {
               ? 'Tu pedido fue creado correctamente. Debemos confirmar tu pago manualmente, esto puede demorar hasta 24 horas.'
               : 'Tu pedido fue creado correctamente. Serás redirigido al pago.'}
           </p>
+
+          {!user && (
+            <div className="bg-primary-50 border border-primary-200 rounded-xl p-4 mb-6 text-left">
+              <p className="text-sm font-semibold text-primary-900 mb-1">Guardá este link para descargar tu pedido</p>
+              <p className="text-sm text-primary-800">
+                Como compraste sin cuenta, te avisamos por mail a <b>{guestEmail}</b> apenas confirmemos el pago, con un link para ver y descargar tus archivos. También podés volver cuando quieras a{' '}
+                <Link to={`/mi-pedido?order=${orderId}&email=${encodeURIComponent(guestEmail)}`} className="underline font-medium">
+                  modeltex.com.ar/mi-pedido
+                </Link>{' '}
+                con tu número de pedido (<span className="font-mono">#{orderId.slice(0, 8)}</span>) y tu email.
+              </p>
+            </div>
+          )}
 
           {isManual && paymentMethod === 'transfer' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6 text-left">
@@ -291,7 +309,11 @@ export default function CheckoutPage() {
           )}
 
           <div className="flex flex-col gap-3">
-            <Link to="/mis-compras" className="btn-primary">Ver mis compras</Link>
+            {user ? (
+              <Link to="/mis-compras" className="btn-primary">Ver mis compras</Link>
+            ) : (
+              <Link to={`/mi-pedido?order=${orderId}&email=${encodeURIComponent(guestEmail)}`} className="btn-primary">Ver mi pedido</Link>
+            )}
             <Link to="/catalogo" onClick={() => { /* Navigate cleanly without filter params */ }} className="btn-secondary">Seguir comprando</Link>
             <WhatsAppConsultButton
               message={`Hola Modeltex, tengo una consulta sobre mi pedido #${orderId.slice(0, 8)} (pago por ${PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label || paymentMethod}).`}
@@ -326,17 +348,38 @@ export default function CheckoutPage() {
             {/* Client info */}
             <div className="card p-5 sm:p-6">
               <h2 className="font-semibold text-gray-900 text-lg mb-4">Datos del cliente</h2>
-              <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4">
-                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                  <span className="text-primary-800 font-semibold text-sm">
-                    {user?.email?.charAt(0).toUpperCase()}
-                  </span>
+              {user ? (
+                <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4">
+                  <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                    <span className="text-primary-800 font-semibold text-sm">
+                      {user.email?.charAt(0).toUpperCase()}
+                    </span>
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900 text-sm">{user.email}</p>
+                    <p className="text-xs text-gray-500">Verificá tus datos en tu perfil antes de pagar</p>
+                  </div>
                 </div>
+              ) : (
                 <div>
-                  <p className="font-medium text-gray-900 text-sm">{user?.email}</p>
-                  <p className="text-xs text-gray-500">Verificá tus datos en tu perfil antes de pagar</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tu email</label>
+                  <input
+                    type="email"
+                    value={guestEmail}
+                    onChange={(e) => setGuestEmail(e.target.value)}
+                    onBlur={() => setGuestEmailTouched(true)}
+                    placeholder="tu@email.com"
+                    className="input-field"
+                  />
+                  {guestEmailTouched && !guestEmailValid && (
+                    <p className="text-xs text-red-600 mt-1">Ingresá un email válido.</p>
+                  )}
+                  <p className="text-xs text-gray-500 mt-2">
+                    Comprás sin crear cuenta — a este email te avisamos y te mandamos el link para descargar cuando confirmemos el pago.
+                    {' '}¿Ya tenés cuenta? <Link to="/login" className="text-primary-700 font-medium hover:underline">Iniciá sesión</Link>.
+                  </p>
                 </div>
-              </div>
+              )}
             </div>
 
             {/* Payment method */}

@@ -16,6 +16,7 @@ const CatalogPage = lazy(() => import('./pages/CatalogPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const CartPage = lazy(() => import('./pages/CartPage'));
 const CheckoutPage = lazy(() => import('./pages/CheckoutPage'));
+const MyGuestOrderPage = lazy(() => import('./pages/MyGuestOrderPage'));
 const MyAccountPage = lazy(() => import('./pages/MyAccountPage'));
 const MyOrdersPage = lazy(() => import('./pages/MyOrdersPage'));
 const MyDownloadsPage = lazy(() => import('./pages/MyDownloadsPage'));
@@ -57,7 +58,10 @@ function AppLayout() {
             <Route path="/moldes-para-emprendedores" element={<MoldesEmprendedoresPage />} />
             <Route path="/producto/:slug" element={<ProductDetailPage />} />
             <Route path="/carrito" element={<CartPage />} />
-            <Route path="/checkout" element={<ProtectedRoute><CheckoutPage /></ProtectedRoute>} />
+            {/* Sin ProtectedRoute a proposito: se puede comprar sin cuenta. CheckoutPage
+                distingue internamente si hay sesion o pide el email de invitado. */}
+            <Route path="/checkout" element={<CheckoutPage />} />
+            <Route path="/mi-pedido" element={<MyGuestOrderPage />} />
             <Route path="/mi-cuenta" element={<ProtectedRoute><MyAccountPage /></ProtectedRoute>} />
             <Route path="/mis-compras" element={<ProtectedRoute><MyOrdersPage /></ProtectedRoute>} />
             <Route path="/descargas" element={<ProtectedRoute><MyDownloadsPage /></ProtectedRoute>} />

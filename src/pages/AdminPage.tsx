@@ -155,6 +155,22 @@ export default function AdminPage() {
     const { error } = await supabase.from('orders').update({ [field]: value }).eq('id', orderId);
     if (!error) {
       setOrders(prev => prev.map(o => o.id === orderId ? { ...o, [field]: value } : o));
+      // Si es un pedido de invitado (sin cuenta) y se acaba de confirmar el
+      // pago, avisarle por mail con el link para descargar. Best-effort: si
+      // no hay Resend configurado o falla, no bloquea nada del lado admin.
+      if (field === 'payment_status' && value === 'pagado') {
+        const order = orders.find(o => o.id === orderId);
+        if (order?.guest_email) {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            fetch('/api/notify-buyer-paid', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session.access_token}` },
+              body: JSON.stringify({ orderId }),
+            }).catch(() => { /* best-effort */ });
+          }
+        }
+      }
     }
   };
 
@@ -638,8 +654,15 @@ export default function AdminPage() {
                     <p className="text-sm font-bold text-primary-900">${Number(o.total).toLocaleString('es-AR')}</p>
                   </div>
                   <div>
-                    <p className="text-xs text-gray-400">Comprador</p>
-                    <p className="text-sm font-medium text-gray-700 truncate">{o.buyer?.full_name || o.buyer?.email || '—'}</p>
+                    <p className="text-xs text-gray-400 flex items-center gap-1.5">
+                      Comprador
+                      {!o.user_id && (
+                        <span className="text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded">SIN CUENTA</span>
+                      )}
+                    </p>
+                    <p className="text-sm font-medium text-gray-700 truncate">
+                      {o.buyer?.full_name || o.buyer?.email || o.guest_email || '—'}
+                    </p>
                     {o.buyer?.whatsapp && <p className="text-xs text-gray-500">WhatsApp: {o.buyer.whatsapp}</p>}
                   </div>
                 </div>
