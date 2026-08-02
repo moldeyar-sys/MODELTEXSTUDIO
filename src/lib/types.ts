@@ -52,6 +52,7 @@ export interface Product {
   is_active: boolean;
   is_featured: boolean;
   created_at: string;
+  view_count?: number; // opcional: resiliente si la columna aun no existe
 }
 
 export interface ProductFile {

@@ -44,9 +44,9 @@ export function FreeMoldCard({ mold }: Props) {
   const visibleFiles = showAllFiles ? files : files.slice(0, FILES_COLLAPSED);
   const hiddenCount = files.length - FILES_COLLAPSED;
 
-  const handleDownload = (url: string) => {
-    incrementFreeMoldDownload(mold.id);
-    window.open(url, '_blank', 'noopener,noreferrer');
+  const handleDownload = (f: { url: string; label?: string; name?: string }) => {
+    incrementFreeMoldDownload(mold.id, fileDisplayName(f), !!user, user?.id ?? null);
+    window.open(f.url, '_blank', 'noopener,noreferrer');
   };
 
   return (
@@ -117,7 +117,7 @@ export function FreeMoldCard({ mold }: Props) {
                 canDownload(f) ? (
                   <button
                     key={i}
-                    onClick={() => handleDownload(f.url)}
+                    onClick={() => handleDownload(f)}
                     className="flex items-center justify-between gap-2 w-full px-2.5 py-1.5 bg-primary-800 text-white border border-primary-800 rounded-lg text-xs font-semibold hover:bg-primary-700 transition-colors"
                   >
                     <span className="truncate">{fileDisplayName(f)}</span>

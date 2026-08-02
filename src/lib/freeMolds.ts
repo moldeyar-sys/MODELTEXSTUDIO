@@ -37,12 +37,56 @@ export async function fetchAllFreeMolds(): Promise<FreeMold[]> {
   }
 }
 
-/** Suma +1 al contador de descargas (via funcion segura). No bloquea la descarga. */
-export async function incrementFreeMoldDownload(id: string): Promise<void> {
+/**
+ * Suma +1 al contador de descargas (via funcion segura, igual que siempre)
+ * y ademas registra el detalle (con/sin cuenta, que archivo) para las
+ * estadisticas del panel admin. Todo best-effort: si algo falla, no afecta
+ * la descarga en si.
+ */
+export async function incrementFreeMoldDownload(
+  id: string,
+  fileLabel: string,
+  hasAccount: boolean,
+  userId: string | null,
+): Promise<void> {
   try {
     await supabase.rpc('increment_free_mold_download', { p_id: id });
   } catch {
-    /* el contador es best-effort: si falla, no afecta la descarga */
+    /* el contador viejo es best-effort */
+  }
+  try {
+    await supabase.from('free_mold_downloads').insert({
+      free_mold_id: id,
+      file_label: fileLabel,
+      has_account: hasAccount,
+      user_id: userId,
+    });
+  } catch {
+    /* el detalle nuevo tambien es best-effort */
+  }
+}
+
+export interface FreeMoldDownloadStats {
+  free_mold_id: string;
+  con_cuenta: number;
+  sin_cuenta: number;
+}
+
+/** Descargas agrupadas por molde y con/sin cuenta, para el panel admin. Resiliente. */
+export async function fetchFreeMoldDownloadStats(): Promise<FreeMoldDownloadStats[]> {
+  try {
+    const { data, error } = await supabase.from('free_mold_downloads').select('free_mold_id,has_account');
+    if (error) return [];
+    const map = new Map<string, FreeMoldDownloadStats>();
+    for (const row of (data as { free_mold_id: string; has_account: boolean }[]) || []) {
+      const entry = map.get(row.free_mold_id) || { free_mold_id: row.free_mold_id, con_cuenta: 0, sin_cuenta: 0 };
+      if (row.has_account) entry.con_cuenta++;
+      else entry.sin_cuenta++;
+      map.set(row.free_mold_id, entry);
+    }
+    return Array.from(map.values());
+  } catch {
+    return [];
   }
 }
 

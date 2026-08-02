@@ -16,6 +16,7 @@ import {
   Tags,
 } from 'lucide-react';
 import { supabase } from '../lib/supabase';
+import { useAuth } from '../contexts/AuthContext';
 import { ProductCard } from '../components/ui/ProductCard';
 import { useSeo, useStructuredData } from '../lib/seo';
 import type { Product } from '../lib/types';
@@ -38,6 +39,7 @@ const formatDescription = (format: string) => {
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const { isAdmin } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -60,6 +62,16 @@ export default function ProductDetailPage() {
       setProduct(data as Product);
       setActiveImage(0);
       fetchRelated(data as Product);
+      // Cuenta para "productos mas vistos" del panel admin. El propio admin
+      // navegando su catalogo no debe inflar el conteo. Best-effort: si
+      // falla, no afecta la pagina.
+      if (!isAdmin) {
+        try {
+          await supabase.rpc('increment_product_view', { p_id: (data as Product).id });
+        } catch {
+          /* best-effort */
+        }
+      }
     }
     setLoading(false);
   };

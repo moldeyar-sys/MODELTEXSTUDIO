@@ -6,12 +6,13 @@ import {
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
   Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save, Bot, Users, Copy, Check,
-  Sparkles, RefreshCw, PenLine
+  Sparkles, RefreshCw, PenLine, BarChart3, Eye
 } from 'lucide-react';
 import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage, NewsletterSubscriber } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
-import { fetchAllFreeMolds } from '../lib/freeMolds';
+import { fetchAllFreeMolds, fetchFreeMoldDownloadStats } from '../lib/freeMolds';
+import type { FreeMoldDownloadStats } from '../lib/freeMolds';
 import { fetchContactMessages } from '../lib/contact';
 import { fetchNewsletterSubscribers, deleteNewsletterSubscriber } from '../lib/newsletter';
 import { fetchAllHeroImages } from '../lib/heroImages';
@@ -20,7 +21,7 @@ import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } 
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats';
 
 export default function AdminPage() {
   useAuth();
@@ -30,6 +31,7 @@ export default function AdminPage() {
   const [customers, setCustomers] = useState<Profile[]>([]);
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [freeMolds, setFreeMolds] = useState<FreeMold[]>([]);
+  const [freeMoldDownloadStats, setFreeMoldDownloadStats] = useState<FreeMoldDownloadStats[]>([]);
   const [contacts, setContacts] = useState<ContactMessage[]>([]);
   const [subscribers, setSubscribers] = useState<NewsletterSubscriber[]>([]);
   const [emailsCopied, setEmailsCopied] = useState(false);
@@ -63,12 +65,13 @@ export default function AdminPage() {
 
   const fetchAll = async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
-    const [prodRes, orderRes, custRes, reqRes, freeRes, contactRes, subsRes, heroRes] = await Promise.all([
+    const [prodRes, orderRes, custRes, reqRes, freeRes, downloadStatsRes, contactRes, subsRes, heroRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('orders').select('*, order_items(*, product:products(name, main_image_url)), buyer:profiles(email, whatsapp, full_name)').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('custom_requests').select('*').order('created_at', { ascending: false }),
       fetchAllFreeMolds(), // resiliente: si la tabla no existe, devuelve [] sin romper el admin
+      fetchFreeMoldDownloadStats(), // resiliente igual
       fetchContactMessages(), // resiliente igual
       fetchNewsletterSubscribers(), // resiliente igual
       fetchAllHeroImages(), // resiliente
@@ -78,6 +81,7 @@ export default function AdminPage() {
     setCustomers((custRes.data as Profile[]) || []);
     setRequests((reqRes.data as CustomRequest[]) || []);
     setFreeMolds(freeRes);
+    setFreeMoldDownloadStats(downloadStatsRes);
     setContacts(contactRes);
     setSubscribers(subsRes);
     setHeroImages(heroRes);
@@ -101,6 +105,7 @@ export default function AdminPage() {
     { id: 'hero', label: 'Hero', icon: <ImageIcon className="w-4 h-4" /> },
     { id: 'payments', label: 'Pagos', icon: <CreditCard className="w-4 h-4" /> },
     { id: 'ia', label: 'IA', icon: <Bot className="w-4 h-4" /> },
+    { id: 'stats', label: 'Estadísticas', icon: <BarChart3 className="w-4 h-4" /> },
   ];
 
   const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1351,6 +1356,103 @@ export default function AdminPage() {
                 {aiSaving ? <><div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" /> Guardando...</> : aiSaved ? '✓ Guardado' : <><Save className="w-4 h-4" /> Guardar memoria</>}
               </button>
               {aiSaved && <p className="text-sm text-green-600">✓ El asistente ya usa esta información.</p>}
+            </div>
+          </div>
+        )}
+
+        {/* Estadisticas: descargas de Moldes Gratis (con/sin cuenta) y productos mas vistos */}
+        {activeTab === 'stats' && (
+          <div className="space-y-8 max-w-4xl">
+            <div>
+              <h2 className="font-semibold text-gray-900 text-lg">Estadísticas</h2>
+              <p className="text-sm text-gray-500">Descargas de Moldes Gratis y qué productos generan más interés.</p>
+            </div>
+
+            {/* Descargas de Moldes Gratis */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                <Gift className="w-4 h-4 text-primary-700" /> Descargas de Moldes Gratis
+              </h3>
+              <p className="text-xs text-gray-500 mb-3">
+                "Con cuenta" y "sin cuenta" se cuentan desde que activamos este detalle — el total histórico incluye descargas de antes también.
+              </p>
+              {freeMolds.length === 0 ? (
+                <p className="text-sm text-gray-400">Todavía no hay moldes gratis cargados.</p>
+              ) : (
+                <div className="card overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
+                        <th className="px-4 py-2.5 font-medium">Molde</th>
+                        <th className="px-4 py-2.5 font-medium text-right">Total histórico</th>
+                        <th className="px-4 py-2.5 font-medium text-right">Con cuenta</th>
+                        <th className="px-4 py-2.5 font-medium text-right">Sin cuenta</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {[...freeMolds]
+                        .sort((a, b) => (b.download_count || 0) - (a.download_count || 0))
+                        .map(m => {
+                          const stat = freeMoldDownloadStats.find(s => s.free_mold_id === m.id);
+                          return (
+                            <tr key={m.id} className="border-b border-gray-50 last:border-0">
+                              <td className="px-4 py-2.5 font-medium text-gray-800">{m.title}</td>
+                              <td className="px-4 py-2.5 text-right text-gray-700">{m.download_count || 0}</td>
+                              <td className="px-4 py-2.5 text-right text-green-700">{stat?.con_cuenta || 0}</td>
+                              <td className="px-4 py-2.5 text-right text-gray-500">{stat?.sin_cuenta || 0}</td>
+                            </tr>
+                          );
+                        })}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+            </div>
+
+            {/* Productos mas vistos */}
+            <div>
+              <h3 className="font-semibold text-gray-900 mb-1 flex items-center gap-2">
+                <Eye className="w-4 h-4 text-primary-700" /> Productos más vistos
+              </h3>
+              <p className="text-xs text-gray-500 mb-3">
+                Cuenta cada visita a la ficha del producto (tus propias visitas como admin no suman). Top 30.
+              </p>
+              {(() => {
+                const viewed = products.filter(p => (p.view_count || 0) > 0);
+                const top = [...products].sort((a, b) => (b.view_count || 0) - (a.view_count || 0)).slice(0, 30);
+                if (viewed.length === 0) {
+                  return <p className="text-sm text-gray-400">Todavía no hay vistas registradas.</p>;
+                }
+                return (
+                  <>
+                    <div className="card overflow-x-auto">
+                      <table className="w-full text-sm">
+                        <thead>
+                          <tr className="border-b border-gray-100 text-left text-xs text-gray-500">
+                            <th className="px-4 py-2.5 font-medium">#</th>
+                            <th className="px-4 py-2.5 font-medium">Producto</th>
+                            <th className="px-4 py-2.5 font-medium">Categoría</th>
+                            <th className="px-4 py-2.5 font-medium text-right">Vistas</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {top.map((p, i) => (
+                            <tr key={p.id} className="border-b border-gray-50 last:border-0">
+                              <td className="px-4 py-2.5 text-gray-400">{i + 1}</td>
+                              <td className="px-4 py-2.5 font-medium text-gray-800">{p.name}</td>
+                              <td className="px-4 py-2.5 text-gray-500 capitalize">{p.category?.replace('-', ' ')}</td>
+                              <td className="px-4 py-2.5 text-right text-gray-700">{p.view_count || 0}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                    <p className="text-xs text-gray-400 mt-2">
+                      {viewed.length} de {products.length} productos tienen al menos una vista registrada.
+                    </p>
+                  </>
+                );
+              })()}
             </div>
           </div>
         )}
