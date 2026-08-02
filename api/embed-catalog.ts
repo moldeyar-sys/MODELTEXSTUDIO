@@ -161,19 +161,28 @@ export default async function handler(req: any, res: any) {
     const now = new Date().toISOString();
     const rows = products.map((p, i) => ({ id: p.id, embedding: embeddings[i], embedding_updated_at: now }));
 
-    // Upsert por PK: como los id ya existen, esto actualiza solo embedding/
-    // embedding_updated_at sin tocar (ni requerir) el resto de las columnas.
-    const upsertRes = await fetch(`${SUPABASE_URL}/rest/v1/products?on_conflict=id`, {
-      method: 'POST',
-      headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-        Prefer: 'resolution=merge-duplicates,return=minimal',
-      },
-      body: JSON.stringify(rows),
-    });
-    if (!upsertRes.ok) throw new Error(`Supabase upsert ${upsertRes.status}: ${await upsertRes.text()}`);
+    // PATCH por producto (no upsert): un upsert vía POST intenta construir una
+    // fila INSERT completa y Postgres exige sus columnas NOT NULL (name, price,
+    // etc.) aunque el conflicto por id termine resolviéndose como UPDATE. PATCH
+    // es un UPDATE puro por WHERE id=..., nunca arma una fila nueva.
+    const results = await Promise.all(
+      rows.map((row) =>
+        fetch(`${SUPABASE_URL}/rest/v1/products?id=eq.${row.id}`, {
+          method: 'PATCH',
+          headers: {
+            apikey: SUPABASE_ANON_KEY,
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+            Prefer: 'return=minimal',
+          },
+          body: JSON.stringify({ embedding: row.embedding, embedding_updated_at: row.embedding_updated_at }),
+        }),
+      ),
+    );
+    const failed = results.filter((r) => !r.ok);
+    if (failed.length > 0) {
+      throw new Error(`Supabase update: ${failed.length}/${rows.length} productos fallaron (ej. ${failed[0].status})`);
+    }
 
     const processedSoFar = offset + rows.length;
     // El conteo total puede quedar viejo si el admin activa/desactiva productos
