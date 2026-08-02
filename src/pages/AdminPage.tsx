@@ -6,7 +6,7 @@ import {
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
   Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save, Bot, Users, Copy, Check,
-  Sparkles, RefreshCw, PenLine, BarChart3, Eye
+  Sparkles, RefreshCw, PenLine, BarChart3, Eye, MessageSquare, ChevronDown, ChevronUp
 } from 'lucide-react';
 import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage, NewsletterSubscriber } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
@@ -16,12 +16,14 @@ import type { FreeMoldDownloadStats } from '../lib/freeMolds';
 import { fetchContactMessages } from '../lib/contact';
 import { fetchNewsletterSubscribers, deleteNewsletterSubscriber } from '../lib/newsletter';
 import { fetchAllHeroImages } from '../lib/heroImages';
+import { fetchChatSessions } from '../lib/chatHistory';
+import type { ChatSession } from '../lib/chatHistory';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats' | 'chats';
 
 export default function AdminPage() {
   useAuth();
@@ -44,6 +46,8 @@ export default function AdminPage() {
   const [descRemaining, setDescRemaining] = useState<number | null>(null);
   const [heroImages, setHeroImages] = useState<HeroImage[]>([]);
   const [uploadingHero, setUploadingHero] = useState(false);
+  const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
+  const [expandedChatSession, setExpandedChatSession] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [paySettings, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
   const [payForm, setPayForm] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
@@ -65,7 +69,7 @@ export default function AdminPage() {
 
   const fetchAll = async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
-    const [prodRes, orderRes, custRes, reqRes, freeRes, downloadStatsRes, contactRes, subsRes, heroRes] = await Promise.all([
+    const [prodRes, orderRes, custRes, reqRes, freeRes, downloadStatsRes, contactRes, subsRes, heroRes, chatRes] = await Promise.all([
       supabase.from('products').select('*').order('created_at', { ascending: false }),
       supabase.from('orders').select('*, order_items(*, product:products(name, main_image_url)), buyer:profiles(email, whatsapp, full_name)').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
@@ -75,6 +79,7 @@ export default function AdminPage() {
       fetchContactMessages(), // resiliente igual
       fetchNewsletterSubscribers(), // resiliente igual
       fetchAllHeroImages(), // resiliente
+      fetchChatSessions(), // resiliente igual
     ]);
     setProducts((prodRes.data as Product[]) || []);
     setOrders((orderRes.data as Order[]) || []);
@@ -85,6 +90,7 @@ export default function AdminPage() {
     setContacts(contactRes);
     setSubscribers(subsRes);
     setHeroImages(heroRes);
+    setChatSessions(chatRes);
     const ps = await fetchPaymentSettings();
     setPaySettings(ps);
     setPayForm(ps);
@@ -106,6 +112,7 @@ export default function AdminPage() {
     { id: 'payments', label: 'Pagos', icon: <CreditCard className="w-4 h-4" /> },
     { id: 'ia', label: 'IA', icon: <Bot className="w-4 h-4" /> },
     { id: 'stats', label: 'Estadísticas', icon: <BarChart3 className="w-4 h-4" /> },
+    { id: 'chats', label: `Chats IA (${chatSessions.length})`, icon: <MessageSquare className="w-4 h-4" /> },
   ];
 
   const handleHeroUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -1458,6 +1465,76 @@ export default function AdminPage() {
                 );
               })()}
             </div>
+          </div>
+        )}
+
+        {/* Chats IA: historial de conversaciones */}
+        {activeTab === 'chats' && (
+          <div className="space-y-4 max-w-4xl">
+            <div>
+              <h2 className="font-semibold text-gray-900 text-lg">Chats con el asistente IA</h2>
+              <p className="text-sm text-gray-500">
+                Qué le preguntan al asistente. Sin cuenta: máximo 10 preguntas por sesión (se les avisa al llegar). Con cuenta: sin límite. Últimas {chatSessions.length} conversaciones.
+              </p>
+            </div>
+
+            {chatSessions.length === 0 ? (
+              <p className="text-sm text-gray-400">
+                Todavía no hay conversaciones registradas.
+                <br />(Si esperabas alguna y no aparece, falta correr el SQL del historial de chat en Supabase.)
+              </p>
+            ) : (
+              <div className="space-y-2">
+                {chatSessions.map(session => {
+                  const isOpen = expandedChatSession === session.session_id;
+                  const customer = session.user_id ? customers.find(c => c.id === session.user_id) : null;
+                  const firstQuestion = session.messages.find(m => m.role === 'user')?.content || '(sin preguntas)';
+                  return (
+                    <div key={session.session_id} className="card overflow-hidden">
+                      <button
+                        onClick={() => setExpandedChatSession(isOpen ? null : session.session_id)}
+                        className="w-full flex items-center justify-between gap-3 px-4 py-3 text-left hover:bg-gray-50"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                            {customer ? (
+                              <span className="text-[11px] font-semibold text-primary-700 bg-primary-50 px-2 py-0.5 rounded-full">
+                                {customer.full_name || customer.email}
+                              </span>
+                            ) : (
+                              <span className="text-[11px] font-medium text-gray-500 bg-gray-100 px-2 py-0.5 rounded-full">Sin cuenta</span>
+                            )}
+                            <span className="text-xs text-gray-400">
+                              {session.question_count} pregunta{session.question_count === 1 ? '' : 's'}
+                            </span>
+                            <span className="text-xs text-gray-400">
+                              · {new Date(session.last_at).toLocaleString('es-AR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 truncate">{firstQuestion}</p>
+                        </div>
+                        {isOpen ? <ChevronUp className="w-4 h-4 text-gray-400 flex-shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 flex-shrink-0" />}
+                      </button>
+                      {isOpen && (
+                        <div className="border-t border-gray-100 px-4 py-3 space-y-2 bg-gray-50/50 max-h-80 overflow-y-auto">
+                          {session.messages.map(m => (
+                            <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                              <div
+                                className={`max-w-[85%] px-3 py-2 rounded-xl text-sm whitespace-pre-wrap ${
+                                  m.role === 'user' ? 'bg-primary-800 text-white' : 'bg-white border border-gray-200 text-gray-700'
+                                }`}
+                              >
+                                {m.content}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
       </div>

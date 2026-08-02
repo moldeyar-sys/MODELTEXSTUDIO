@@ -13,6 +13,9 @@ const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
 const OPENROUTER_EMBED_MODEL = process.env.OPENROUTER_EMBED_MODEL || 'openai/text-embedding-3-small';
 const WHATSAPP = '5491166531086';
 
+// Preguntas maximas para quien todavia no se creo una cuenta. Con cuenta: sin tope.
+const ANON_MESSAGE_LIMIT = 10;
+
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
 type ProductRow = {
   name: string;
@@ -33,6 +36,56 @@ function formatProductLine(p: ProductRow): string {
   const telas = (p.recommended_fabrics || []).join('/') || 's/d';
   const codigo = p.codigo ? ` [${p.codigo}]` : '';
   return `- ${p.name}${codigo} | ${p.category} | ${p.garment_type || 's/d'} | $${precio} | talles: ${talles} | formatos: ${formatos} | telas: ${telas}`;
+}
+
+// Si el navegador manda un token de sesion, confirma quien es (para no
+// contar como "sin cuenta" a alguien que dice tener token pero es invalido).
+async function getUserId(token: string | null): Promise<string | null> {
+  if (!token) return null;
+  try {
+    const res = await fetch(`${SUPABASE_URL}/auth/v1/user`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return null;
+    const user = (await res.json()) as { id?: string };
+    return user?.id || null;
+  } catch {
+    return null;
+  }
+}
+
+// Cuantas preguntas ya mando esta sesion SIN cuenta (via funcion segura:
+// no hace falta permiso de lectura general sobre chat_messages).
+async function countSessionMessages(sessionId: string): Promise<number> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/count_session_messages`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_session_id: sessionId }),
+    });
+    if (!res.ok) return 0;
+    return (await res.json()) as number;
+  } catch {
+    return 0;
+  }
+}
+
+// Guarda un mensaje en el historial (best-effort: si falla, no interrumpe el chat).
+async function logMessage(sessionId: string, userId: string | null, role: 'user' | 'assistant', content: string): Promise<void> {
+  try {
+    await fetch(`${SUPABASE_URL}/rest/v1/chat_messages`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        'Content-Type': 'application/json',
+        Prefer: 'return=minimal',
+      },
+      body: JSON.stringify({ session_id: sessionId, user_id: userId, role, content: content.slice(0, 4000) }),
+    });
+  } catch {
+    /* best-effort */
+  }
 }
 
 // Trae la "memoria" editable del admin (tabla ai_settings, fila default).
@@ -181,6 +234,11 @@ export default async function handler(req: any, res: any) {
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
     const incoming: ChatMessage[] = Array.isArray(body.messages) ? body.messages : [];
+    // Identifica la sesion (para historial y limite) y, si mando token, quien es.
+    const sessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId.slice(0, 100) : null;
+    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || null;
+    const userId = await getUserId(token);
+
     // Sanitiza: solo user/assistant, recorta largo y cantidad.
     const history = incoming
       .filter((m) => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
@@ -188,6 +246,24 @@ export default async function handler(req: any, res: any) {
       .map((m) => ({ role: m.role, content: m.content.slice(0, 2000) }));
 
     const lastUserMessage = [...history].reverse().find((m) => m.role === 'user')?.content || '';
+
+    // Limite de preguntas para quien no tiene cuenta. Se chequea ANTES de
+    // gastar en OpenRouter: si ya llego al tope, ni se llama al modelo.
+    if (sessionId && !userId && lastUserMessage) {
+      const askedSoFar = await countSessionMessages(sessionId);
+      if (askedSoFar >= ANON_MESSAGE_LIMIT) {
+        res.status(200).json({
+          reply:
+            `Llegaste al máximo de ${ANON_MESSAGE_LIMIT} preguntas sin cuenta. Creá una cuenta gratis (es rápido) para seguir preguntando sin límite: /registro`,
+          limitReached: true,
+        });
+        return;
+      }
+    }
+
+    if (sessionId && lastUserMessage) {
+      await logMessage(sessionId, userId, 'user', lastUserMessage);
+    }
 
     const [semanticMatches, knowledge] = await Promise.all([
       lastUserMessage ? getSemanticMatches(lastUserMessage) : Promise.resolve(null),
@@ -226,6 +302,7 @@ export default async function handler(req: any, res: any) {
 
     const data = (await orRes.json()) as any;
     const reply = data?.choices?.[0]?.message?.content?.trim() || 'No pude generar una respuesta. Probá de nuevo.';
+    if (sessionId) await logMessage(sessionId, userId, 'assistant', reply);
     res.status(200).json({ reply });
   } catch (err) {
     console.error('chat handler error', err);

@@ -1,5 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
-import { Bot, X, Send, Loader2 } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { Bot, X, Send, Loader2, UserPlus } from 'lucide-react';
+import { supabase } from '../../lib/supabase';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -33,6 +35,20 @@ function renderWithLinks(text: string) {
   );
 }
 
+// Identifica la conversacion para el historial y el limite de preguntas sin
+// cuenta. Vive en sessionStorage: sobrevive a un refresco de pagina pero es
+// nueva en cada pestaña/incognito — igual de "best-effort" que el resto de
+// las metricas del sitio (vistas, descargas), no es una traba de seguridad.
+function getSessionId(): string {
+  const KEY = 'modeltex_chat_session';
+  let id = sessionStorage.getItem(KEY);
+  if (!id) {
+    id = crypto.randomUUID();
+    sessionStorage.setItem(KEY, id);
+  }
+  return id;
+}
+
 interface ChatWidgetProps {
   /** Controlado desde ContactDock: el chat ya no tiene burbuja propia. */
   open: boolean;
@@ -43,6 +59,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: GREETING }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [limitReached, setLimitReached] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -51,22 +68,27 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
 
   const send = async (text: string) => {
     const content = text.trim();
-    if (!content || loading) return;
+    if (!content || loading || limitReached) return;
     const next = [...messages, { role: 'user' as const, content }];
     setMessages(next);
     setInput('');
     setLoading(true);
     try {
+      const { data: { session } } = await supabase.auth.getSession();
       const res = await fetch('/api/chat', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ messages: next }),
+        headers: {
+          'Content-Type': 'application/json',
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ messages: next, sessionId: getSessionId() }),
       });
       const data = await res.json().catch(() => ({}));
       const reply =
         data?.reply ||
         'Uy, no pude responder ahora. Escribinos por WhatsApp: https://wa.me/5491166531086';
       setMessages([...next, { role: 'assistant', content: reply }]);
+      if (data?.limitReached) setLimitReached(true);
     } catch {
       setMessages([
         ...next,
@@ -145,30 +167,41 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
               )}
             </div>
 
-            {/* Input */}
-            <form
-              onSubmit={(e) => {
-                e.preventDefault();
-                send(input);
-              }}
-              className="flex items-center gap-2 p-2.5 border-t border-gray-100 bg-white"
-            >
-              <input
-                value={input}
-                onChange={(e) => setInput(e.target.value)}
-                placeholder="Escribí tu consulta..."
-                className="flex-1 px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                disabled={loading}
-              />
-              <button
-                type="submit"
-                disabled={loading || !input.trim()}
-                className="w-10 h-10 flex items-center justify-center bg-primary-800 hover:bg-primary-900 text-white rounded-xl disabled:opacity-40 transition-colors flex-shrink-0"
-                aria-label="Enviar"
+            {/* Input, o CTA de cuenta si llego al limite sin cuenta */}
+            {limitReached ? (
+              <div className="p-3 border-t border-gray-100 bg-white">
+                <Link
+                  to="/registro"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-primary-800 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
+                >
+                  <UserPlus className="w-4 h-4" /> Crear cuenta gratis para seguir preguntando
+                </Link>
+              </div>
+            ) : (
+              <form
+                onSubmit={(e) => {
+                  e.preventDefault();
+                  send(input);
+                }}
+                className="flex items-center gap-2 p-2.5 border-t border-gray-100 bg-white"
               >
-                {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
-              </button>
-            </form>
+                <input
+                  value={input}
+                  onChange={(e) => setInput(e.target.value)}
+                  placeholder="Escribí tu consulta..."
+                  className="flex-1 px-3 py-2.5 text-sm bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  disabled={loading}
+                />
+                <button
+                  type="submit"
+                  disabled={loading || !input.trim()}
+                  className="w-10 h-10 flex items-center justify-center bg-primary-800 hover:bg-primary-900 text-white rounded-xl disabled:opacity-40 transition-colors flex-shrink-0"
+                  aria-label="Enviar"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Send className="w-5 h-5" />}
+                </button>
+              </form>
+            )}
           </div>
         </div>
       )}
