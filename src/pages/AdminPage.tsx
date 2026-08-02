@@ -1256,7 +1256,7 @@ export default function AdminPage() {
                       className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-primary-800 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
                     >
                       {descBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <PenLine className="w-3.5 h-3.5" />}
-                      Generar tanda (15)
+                      Generar tanda (10)
                     </button>
                     {descRemaining != null && (
                       <span className="text-xs text-gray-500">

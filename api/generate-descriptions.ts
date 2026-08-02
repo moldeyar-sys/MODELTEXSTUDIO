@@ -22,6 +22,13 @@ const TEXT_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
 // y la funcion tiene un tiempo maximo de ejecucion.
 const BATCH_SIZE = 10;
 
+// NOTA: este freno es best-effort. En Vercel serverless, invocaciones
+// concurrentes pueden caer en instancias de proceso distintas y esta
+// variable de modulo no se comparte entre ellas — no es una garantia dura,
+// solo reduce la chance de llamadas pegadas dentro de la misma instancia
+// caliente. Suficiente hoy: lo dispara un solo admin a mano y el boton se
+// deshabilita mientras carga. Si se vuelve un problema real, mover el
+// estado a una tabla de Supabase con timestamp.
 const MIN_MS_BETWEEN_CALLS = 1500;
 let lastCallAt = 0;
 
@@ -54,12 +61,17 @@ const SYSTEM_PROMPT = [
   'Vas a recibir una lista de productos en JSON. Para cada uno, escribi una descripcion corta de venta.',
   '',
   'REGLAS:',
-  '- Espanol rioplatense natural, como lo escribiria una persona, no un robot.',
+  '- AUDIENCIA — clave: quien lee esto NO es quien va a usar la prenda puesta. Es un fabricante o emprendedor que compra el MOLDE como insumo de produccion para despues coser y vender. Evita beneficios de uso personal ("comodo", "a la moda", "te queda bien") y priorizá beneficios de produccion: precision del patronaje, amplitud de talles para vender a mas publico, formato listo para imprimir/cortar, ahorro de tiempo de trazado. Tono profesional-cercano, no de venta de ropa a un consumidor final.',
+  '- Intencion de venta: no es una ficha tecnica que lista datos por igual, es un texto que tiene que dar ganas de comprar. De cada producto, priorizá el dato que mas vende (si tiene muchos talles, ese es el gancho; si la tela recomendada es especifica, ese es el gancho) en vez de enumerar todo parejo.',
+  '- OBLIGATORIO: espanol rioplatense con VOSEO, nunca "tu". Conjugaciones correctas de ejemplo: "creá" (no "crea"), "diseñá" (no "diseña"), "confeccioná" (no "confecciona"), "descargá" (no "descarga"), "elegí" (no "elige"), "obtené" (no "obtienes"), "tenés" (no "tienes"). Si dudás entre dos formas, elegi siempre la forma con vos.',
   '- Entre 100 y 160 caracteres.',
   '- Mencion la prenda y algo util para quien compra (talles incluidos, formato digital, tela recomendada) segun los datos que te dan.',
   '- NUNCA inventes datos que no esten en el JSON del producto (nada de precios, materiales o promesas que no figuren).',
-  '- No repitas el codigo ni el nombre completo tal cual aparece; sonaria repetitivo en la pagina.',
+  '- No repitas el codigo ni el nombre completo tal cual aparece; sonaria repetitivo en la pagina. Tampoco repitas la misma palabra o un sinonimo de ella mas de una vez dentro del mismo texto corto.',
+  '- No menciones "Modeltex": ya aparece en el nombre y el contexto de la pagina, repetirla en la descripcion no suma y resta espacio util.',
   '- Sin emojis, sin signos de exclamacion en exceso, sin mayusculas sostenidas.',
+  '- IMPORTANTE — variedad: vas a escribir varias descripciones seguidas para un catalogo real. No repitas la misma estructura de frase en todas (ej. "no arranques siempre con un verbo de accion seguido de \'un/una [prenda] para\'"). Cada una tiene que sonar como si la hubiera escrito una persona distinta pensando en ESE producto puntual, no una plantilla con los datos cambiados. Variá el orden: a veces empezá nombrando la prenda, otras el beneficio, otras el talle.',
+  '- Evitá cierres genericos y vacios de contenido como "para un trabajo mas sencillo" o "para una confeccion precisa" salvo que agreguen algo especifico de ESE producto.',
   '',
   'Responde UNICAMENTE un JSON con esta forma exacta, sin texto antes ni despues:',
   '{"items":[{"id":"...","text":"..."}]}',
@@ -110,9 +122,14 @@ async function generateDescriptions(products: RawProduct[]): Promise<Map<string,
   const choice = data.choices?.[0];
   const raw = choice?.message?.content || '';
 
-  // Algunos modelos devuelven el JSON envuelto en ```json ... ``` pese a
-  // pedir response_format json_object. Se le saca el envoltorio si aparece.
-  const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
+  // Algunos modelos devuelven el JSON envuelto en ```json ... ``` (a veces con
+  // texto tipo "Aca esta el JSON:" antes) pese a pedir response_format
+  // json_object. En vez de un regex anclado al inicio/fin exacto del string
+  // (que no cubre texto alrededor), se recorta directo del primer '{' al
+  // ultimo '}': funciona este envoltorio este o no.
+  const firstBrace = raw.indexOf('{');
+  const lastBrace = raw.lastIndexOf('}');
+  const cleaned = firstBrace !== -1 && lastBrace > firstBrace ? raw.slice(firstBrace, lastBrace + 1).trim() : raw.trim();
 
   let parsed: { items?: { id?: string; text?: string }[] };
   try {
