@@ -295,8 +295,10 @@ export default function AdminPage() {
         <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary-900 mb-1 sm:mb-2">Panel de Administración</h1>
         <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-8">Gestioná productos, pedidos y clientes de Modeltex</p>
 
-        {/* Tabs: scroll horizontal en mobile en vez de wrap (evita 3-4 filas en pantalla chica) */}
-        <div className="flex flex-nowrap gap-1 bg-white rounded-xl p-1 border border-gray-200 mb-4 sm:mb-8 overflow-x-auto mobile-scrollbar-none -mx-4 px-4 sm:mx-0 sm:px-1">
+        {/* Tabs: siempre en wrap (varias filas si hace falta). Antes usaba scroll
+            horizontal con la scrollbar oculta: con 11 pestañas quedaban tapadas
+            "Pagos" e "IA" sin ningún indicio de que había más para el costado. */}
+        <div className="flex flex-wrap gap-1 bg-white rounded-xl p-1 border border-gray-200 mb-4 sm:mb-8">
           {tabs.map(tab => (
             <button
               key={tab.id}
