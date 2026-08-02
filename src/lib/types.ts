@@ -53,6 +53,8 @@ export interface Product {
   is_featured: boolean;
   created_at: string;
   view_count?: number; // opcional: resiliente si la columna aun no existe
+  view_count_account?: number; // desglose "con cuenta" (opcional, migracion 026)
+  view_count_no_account?: number; // desglose "sin cuenta" (opcional, migracion 026)
 }
 
 export interface ProductFile {

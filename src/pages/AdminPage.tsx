@@ -1415,7 +1415,7 @@ export default function AdminPage() {
                 <Eye className="w-4 h-4 text-primary-700" /> Productos más vistos
               </h3>
               <p className="text-xs text-gray-500 mb-3">
-                Cuenta cada visita a la ficha del producto (tus propias visitas como admin no suman). Top 30.
+                Cuenta cada visita a la ficha del producto (tus propias visitas como admin no suman). "Con cuenta" y "sin cuenta" se cuentan desde que activamos ese detalle — las vistas totales incluyen las de antes también. Top 30.
               </p>
               {(() => {
                 const viewed = products.filter(p => (p.view_count || 0) > 0);
@@ -1432,7 +1432,9 @@ export default function AdminPage() {
                             <th className="px-4 py-2.5 font-medium">#</th>
                             <th className="px-4 py-2.5 font-medium">Producto</th>
                             <th className="px-4 py-2.5 font-medium">Categoría</th>
-                            <th className="px-4 py-2.5 font-medium text-right">Vistas</th>
+                            <th className="px-4 py-2.5 font-medium text-right">Vistas totales</th>
+                            <th className="px-4 py-2.5 font-medium text-right">Con cuenta</th>
+                            <th className="px-4 py-2.5 font-medium text-right">Sin cuenta</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1442,6 +1444,8 @@ export default function AdminPage() {
                               <td className="px-4 py-2.5 font-medium text-gray-800">{p.name}</td>
                               <td className="px-4 py-2.5 text-gray-500 capitalize">{p.category?.replace('-', ' ')}</td>
                               <td className="px-4 py-2.5 text-right text-gray-700">{p.view_count || 0}</td>
+                              <td className="px-4 py-2.5 text-right text-green-700">{p.view_count_account || 0}</td>
+                              <td className="px-4 py-2.5 text-right text-gray-500">{p.view_count_no_account || 0}</td>
                             </tr>
                           ))}
                         </tbody>

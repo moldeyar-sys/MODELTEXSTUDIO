@@ -39,7 +39,7 @@ const formatDescription = (format: string) => {
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,7 +67,7 @@ export default function ProductDetailPage() {
       // falla, no afecta la pagina.
       if (!isAdmin) {
         try {
-          await supabase.rpc('increment_product_view', { p_id: (data as Product).id });
+          await supabase.rpc('increment_product_view', { p_id: (data as Product).id, p_has_account: !!user });
         } catch {
           /* best-effort */
         }
