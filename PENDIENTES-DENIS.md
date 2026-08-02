@@ -13,6 +13,11 @@ Todo lo que depende de vos para que las mejoras queden funcionando de verdad. Vo
 - [ ] **Ponerle límite de gasto a la clave en OpenRouter** (openrouter.ai → Keys → tu clave → Credit limit, ej. 10 USD/mes). El uso normal es centavos; el límite es tu protección real si algún día se filtra la clave o un token de admin.
 - [ ] Cuando cargues productos nuevos, volver a apretar "Indexar productos nuevos" (el botón solo procesa los que todavía no tienen embedding, así que es rápido y no vuelve a cobrar por los que ya estaban).
 
+## 🟡 En progreso — Descripciones SEO (panel admin → IA → "Descripciones SEO")
+
+- [x] Primera tanda probada, ajustada (voseo + enfoque en fabricantes/emprendedores, no en el consumidor final) y guardada: **9/566 productos** ya tienen descripción, confirmado en la base.
+- [ ] Seguir con el resto a tu ritmo: "Generar tanda (10)" → revisar/editar → "Guardar aprobadas" → repetir. Quedan **557**. No hace falta que yo esté presente en cada tanda, salvo que alguna te muestre algo raro (avisame y lo reviso).
+
 ## 📣 Marketing — pedir reseñas reales
 
 Los 3 testimonios de la home ("Carolina M.", "Diego R.", "Valentina S.") son de ejemplo, no clientes reales. Van a desaparecer solos apenas entre la primera reseña real. Formas rápidas de conseguirlas:
@@ -32,4 +37,4 @@ Vercel CLI en esta compu quedó logueada con tu cuenta personal, aprobada dentro
 - [ ] Decidir si querés que arranque la tarea de "acentos rotos" que quedó como sugerencia aparte (10 archivos con `?` en vez de tildes).
 
 ---
-*Última actualización: 02/08/2026 — IA en vivo y verificada, búsqueda semántica con 566/566 productos indexados.*
+*Última actualización: 02/08/2026 — Descripciones SEO arrancadas (9/566), prompt ajustado tras la primera tanda.*
