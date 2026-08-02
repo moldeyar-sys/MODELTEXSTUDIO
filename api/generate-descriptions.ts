@@ -20,7 +20,7 @@ const TEXT_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
 
 // Chico a proposito: cada producto suma tokens al prompt y a la respuesta,
 // y la funcion tiene un tiempo maximo de ejecucion.
-const BATCH_SIZE = 15;
+const BATCH_SIZE = 10;
 
 const MIN_MS_BETWEEN_CALLS = 1500;
 let lastCallAt = 0;
@@ -91,7 +91,10 @@ async function generateDescriptions(products: RawProduct[]): Promise<Map<string,
     body: JSON.stringify({
       model: TEXT_MODEL,
       temperature: 0.6,
-      max_tokens: Math.max(400, products.length * 60),
+      // Generoso a proposito: si se queda corto, la respuesta se corta a
+      // mitad de un JSON y JSON.parse revienta. Mejor gastar de mas en
+      // margen que fallar la tanda entera por un limite ajustado.
+      max_tokens: Math.max(800, products.length * 130),
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: SYSTEM_PROMPT },
@@ -101,14 +104,34 @@ async function generateDescriptions(products: RawProduct[]): Promise<Map<string,
   });
   if (!res.ok) throw new Error(`OpenRouter chat ${res.status}: ${await res.text()}`);
 
-  const data = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-  const raw = data.choices?.[0]?.message?.content || '';
+  const data = (await res.json()) as {
+    choices?: { message?: { content?: string }; finish_reason?: string }[];
+  };
+  const choice = data.choices?.[0];
+  const raw = choice?.message?.content || '';
+
+  // Algunos modelos devuelven el JSON envuelto en ```json ... ``` pese a
+  // pedir response_format json_object. Se le saca el envoltorio si aparece.
+  const cleaned = raw.trim().replace(/^```(?:json)?\s*/i, '').replace(/```\s*$/i, '').trim();
 
   let parsed: { items?: { id?: string; text?: string }[] };
   try {
-    parsed = JSON.parse(raw);
-  } catch {
-    throw new Error('La IA devolvió una respuesta que no se pudo leer. Probá generar esta tanda de nuevo.');
+    parsed = JSON.parse(cleaned);
+  } catch (parseErr) {
+    // Se loguea el motivo real (truncado, para no volcar datos de mas a los
+    // logs) en vez de solo "no se pudo leer": la proxima vez que falle, se
+    // sabe si fue corte por longitud, formato raro, u otra cosa.
+    console.error(
+      'generate-descriptions: JSON invalido. finish_reason=', choice?.finish_reason,
+      'parseErr=', (parseErr as Error).message,
+      'raw(0-400)=', raw.slice(0, 400),
+    );
+    const truncated = choice?.finish_reason === 'length';
+    throw new Error(
+      truncated
+        ? 'La respuesta de la IA se cortó por longitud. Ya lo ajusté para la próxima tanda — probá de nuevo.'
+        : 'La IA devolvió una respuesta que no se pudo leer. Probá generar esta tanda de nuevo.',
+    );
   }
 
   const validIds = new Set(products.map((p) => p.id));
