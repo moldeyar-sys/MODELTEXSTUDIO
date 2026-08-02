@@ -376,39 +376,6 @@ export default function AdminPage() {
         {/* Products */}
         {activeTab === 'products' && (
           <div>
-            {/* Busqueda inteligente (IA): el asistente pasa a entender significado, no solo texto */}
-            <div className="card p-4 mb-5 border-2 border-primary-100 bg-primary-50/40">
-              <div className="flex items-start gap-3">
-                <div className="w-9 h-9 rounded-lg bg-primary-800 text-white flex items-center justify-center flex-shrink-0">
-                  <Sparkles className="w-4 h-4" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-semibold text-gray-900">Búsqueda inteligente (IA)</p>
-                  <p className="text-xs text-gray-500 mt-0.5">
-                    Para que el asistente encuentre productos por significado (ej: "algo abrigado para nene" → campera de frisa infantil), no solo por palabra exacta.
-                  </p>
-                  <div className="flex flex-wrap items-center gap-2 mt-3">
-                    <button
-                      onClick={() => runEmbedCatalog(false)}
-                      disabled={embedBusy}
-                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-primary-800 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
-                    >
-                      {embedBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
-                      Indexar productos nuevos
-                    </button>
-                    <button
-                      onClick={() => runEmbedCatalog(true)}
-                      disabled={embedBusy}
-                      className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 bg-white text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
-                    >
-                      <RefreshCw className="w-3.5 h-3.5" /> Regenerar todos
-                    </button>
-                  </div>
-                  {embedStatus && <p className="text-xs text-gray-500 mt-2">{embedStatus}</p>}
-                </div>
-              </div>
-            </div>
-
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -1156,6 +1123,39 @@ export default function AdminPage() {
         {/* IA — memoria / base de conocimiento del asistente */}
         {activeTab === 'ia' && (
           <div className="max-w-3xl">
+            {/* Busqueda inteligente (IA): el asistente pasa a entender significado, no solo texto */}
+            <div className="card p-4 mb-6 border-2 border-primary-100 bg-primary-50/40">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary-800 text-white flex items-center justify-center flex-shrink-0">
+                  <Sparkles className="w-4 h-4" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-900">Búsqueda inteligente (IA)</p>
+                  <p className="text-xs text-gray-500 mt-0.5">
+                    Para que el asistente encuentre productos por significado (ej: "algo abrigado para nene" → campera de frisa infantil), no solo por palabra exacta.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-2 mt-3">
+                    <button
+                      onClick={() => runEmbedCatalog(false)}
+                      disabled={embedBusy}
+                      className="inline-flex items-center gap-1.5 text-xs font-semibold px-3 py-2 bg-primary-800 text-white rounded-lg hover:bg-primary-700 disabled:opacity-50"
+                    >
+                      {embedBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Sparkles className="w-3.5 h-3.5" />}
+                      Indexar productos nuevos
+                    </button>
+                    <button
+                      onClick={() => runEmbedCatalog(true)}
+                      disabled={embedBusy}
+                      className="inline-flex items-center gap-1.5 text-xs font-medium px-3 py-2 bg-white text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                    >
+                      <RefreshCw className="w-3.5 h-3.5" /> Regenerar todos
+                    </button>
+                  </div>
+                  {embedStatus && <p className="text-xs text-gray-500 mt-2">{embedStatus}</p>}
+                </div>
+              </div>
+            </div>
+
             <h2 className="text-lg font-semibold text-gray-900 mb-1 flex items-center gap-2">
               <Bot className="w-5 h-5 text-primary-700" /> Memoria del asistente IA
             </h2>
