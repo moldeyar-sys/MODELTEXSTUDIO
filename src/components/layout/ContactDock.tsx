@@ -53,7 +53,7 @@ export function ContactDock() {
 
       {/* Opciones desplegadas (aparecen arriba del boton principal) */}
       {menuOpen && (
-        <div className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 z-50 flex flex-col items-end gap-2.5">
+        <div className="fixed bottom-[4.5rem] right-3 sm:bottom-24 sm:right-6 z-50 flex flex-col items-end gap-2.5">
           <button
             onClick={openChat}
             className="flex items-center gap-2.5 pl-4 pr-1.5 py-1.5 bg-white rounded-full shadow-lg border border-gray-200 hover:border-primary-300 active:scale-95 transition-all"
@@ -98,9 +98,9 @@ export function ContactDock() {
           onClick={() => setMenuOpen(v => !v)}
           aria-label={menuOpen ? 'Cerrar opciones de contacto' : 'Abrir opciones de contacto'}
           aria-expanded={menuOpen}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-14 h-14 bg-primary-800 hover:bg-primary-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
+          className="fixed bottom-3 right-3 sm:bottom-6 sm:right-6 z-50 w-12 h-12 sm:w-14 sm:h-14 bg-primary-800 hover:bg-primary-700 text-white rounded-full shadow-lg hover:shadow-xl transition-all duration-200 flex items-center justify-center active:scale-95"
         >
-          {menuOpen ? <X className="w-6 h-6" /> : <MessagesSquare className="w-6 h-6" />}
+          {menuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <MessagesSquare className="w-5 h-5 sm:w-6 sm:h-6" />}
         </button>
       )}
 

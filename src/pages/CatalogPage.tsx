@@ -243,6 +243,7 @@ export default function CatalogPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [showFilters, setShowFilters] = useState(false);
+  const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const { t } = useLocale();
 
   const category = (searchParams.get('categoria') || '') as ProductCategory | '';
@@ -291,6 +292,11 @@ export default function CatalogPage() {
 
   useEffect(() => {
     setSearch(busqueda);
+  }, [busqueda]);
+
+  // Si venimos de un link con busqueda ya cargada (ej. sugerencia del home), mostramos el buscador abierto en mobile.
+  useEffect(() => {
+    if (busqueda) setMobileSearchOpen(true);
   }, [busqueda]);
 
   const buildSearchParams = (value: string, replaceDetectedFilters: boolean) => {
@@ -422,10 +428,10 @@ export default function CatalogPage() {
     <div className="min-h-screen bg-petroleum-50">
       <div className="relative overflow-hidden bg-white border-b border-gray-100">
         <FloatingPatterns variant="dark" />
-        <div className="container-custom py-5 sm:py-8">
+        <div className="container-custom py-3 sm:py-8">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="max-w-3xl">
-              <h1 className="font-sans text-2xl sm:text-3xl md:text-4xl font-extrabold text-primary-900 tracking-tight text-balance">
+              <h1 className="font-sans text-xl sm:text-3xl md:text-4xl font-extrabold text-primary-900 tracking-tight text-balance">
                 Moldes aprobados con muestra
               </h1>
               {/* El volumen del catalogo es el mejor argumento de venta: va como dato, no como pie de pagina. */}
@@ -452,48 +458,101 @@ export default function CatalogPage() {
         </div>
       </div>
 
-      <div className="relative overflow-hidden container-custom py-5 sm:py-8">
+      <div className="relative overflow-hidden container-custom py-3 sm:py-8">
         <FloatingPatterns variant="dark" />
 
-        <div className="flex gap-2 overflow-x-auto mobile-scrollbar-none pb-2 mb-3 -mx-1 px-1">
-          {SEASON_OPTIONS.map(({ value, label, Icon }) => (
-            <button
-              key={value || 'todas'}
-              onClick={() => updateFilter('temporada', value)}
-              className={`flex-shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                temporada === value ? 'bg-petroleum-600 text-white border-petroleum-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-              }`}
-            >
-              <Icon className="w-4 h-4" /> {label}
-            </button>
-          ))}
+        <div className="relative mb-1.5 sm:mb-3">
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto mobile-scrollbar-none pb-1 -mx-1 px-1 [mask-image:linear-gradient(to_right,black_92%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_92%,transparent_100%)]">
+            {SEASON_OPTIONS.map(({ value, label, Icon }) => (
+              <button
+                key={value || 'todas'}
+                onClick={() => updateFilter('temporada', value)}
+                className={`flex-shrink-0 inline-flex items-center gap-1 sm:gap-1.5 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium border transition-colors ${
+                  temporada === value ? 'bg-petroleum-600 text-white border-petroleum-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="flex gap-2 overflow-x-auto mobile-scrollbar-none pb-2 mb-5 -mx-1 px-1">
-          <button
-            onClick={() => updateFilter('categoria', '')}
-            className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-              !category ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            Todos
-          </button>
-          {CATEGORIES.map((item) => (
+        <div className="relative mb-2.5 sm:mb-5">
+          <div className="flex gap-1.5 sm:gap-2 overflow-x-auto mobile-scrollbar-none pb-1 -mx-1 px-1 [mask-image:linear-gradient(to_right,black_92%,transparent_100%)] [-webkit-mask-image:linear-gradient(to_right,black_92%,transparent_100%)]">
             <button
-              key={item.value}
-              onClick={() => updateFilter('categoria', item.value)}
-              className={`flex-shrink-0 px-4 py-2 rounded-full text-sm font-medium border transition-colors ${
-                category === item.value ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+              onClick={() => updateFilter('categoria', '')}
+              className={`flex-shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium border transition-colors ${
+                !category ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
               }`}
             >
-              {item.label}
+              Todos
             </button>
-          ))}
+            {CATEGORIES.map((item) => (
+              <button
+                key={item.value}
+                onClick={() => updateFilter('categoria', item.value)}
+                className={`flex-shrink-0 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full text-xs sm:text-sm font-medium border transition-colors ${
+                  category === item.value ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
+                }`}
+              >
+                {item.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        <div className="sticky top-[68px] z-20 mb-5 sm:top-[78px]">
-          <div className="rounded-2xl border border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85 shadow-sm p-3 sm:p-4 space-y-3">
-            <form onSubmit={handleSearch} className="flex items-center gap-2">
+        <div className="sticky top-[68px] z-20 mb-3 sm:mb-5 sm:top-[78px]">
+          <div className="rounded-2xl border border-gray-200 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/85 shadow-sm p-2.5 sm:p-4 space-y-2.5 sm:space-y-3">
+            {/* Mobile: solo la lupa, para no ocupar espacio; se expande al tocar */}
+            <div className="sm:hidden">
+              {!mobileSearchOpen ? (
+                <button
+                  type="button"
+                  onClick={() => setMobileSearchOpen(true)}
+                  className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-400 text-sm"
+                >
+                  <Search className="w-4 h-4" />
+                  {search ? <span className="text-gray-700 truncate">{search}</span> : <span>Buscar</span>}
+                </button>
+              ) : (
+                <form onSubmit={handleSearch} className="flex items-center gap-2">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                    <input
+                      autoFocus
+                      type="text"
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Buscar molde, prenda, uso o formato"
+                      className="input-field pl-10 pr-10"
+                    />
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch('')}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                        aria-label="Limpiar busqueda"
+                      >
+                        <X className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                  <button type="submit" className="btn-primary px-3.5 shrink-0" aria-label="Buscar">
+                    <Search className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setMobileSearchOpen(false)}
+                    className="shrink-0 text-sm text-gray-500 px-1"
+                  >
+                    Cerrar
+                  </button>
+                </form>
+              )}
+            </div>
+
+            {/* Desktop: buscador siempre visible */}
+            <form onSubmit={handleSearch} className="hidden sm:flex items-center gap-2">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
@@ -555,7 +614,7 @@ export default function CatalogPage() {
               </div>
             )}
 
-            <div className="flex flex-wrap gap-2">
+            <div className="hidden sm:flex flex-wrap gap-2">
               {SMART_SEARCH_EXAMPLES.map((example) => (
                 <button
                   key={example}
@@ -583,13 +642,15 @@ export default function CatalogPage() {
               >
                 <span className="inline-flex items-center gap-2">
                   <SlidersHorizontal className="w-4 h-4" /> Filtros
+                  <span className="sm:hidden text-gray-400 font-normal">· {SORT_LABELS[sort]}{format ? ` · ${format}` : ''}</span>
                 </span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-primary-100 text-primary-800">
                   {activeFiltersCount}
                 </span>
               </button>
 
-              <label className="relative block">
+              {/* Ordenar y Formato: en mobile viven dentro del panel "Filtros" (evita duplicar 2 filas mas) */}
+              <label className="hidden sm:block relative">
                 <ArrowUpDown className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <select
                   value={sort}
@@ -604,7 +665,7 @@ export default function CatalogPage() {
                 </select>
               </label>
 
-              <label className="relative block">
+              <label className="hidden sm:block relative">
                 <Tag className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                 <select
                   value={format}

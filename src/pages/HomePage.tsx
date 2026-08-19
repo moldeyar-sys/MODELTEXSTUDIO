@@ -246,7 +246,7 @@ const HomePage = () => {
   return (
     <div className="min-h-screen bg-white overflow-hidden">
       {/* HERO SECTION */}
-      <section className="relative pt-10 pb-14 sm:pt-14 sm:pb-20 md:pt-16 md:pb-28 overflow-hidden pattern-paper">
+      <section className="relative pt-5 pb-6 sm:pt-14 sm:pb-20 md:pt-16 md:pb-28 overflow-hidden pattern-paper">
         {/* Lluvia de moldes reales (siluetas de los DXF) sobre el papel de molderia */}
         <FloatingPatterns variant="dark" />
 
@@ -255,25 +255,25 @@ const HomePage = () => {
 
         {/* Content */}
         <div className="container-custom relative z-10">
-          <div className="flex flex-col lg:flex-row items-center gap-12 lg:gap-16">
+          <div className="flex flex-col lg:flex-row items-center gap-5 sm:gap-10 lg:gap-16">
             {/* Left: Text */}
             <div className="flex-1 max-w-2xl text-center lg:text-left">
               {/* Badge */}
-              <div className="inline-flex items-center gap-2 bg-white text-primary-800 text-sm font-semibold px-4 py-2 rounded-full mb-6 border border-primary-200 shadow-sm">
+              <div className="inline-flex items-center gap-2 bg-white text-primary-800 text-sm font-semibold px-4 py-2 rounded-full mb-3 sm:mb-6 border border-primary-200 shadow-sm">
                 <ShieldCheck className="w-4 h-4" />
                 <span>{t('home.hero.badge', '18+ años en la industria textil')}</span>
               </div>
 
-              <h1 className="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-primary-900 mb-6 leading-tight text-balance">
+              <h1 className="font-display text-3xl sm:text-5xl md:text-6xl font-bold text-primary-900 mb-3 sm:mb-6 leading-tight text-balance">
                 {t('home.hero.title', 'Moldería textil profesional para fabricantes de indumentaria')}
               </h1>
 
-              <p className="font-sans text-lg md:text-xl text-gray-600 mb-8 leading-relaxed">
+              <p className="font-sans text-base md:text-xl text-gray-600 mb-4 sm:mb-8 leading-relaxed">
                 {t('home.hero.subtitle', 'Moldes digitales y en cartón, moldería a pedido y tizado computarizado. Precisión industrial, escalado completo y entrega rápida para que produzcas sin demoras.')}
               </p>
 
               {/* Fila de confianza: responde las tres dudas antes de que las pregunten */}
-              <div className="flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 mb-8 text-sm text-gray-600">
+              <div className="flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 mb-4 sm:mb-8 text-sm text-gray-600">
                 <span className="inline-flex items-center gap-1.5">
                   <Zap className="w-4 h-4 text-primary-700" /> Descarga inmediata
                 </span>
@@ -305,7 +305,7 @@ const HomePage = () => {
               {/* Moldes Gratis: el unico acento magenta de la pagina */}
               <Link
                 to="/moldes-gratis"
-                className="group mt-6 inline-flex w-full max-w-md items-center gap-4 rounded-2xl border-2 border-accent-200 bg-white px-5 py-4 shadow-sm hover:border-accent-400 hover:shadow-md active:scale-[0.99] transition-all duration-200 cursor-pointer"
+                className="group mt-4 sm:mt-6 inline-flex w-full max-w-md items-center gap-4 rounded-2xl border-2 border-accent-200 bg-white px-5 py-4 shadow-sm hover:border-accent-400 hover:shadow-md active:scale-[0.99] transition-all duration-200 cursor-pointer"
               >
                 <div className="relative flex-shrink-0">
                   <div className="w-14 h-14 rounded-xl bg-accent-500 flex items-center justify-center shadow-sm group-hover:rotate-6 transition-transform duration-300">
