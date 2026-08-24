@@ -669,7 +669,14 @@ export default function AdminPage() {
 
                 {/* Detalle de lo comprado: artículo, formato y talles */}
                 <div className="bg-gray-50 rounded-xl p-4 mb-4">
-                  <p className="text-xs font-medium text-gray-500 mb-3">Detalle del pedido</p>
+                  <p className="text-xs font-medium text-gray-500 mb-3">
+                    Detalle del pedido
+                    {(o.order_items?.length ?? 0) === 0 && (o.cart_snapshot?.length ?? 0) > 0 && (
+                      <span className="ml-2 text-[10px] font-semibold text-amber-700 bg-amber-100 px-1.5 py-0.5 rounded align-middle">
+                        respaldo del carrito
+                      </span>
+                    )}
+                  </p>
                   <div className="space-y-3">
                     {(o.order_items ?? []).map(it => (
                       <div key={it.id} className="flex items-start justify-between gap-3">
@@ -701,7 +708,37 @@ export default function AdminPage() {
                         </span>
                       </div>
                     ))}
-                    {(o.order_items?.length ?? 0) === 0 && (
+                    {/* Si el guardado normal de order_items falló, se reconstruye desde
+                        el respaldo guardado junto con el pedido (ver cart_snapshot). */}
+                    {(o.order_items?.length ?? 0) === 0 && (o.cart_snapshot ?? []).map((it, idx) => (
+                      <div key={idx} className="flex items-start justify-between gap-3">
+                        <div className="flex items-start gap-3 min-w-0">
+                          {it.main_image_url && (
+                            <img src={it.main_image_url} alt="" className="w-10 h-10 rounded-lg object-cover flex-shrink-0" />
+                          )}
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-gray-900">{it.product_name}</p>
+                            <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-0.5">
+                              {it.formato && <span className="text-xs text-primary-700">{it.formato}</span>}
+                              <span className="text-xs text-gray-500">Cantidad: {it.quantity}</span>
+                            </div>
+                            {it.sizes && it.sizes.length > 0 && (
+                              <div className="flex flex-wrap gap-1 mt-1.5">
+                                {it.sizes.map(s => (
+                                  <span key={s} className="text-[11px] font-medium px-2 py-0.5 bg-primary-100 text-primary-800 rounded">
+                                    {s}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                        <span className="text-sm font-semibold text-gray-900 flex-shrink-0">
+                          ${Number(it.price).toLocaleString('es-AR')}
+                        </span>
+                      </div>
+                    ))}
+                    {(o.order_items?.length ?? 0) === 0 && (o.cart_snapshot?.length ?? 0) === 0 && (
                       <p className="text-sm text-gray-400">Sin detalle de productos.</p>
                     )}
                   </div>

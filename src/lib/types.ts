@@ -79,6 +79,22 @@ export interface Order {
   order_items?: OrderItem[];
   /** Datos del comprador (join con profiles en el panel admin). */
   buyer?: { email?: string; whatsapp?: string; full_name?: string } | null;
+  /**
+   * Copia del carrito guardada en el mismo insert que el pedido (no depende
+   * de que la carga de order_items tenga éxito). Respaldo para que el admin
+   * siempre pueda ver qué se compró aunque falle el guardado normal de items.
+   */
+  cart_snapshot?: CartSnapshotItem[] | null;
+}
+
+export interface CartSnapshotItem {
+  product_id: string;
+  product_name: string;
+  main_image_url?: string | null;
+  formato?: string | null;
+  sizes?: string[] | null;
+  quantity: number;
+  price: number;
 }
 
 export interface OrderItem {

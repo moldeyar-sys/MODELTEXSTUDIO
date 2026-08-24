@@ -56,18 +56,44 @@ export default function CheckoutPage() {
     setError('');
 
     try {
-      const { data: order, error: orderError } = await supabase
+      // Copia del carrito para guardar DENTRO del mismo insert del pedido.
+      // Es el respaldo que el panel admin usa si el insert de order_items
+      // (paso aparte, puede fallar solo) no llega a guardar nada: así nunca
+      // se pierde de vista qué compró el cliente.
+      const cartSnapshot = items.map(item => ({
+        product_id: item.product.id,
+        product_name: item.product.name,
+        main_image_url: item.product.main_image_url ?? null,
+        formato: item.format ?? null,
+        sizes: item.sizes ?? [],
+        quantity: item.quantity,
+        price: cartUnitPrice(item),
+      }));
+
+      const baseOrder = {
+        user_id: user?.id ?? null,
+        guest_email: user ? null : guestEmail.trim().toLowerCase(),
+        total,
+        payment_method: paymentMethod,
+        payment_status: 'pendiente',
+        order_status: 'pendiente',
+      };
+
+      // Resiliente: si la migracion de cart_snapshot todavia no se corrio en
+      // la base (columna inexistente), reintenta sin ese campo para no
+      // bloquear la venta — igual que el patron ya usado para order_items.
+      let { data: order, error: orderError } = await supabase
         .from('orders')
-        .insert({
-          user_id: user?.id ?? null,
-          guest_email: user ? null : guestEmail.trim().toLowerCase(),
-          total,
-          payment_method: paymentMethod,
-          payment_status: 'pendiente',
-          order_status: 'pendiente',
-        })
+        .insert({ ...baseOrder, cart_snapshot: cartSnapshot })
         .select()
         .single();
+      if (orderError && /cart_snapshot|column/i.test(orderError.message ?? '')) {
+        ({ data: order, error: orderError } = await supabase
+          .from('orders')
+          .insert(baseOrder)
+          .select()
+          .single());
+      }
 
       if (orderError) throw orderError;
 
@@ -87,11 +113,18 @@ export default function CheckoutPage() {
 
       // Resiliente: si alguna columna nueva (formato/sizes/product_name) aún no
       // existe en la base, reintenta con solo las columnas básicas para no bloquear la venta.
-      let { error: itemsError } = await supabase.from('order_items').insert(orderItems);
-      if (itemsError && /formato|sizes|product_name|column/i.test(itemsError.message ?? '')) {
-        ({ error: itemsError } = await supabase.from('order_items').insert(baseItems));
+      // El pedido y el cart_snapshot de arriba ya se guardaron: si esto falla
+      // igual no se pierde el detalle de la compra, así que nunca frenamos el
+      // checkout ni mostramos error por esto (solo queda log para depurar).
+      try {
+        let { error: itemsError } = await supabase.from('order_items').insert(orderItems);
+        if (itemsError && /formato|sizes|product_name|column/i.test(itemsError.message ?? '')) {
+          ({ error: itemsError } = await supabase.from('order_items').insert(baseItems));
+        }
+        if (itemsError) console.error('order_items insert failed, cart_snapshot cubre el respaldo:', itemsError);
+      } catch (itemsEx) {
+        console.error('order_items insert failed, cart_snapshot cubre el respaldo:', itemsEx);
       }
-      if (itemsError) throw itemsError;
 
       // Avisar al dueño de la nueva compra (WhatsApp + email).
       // sendBeacon sobrevive a la redirección a Mercado Pago; si no está disponible, cae a fetch.
