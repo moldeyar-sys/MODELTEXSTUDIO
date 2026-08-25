@@ -70,7 +70,19 @@ export default function CheckoutPage() {
         price: cartUnitPrice(item),
       }));
 
+      // El id del pedido se genera acá y NO se pide de vuelta a la base:
+      // los invitados no tienen permiso de LECTURA sobre orders (a propósito,
+      // migración 028), así que un .select() tras el insert hace fallar TODA
+      // la compra sin cuenta con "row-level security" aunque el insert sea válido.
+      const newOrderId = typeof crypto !== 'undefined' && 'randomUUID' in crypto
+        ? crypto.randomUUID()
+        : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+            const r = (Math.random() * 16) | 0;
+            return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+          });
+
       const baseOrder = {
+        id: newOrderId,
         user_id: user?.id ?? null,
         guest_email: user ? null : guestEmail.trim().toLowerCase(),
         total,
@@ -82,23 +94,17 @@ export default function CheckoutPage() {
       // Resiliente: si la migracion de cart_snapshot todavia no se corrio en
       // la base (columna inexistente), reintenta sin ese campo para no
       // bloquear la venta — igual que el patron ya usado para order_items.
-      let { data: order, error: orderError } = await supabase
+      let { error: orderError } = await supabase
         .from('orders')
-        .insert({ ...baseOrder, cart_snapshot: cartSnapshot })
-        .select()
-        .single();
+        .insert({ ...baseOrder, cart_snapshot: cartSnapshot });
       if (orderError && /cart_snapshot|column/i.test(orderError.message ?? '')) {
-        ({ data: order, error: orderError } = await supabase
-          .from('orders')
-          .insert(baseOrder)
-          .select()
-          .single());
+        ({ error: orderError } = await supabase.from('orders').insert(baseOrder));
       }
 
       if (orderError) throw orderError;
 
       const baseItems = items.map(item => ({
-        order_id: order.id,
+        order_id: newOrderId,
         product_id: item.product.id,
         price: cartUnitPrice(item),
         quantity: item.quantity,
@@ -129,7 +135,7 @@ export default function CheckoutPage() {
       // Avisar al dueño de la nueva compra (WhatsApp + email).
       // sendBeacon sobrevive a la redirección a Mercado Pago; si no está disponible, cae a fetch.
       try {
-        const payload = JSON.stringify({ orderId: order.id });
+        const payload = JSON.stringify({ orderId: newOrderId });
         const sent = typeof navigator !== 'undefined' && 'sendBeacon' in navigator
           ? navigator.sendBeacon('/api/notify-order', new Blob([payload], { type: 'application/json' }))
           : false;
@@ -156,7 +162,7 @@ export default function CheckoutPage() {
           const prefRes = await fetch('/api/create-preference', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ items: mpItems, orderId: order.id, payerEmail: user?.email || guestEmail.trim().toLowerCase() }),
+            body: JSON.stringify({ items: mpItems, orderId: newOrderId, payerEmail: user?.email || guestEmail.trim().toLowerCase() }),
           });
           if (prefRes.ok) {
             const { init_point } = await prefRes.json();
@@ -171,7 +177,7 @@ export default function CheckoutPage() {
 
       // Para todos los demás métodos (o si MP falló): mostrar pantalla de confirmación
       setConfirmedTotal(total);
-      setOrderId(order.id);
+      setOrderId(newOrderId);
       clearCart();
     } catch {
       setError('Hubo un error al procesar tu pedido. Intentá de nuevo.');
