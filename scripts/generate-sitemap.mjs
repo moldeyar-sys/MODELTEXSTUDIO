@@ -16,6 +16,7 @@ const staticRoutes = [
   { path: '/moldes-para-emprendedores', changefreq: 'weekly', priority: '0.84' },
   { path: '/moldes-gratis', changefreq: 'weekly', priority: '0.85' },
   { path: '/diseno-a-pedido', changefreq: 'monthly', priority: '0.80' },
+  { path: '/preguntas-frecuentes', changefreq: 'monthly', priority: '0.78' },
   { path: '/como-funciona', changefreq: 'monthly', priority: '0.75' },
   { path: '/ayuda-impresion', changefreq: 'monthly', priority: '0.75' },
   { path: '/politica-descargas', changefreq: 'monthly', priority: '0.65' },

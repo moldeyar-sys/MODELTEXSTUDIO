@@ -71,7 +71,7 @@ export default function MoldesPdfPage() {
         <div className="container-custom py-10 sm:py-14">
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-800">
-              <FileText className="w-4 h-4" /> SEO landing
+              <FileText className="w-4 h-4" /> Moldes digitales
             </div>
             <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-primary-900 mt-5 leading-tight">
               Moldes PDF para imprimir, cortar y producir
@@ -97,9 +97,9 @@ export default function MoldesPdfPage() {
           <div className="card p-6 sm:p-7">
             <h2 className="font-display text-2xl font-bold text-primary-900">Que tipo de moldes PDF puedes encontrar</h2>
             <p className="text-gray-600 mt-3 leading-relaxed">
-              Si alguien busca en Google frases como <strong>moldes PDF</strong>, <strong>moldes para imprimir</strong>
-              {' '}o <strong>moldes de ropa PDF</strong>, esta pagina le deja claro que ofreces exactamente eso:
-              archivos listos para imprimir, con uso real para produccion textil.
+              Todos nuestros <strong>moldes PDF</strong> son <strong>moldes para imprimir</strong> listos para
+              produccion textil real: los descargas, los imprimis en A4 o plotter y cortas. Cada archivo incluye
+              su curva de talles completa y control de medida para verificar la escala.
             </p>
             <div className="mt-5 space-y-3">
               {benefits.map((item) => (

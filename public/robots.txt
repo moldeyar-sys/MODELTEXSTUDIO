@@ -12,4 +12,45 @@ Disallow: /login
 Disallow: /registro
 Disallow: /recuperar-contrasena
 
+# Crawlers de IA: bienvenidos explicitamente (AEO). Queremos que ChatGPT,
+# Claude, Perplexity y similares puedan leer y recomendar el catalogo.
+User-agent: GPTBot
+Allow: /
+
+User-agent: OAI-SearchBot
+Allow: /
+
+User-agent: ChatGPT-User
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: Claude-User
+Allow: /
+
+User-agent: Claude-SearchBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
+User-agent: Perplexity-User
+Allow: /
+
+User-agent: Google-Extended
+Allow: /
+
+User-agent: CCBot
+Allow: /
+
+User-agent: Amazonbot
+Allow: /
+
+User-agent: meta-externalagent
+Allow: /
+
+# Resumen del sitio para asistentes de IA
+# https://modeltex.com.ar/llms.txt
+
 Sitemap: https://modeltex.com.ar/sitemap.xml

@@ -60,6 +60,7 @@ export function Footer() {
             <h4 className="font-semibold text-white mb-4">Ayuda y confianza</h4>
             <ul className="space-y-2">
               <li><Link to="/como-funciona" className="text-primary-200 text-sm hover:text-white transition-colors">Cómo funciona</Link></li>
+              <li><Link to="/preguntas-frecuentes" className="text-primary-200 text-sm hover:text-white transition-colors">Preguntas frecuentes</Link></li>
               <li><Link to="/ayuda-impresion" className="text-primary-200 text-sm hover:text-white transition-colors">Ayuda para imprimir</Link></li>
               <li><Link to="/politica-descargas" className="text-primary-200 text-sm hover:text-white transition-colors">Descargas y reembolsos</Link></li>
               <li><Link to="/terminos" className="text-primary-200 text-sm hover:text-white transition-colors">Términos</Link></li>

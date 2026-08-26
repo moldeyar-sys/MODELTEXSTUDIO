@@ -26,6 +26,7 @@ const IaTextilPage = lazy(() => import('./pages/IaTextilPage'));
 const FreeMoldsPage = lazy(() => import('./pages/FreeMoldsPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const TrustPage = lazy(() => import('./pages/TrustPage'));
+const FaqPage = lazy(() => import('./pages/FaqPage'));
 const MoldesPdfPage = lazy(() => import('./pages/MoldesPdfPage'));
 const MoldesPdfA4Page = lazy(() => import('./pages/MoldesPdfA4Page'));
 const MoldesPlotterPage = lazy(() => import('./pages/MoldesPlotterPage'));
@@ -69,6 +70,7 @@ function AppLayout() {
             <Route path="/ia-textil" element={<IaTextilPage />} />
             <Route path="/moldes-gratis" element={<FreeMoldsPage />} />
             <Route path="/contacto" element={<ContactPage />} />
+            <Route path="/preguntas-frecuentes" element={<FaqPage />} />
             <Route path="/como-funciona" element={<TrustPage variant="como-funciona" />} />
             <Route path="/ayuda-impresion" element={<TrustPage variant="ayuda-impresion" />} />
             <Route path="/politica-descargas" element={<TrustPage variant="politica-descargas" />} />

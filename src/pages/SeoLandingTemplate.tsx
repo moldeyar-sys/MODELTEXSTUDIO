@@ -71,7 +71,7 @@ export function SeoLandingTemplate({
         <div className="container-custom py-10 sm:py-14">
           <div className="max-w-4xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-800">
-              <FileText className="w-4 h-4" /> SEO landing
+              <FileText className="w-4 h-4" /> Moldes digitales
             </div>
             <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold text-primary-900 mt-5 leading-tight">
               {heroTitle}
