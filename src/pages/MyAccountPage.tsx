@@ -203,7 +203,7 @@ export default function MyAccountPage() {
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4">
-                  <Link to="/mis-pedidos" className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 hover:border-primary-200 hover:bg-white transition-colors">
+                  <Link to="/mis-compras" className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 hover:border-primary-200 hover:bg-white transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-primary-900">Mis pedidos</p>
@@ -213,7 +213,7 @@ export default function MyAccountPage() {
                     </div>
                   </Link>
 
-                  <Link to="/mis-descargas" className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 hover:border-primary-200 hover:bg-white transition-colors">
+                  <Link to="/descargas" className="rounded-2xl border border-gray-200 bg-gray-50 px-4 py-4 hover:border-primary-200 hover:bg-white transition-colors">
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-primary-900">Mis descargas</p>
@@ -329,7 +329,7 @@ export default function MyAccountPage() {
                         <p className="font-medium text-gray-900 mt-1">{stats.lastOrder.order_status}</p>
                       </div>
                     </div>
-                    <Link to="/mis-pedidos" className="inline-flex items-center gap-2 text-sm font-medium text-primary-700 hover:text-primary-900">
+                    <Link to="/mis-compras" className="inline-flex items-center gap-2 text-sm font-medium text-primary-700 hover:text-primary-900">
                       Ver historial completo <ArrowRight className="w-4 h-4" />
                     </Link>
                   </div>
