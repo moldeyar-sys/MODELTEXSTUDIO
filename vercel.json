@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/img/:path*", "destination": "/api/img?p=:path*" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ]
 }
