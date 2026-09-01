@@ -2,6 +2,27 @@
 // El Access Token vive como variable de entorno secreta en Vercel, nunca en el cliente.
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
+const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
+const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
+
+// El comprador invitado no tiene cuenta: mandarlo a /mis-compras tras pagar
+// lo estrella contra la pantalla de login. Se mira el pedido real para saber
+// si es invitado y devolverlo a SU pagina (/mi-pedido), donde con el pago ya
+// auto-confirmado por el webhook le aparecen las descargas directamente.
+async function esInvitado(orderId: string): Promise<string | null> {
+  if (!SERVICE_ROLE || !orderId) return null;
+  try {
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=guest_email&limit=1`,
+      { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+    );
+    if (!r.ok) return null;
+    const rows = (await r.json()) as Array<{ guest_email?: string | null }>;
+    return rows?.[0]?.guest_email || null;
+  } catch {
+    return null;
+  }
+}
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
@@ -23,6 +44,11 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
+    const guestEmail = await esInvitado(orderId);
+    const volverA = guestEmail
+      ? `https://modeltex.com.ar/mi-pedido?order=${orderId}&email=${encodeURIComponent(guestEmail)}`
+      : `https://modeltex.com.ar/mis-compras`;
+
     const preference = {
       items: items.map((item: any) => ({
         id: item.product_id || item.id,
@@ -33,13 +59,16 @@ export default async function handler(req: any, res: any) {
       })),
       payer: payerEmail ? { email: payerEmail } : undefined,
       back_urls: {
-        success: `https://modeltex.com.ar/mis-compras?pago=exitoso&order=${orderId}`,
+        success: `${volverA}${volverA.includes('?') ? '&' : '?'}pago=exitoso`,
         failure: `https://modeltex.com.ar/checkout?pago=fallido`,
-        pending: `https://modeltex.com.ar/mis-compras?pago=pendiente&order=${orderId}`,
+        pending: `${volverA}${volverA.includes('?') ? '&' : '?'}pago=pendiente`,
       },
       auto_return: 'approved',
       external_reference: orderId,
       statement_descriptor: 'MODELTEX',
+      // Aviso automatico de pago: MP llama a este endpoint cuando el pago se
+      // acredita y el pedido se marca "pagado" solo (ver api/mp-webhook.ts).
+      notification_url: 'https://modeltex.com.ar/api/mp-webhook',
     };
 
     const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {
