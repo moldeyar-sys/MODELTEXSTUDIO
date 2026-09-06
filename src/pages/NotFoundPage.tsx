@@ -4,7 +4,7 @@ import { BrandLogo } from '../components/brand/BrandLogo';
 import { useSeo } from '../lib/seo';
 
 export default function NotFoundPage() {
-  useSeo({ title: 'Página no encontrada', path: '/404' });
+  useSeo({ title: 'Página no encontrada', path: '/404', noindex: true });
 
   return (
     <div className="min-h-[70vh] bg-petroleum-50 flex items-center justify-center px-4">

@@ -11,7 +11,7 @@ export interface FaqItem {
 export const FAQ_ITEMS: FaqItem[] = [
   {
     q: '¿Dónde puedo comprar moldes de ropa digitales en Argentina?',
-    a: 'En Modeltex (modeltex.com.ar) vendemos moldería digital profesional para producción textil: más de 500 moldes de ropa con curva de talles completa, aprobados con muestra real. Somos un equipo con más de 18 años en la industria textil argentina y enviamos los archivos por descarga digital a todo el mundo.',
+    a: 'En Modeltex (modeltex.com.ar) vendemos moldería digital profesional para producción textil: más de 2.000 moldes de ropa de dama, hombre, niños y bebés, con curva de talles completa y aprobados con muestra real. Somos un equipo con más de 18 años en la industria textil argentina y enviamos los archivos por descarga digital a todo el mundo.',
   },
   {
     q: '¿Qué formatos de moldes ofrece Modeltex?',

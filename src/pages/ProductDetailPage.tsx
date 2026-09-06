@@ -26,6 +26,7 @@ import { ReviewsSection } from '../components/ui/ReviewsSection';
 import { productCode, cartonPrice, pdfPrice, ploterPrice, productUrl } from '../lib/productFormats';
 import { fetchReviews, reviewSummary } from '../lib/reviews';
 import { useLocale } from '../lib/locale';
+import { CATEGORY_TITLE_SUFFIX } from '../lib/categorySeo';
 
 const formatDescription = (format: string, t: (key: string, es: string) => string) => {
   const normalized = format.toLowerCase();
@@ -106,14 +107,34 @@ export default function ProductDetailPage() {
   const deliveryDescription = t('pd.instantDesc', 'Apenas se confirma el pago, accedes desde tu cuenta.');
 
   useSeo({
-    title: product ? product.name : 'Producto',
+    // Muchos moldes comparten nombre ("TOP DAMA" x43): la categoria en el
+    // titulo los distingue un poco en los resultados de busqueda.
+    title: product
+      ? `${product.name} — molde digital ${CATEGORY_TITLE_SUFFIX[product.category] || ''}`.trim()
+      : loading ? 'Producto' : 'Producto no encontrado',
     description: product
       ? (product.short_description || product.long_description || `Molde digital de ${product.garment_type || product.name}. Talles y formatos profesionales con descarga inmediata.`).slice(0, 160)
       : undefined,
     image: product?.main_image_url || undefined,
     path: slug ? `/producto/${slug}` : '/catalogo',
     type: 'product',
+    noindex: !loading && !product,
   });
+
+  const breadcrumbSchema = useMemo(() => {
+    if (!product) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
+        { '@type': 'ListItem', position: 2, name: 'Catálogo', item: 'https://modeltex.com.ar/catalogo' },
+        { '@type': 'ListItem', position: 3, name: categoryLabel, item: `https://modeltex.com.ar/catalogo?categoria=${product.category}` },
+        { '@type': 'ListItem', position: 4, name: product.name, item: productUrl(product.slug) },
+      ],
+    };
+  }, [product, categoryLabel]);
+  useStructuredData(breadcrumbSchema, 'breadcrumb-schema');
 
   // Resumen de reseñas: alimenta las estrellas de Google en los resultados de búsqueda.
   const [ratingSummary, setRatingSummary] = useState({ avg: 0, count: 0 });

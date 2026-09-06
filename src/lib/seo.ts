@@ -6,6 +6,8 @@ interface SeoOptions {
   image?: string;
   path?: string;
   type?: 'website' | 'product' | 'article';
+  /** Paginas que no deben indexarse (404, producto inexistente). */
+  noindex?: boolean;
 }
 
 const SITE_NAME = 'Modeltex';
@@ -13,6 +15,10 @@ const SITE_URL = 'https://modeltex.com.ar';
 const DEFAULT_DESCRIPTION =
   'Modeltex: moldes PDF, moldes para imprimir y molderia digital para producir. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT, con escalado completo y descarga inmediata.';
 const DEFAULT_IMAGE = 'https://modeltex.com.ar/brand/og-image.png';
+// Mismo valor que el <meta name="robots"> base de index.html: al ser una SPA,
+// la etiqueta persiste entre navegaciones y hay que restaurarla al salir de
+// una pagina noindex.
+const DEFAULT_ROBOTS = 'index, follow, max-image-preview:large, max-snippet:-1';
 
 function setMeta(attr: 'name' | 'property', key: string, content: string) {
   let el = document.head.querySelector<HTMLMetaElement>(`meta[${attr}="${key}"]`);
@@ -45,7 +51,7 @@ function setStructuredData(id: string, data: Record<string, unknown> | Array<Rec
   el.textContent = JSON.stringify(data);
 }
 
-export function useSeo({ title, description, image, path, type = 'website' }: SeoOptions) {
+export function useSeo({ title, description, image, path, type = 'website', noindex = false }: SeoOptions) {
   useEffect(() => {
     const fullTitle = title ? `${title} | ${SITE_NAME}` : `${SITE_NAME} | Moldes PDF y molderia digital`;
     const desc = description || DEFAULT_DESCRIPTION;
@@ -58,6 +64,7 @@ export function useSeo({ title, description, image, path, type = 'website' }: Se
 
     document.title = fullTitle;
     setMeta('name', 'description', desc);
+    setMeta('name', 'robots', noindex ? 'noindex, follow' : DEFAULT_ROBOTS);
     setMeta('property', 'og:title', fullTitle);
     setMeta('property', 'og:description', desc);
     setMeta('property', 'og:image', img);
@@ -67,7 +74,7 @@ export function useSeo({ title, description, image, path, type = 'website' }: Se
     setMeta('name', 'twitter:description', desc);
     setMeta('name', 'twitter:image', img);
     setCanonical(url);
-  }, [title, description, image, path, type]);
+  }, [title, description, image, path, type, noindex]);
 }
 
 export function useStructuredData(

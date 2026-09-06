@@ -20,6 +20,7 @@ import { useLocale } from '../lib/locale';
 import type { Product, ProductCategory } from '../lib/types';
 import { CATEGORIES, FORMATS } from '../lib/types';
 import { isPromoActive } from '../lib/promo';
+import { CATEGORY_SEO } from '../lib/categorySeo';
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc' | 'nombre';
 type SmartIntent = {
@@ -431,11 +432,18 @@ export default function CatalogPage() {
   const currentCategoryLabel = CATEGORIES.find((item) => item.value === category)?.label || 'Todos los productos';
   const currentSeasonLabel = SEASON_OPTIONS.find((item) => item.value === temporada)?.label || 'Todas';
 
+  const categorySeo = category ? CATEGORY_SEO[category] : undefined;
   useSeo({
-    title: category ? `Moldes de ${currentCategoryLabel} - molderia digital` : 'Catalogo de molderia digital y moldes de ropa',
-    description: category
-      ? `Moldes de ${currentCategoryLabel.toLowerCase()}: molderia digital y en carton en PDF A4, plotter, DXF, CDR y PLT. Escalado completo y descarga inmediata.`
-      : 'Catalogo de molderia digital y moldes de ropa: dama, hombre, ninos, bebes y unisex. Moldes en carton y PDF A4, plotter, DXF, CDR y PLT, con escalado completo y descarga inmediata.',
+    title: categorySeo
+      ? categorySeo.title
+      : category
+        ? `Moldes de ${currentCategoryLabel} - molderia digital`
+        : 'Catálogo de moldes digitales: más de 2.000 moldes',
+    description: categorySeo
+      ? categorySeo.description
+      : category
+        ? `Moldes de ${currentCategoryLabel.toLowerCase()}: molderia digital y en carton en PDF A4, plotter, DXF, CDR y PLT. Escalado completo y descarga inmediata.`
+        : 'Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Todos los talles incluidos, en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces). Descarga inmediata.',
     path: category ? `/catalogo?categoria=${category}` : '/catalogo',
   });
 
