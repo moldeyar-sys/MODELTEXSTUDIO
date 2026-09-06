@@ -46,10 +46,19 @@ const SEASON_OPTIONS = [
 ] as const;
 
 const SORT_LABELS: Record<SortOption, string> = {
-  reciente: 'Mas recientes',
+  reciente: 'Variado',
   precio_asc: 'Menor precio',
   precio_desc: 'Mayor precio',
   nombre: 'Nombre A-Z',
+};
+
+/** Hash simple y estable de un string a un numero (no aleatorio real: mismo id, mismo resultado siempre). */
+const hashId = (id: string): number => {
+  let h = 0;
+  for (let i = 0; i < id.length; i++) {
+    h = (h * 31 + id.charCodeAt(i)) | 0;
+  }
+  return h;
 };
 
 const SMART_SEARCH_EXAMPLES = [
@@ -234,7 +243,10 @@ const sortProducts = (items: Product[], sort: SortOption) => {
       sorted.sort((a, b) => a.name.localeCompare(b.name, 'es'));
       break;
     default:
-      sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      // Orden mezclado y estable (no por fecha de subida): usa un hash del id
+      // asi el mismo producto siempre cae en la misma posicion relativa, pero
+      // sin agrupar por categoria ni por tanda de carga.
+      sorted.sort((a, b) => hashId(a.id) - hashId(b.id));
       break;
   }
   return sorted;
@@ -663,7 +675,7 @@ export default function CatalogPage() {
                   className="input-field pl-10"
                   aria-label={t('catalog.sortBy', 'Ordenar por')}
                 >
-                  <option value="reciente">{t('catalog.sort.reciente', 'Mas recientes')}</option>
+                  <option value="reciente">{t('catalog.sort.reciente', 'Variado')}</option>
                   <option value="precio_asc">{t('catalog.sort.precio_asc', 'Precio: menor a mayor')}</option>
                   <option value="precio_desc">{t('catalog.sort.precio_desc', 'Precio: mayor a menor')}</option>
                   <option value="nombre">{t('catalog.sort.nombre', 'Nombre A-Z')}</option>
@@ -783,7 +795,7 @@ export default function CatalogPage() {
                   onChange={(e) => updateFilter('orden', e.target.value)}
                   className="input-field"
                 >
-                  <option value="reciente">{t('catalog.sort.reciente', 'Mas recientes')}</option>
+                  <option value="reciente">{t('catalog.sort.reciente', 'Variado')}</option>
                   <option value="precio_asc">{t('catalog.sort.precio_asc', 'Precio: menor a mayor')}</option>
                   <option value="precio_desc">{t('catalog.sort.precio_desc', 'Precio: mayor a menor')}</option>
                   <option value="nombre">{t('catalog.sort.nombre', 'Nombre A-Z')}</option>

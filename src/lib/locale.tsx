@@ -119,7 +119,7 @@ const EN: Record<string, string> = {
   'catalog.format': 'Format',
   'catalog.allFormats': 'All formats',
   'catalog.sortBy': 'Sort by',
-  'catalog.sort.reciente': 'Newest',
+  'catalog.sort.reciente': 'Mixed',
   'catalog.sort.precio_asc': 'Price: low to high',
   'catalog.sort.precio_desc': 'Price: high to low',
   'catalog.sort.nombre': 'Name A-Z',
