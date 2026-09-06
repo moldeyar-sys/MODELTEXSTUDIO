@@ -37,7 +37,7 @@ export default async function handler(req: any, res: any) {
 
     const orderRes = await fetch(
       `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&guest_email=eq.${encodeURIComponent(email)}` +
-        `&select=id,total,payment_method,payment_status,order_status,created_at,` +
+        `&select=id,total,payment_method,payment_status,order_status,created_at,cart_snapshot,` +
         `order_items(quantity,price,formato,sizes,product_name,product:products(id,name))`,
       { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
     );
@@ -67,7 +67,21 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const items: any[] = order.order_items || [];
+    // Si el guardado de order_items falló en el checkout (ver CheckoutPage), se
+    // reconstruye desde el respaldo guardado junto con el pedido (cart_snapshot) —
+    // mismo patrón ya usado en el panel admin — para no dejar a un cliente que
+    // sí pagó sin forma de bajar lo que compró.
+    const items: any[] =
+      order.order_items?.length
+        ? order.order_items
+        : (order.cart_snapshot || []).map((c: any) => ({
+            quantity: c.quantity,
+            price: c.price,
+            formato: c.formato,
+            sizes: c.sizes,
+            product_name: c.product_name,
+            product: { id: c.product_id, name: c.product_name },
+          }));
     const productIds = Array.from(new Set(items.map((it) => it.product?.id).filter(Boolean)));
     const productNames = new Map(items.map((it) => [it.product?.id, it.product?.name || it.product_name || 'Producto']));
 

@@ -34,10 +34,34 @@ function extractPaymentId(req: any): string | null {
 
 /** Precio real minimo de un producto entre todos sus formatos cargados. */
 function precioMinimo(p: any): number {
-  const candidatos = [p?.precio_carton, p?.precio_pdf_a4, p?.precio_pdf_ploter, p?.price]
+  const candidatos = [
+    p?.precio_carton, p?.precio_pdf_a4, p?.precio_pdf_ploter, p?.price,
+    p?.precio_dxf, p?.precio_pds, p?.precio_mrk, p?.precio_ads,
+  ]
     .map(Number)
     .filter((n) => Number.isFinite(n) && n > 0);
   return candidatos.length ? Math.min(...candidatos) : 0;
+}
+
+/**
+ * Precio real del FORMATO especifico que el item dice haber comprado (el string
+ * libre guardado en order_items.formato, ej "Moldes en Cartón", "DXF / AAMA").
+ * Sin esto, alguien podia pagar el precio del formato mas barato y declarar
+ * en el pedido el formato mas caro (el piso solo miraba el minimo global).
+ * Si el formato no matchea nada conocido (pedidos viejos sin este campo, o
+ * un valor inesperado) se cae al piso global de siempre: nunca mas estricto
+ * de lo que ya funcionaba.
+ */
+function precioReal(p: any, formato: string | null | undefined): number {
+  const f = (formato || '').toLowerCase();
+  if (f.includes('cartón') || f.includes('carton')) return Number(p?.precio_carton) || 0;
+  if (f.includes('plóter') || f.includes('ploter')) return Number(p?.precio_pdf_ploter) || 0;
+  if (f.includes('pdf-a4') || f.includes('pdf a4')) return Number(p?.precio_pdf_a4) || Number(p?.price) || 0;
+  if (f.includes('dxf') || f.includes('aama')) return Number(p?.precio_dxf) || 0;
+  if (f.includes('pds')) return Number(p?.precio_pds) || 0;
+  if (f.includes('mrk') || f.includes('tizado')) return Number(p?.precio_mrk) || 0;
+  if (f.includes('ads') || f.includes('audaces')) return Number(p?.precio_ads) || 0;
+  return precioMinimo(p);
 }
 
 export default async function handler(req: any, res: any) {
@@ -82,7 +106,7 @@ export default async function handler(req: any, res: any) {
     const H = { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` };
     const orderRes = await fetch(
       `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}` +
-        `&select=id,total,payment_status,order_items(quantity,product:products(price,precio_carton,precio_pdf_a4,precio_pdf_ploter))`,
+        `&select=id,total,payment_status,order_items(quantity,formato,product:products(price,precio_carton,precio_pdf_a4,precio_pdf_ploter,precio_dxf,precio_pds,precio_mrk,precio_ads))`,
       { headers: H },
     );
     if (!orderRes.ok) throw new Error(`orders ${orderRes.status}`);
@@ -103,7 +127,7 @@ export default async function handler(req: any, res: any) {
     const monto = Number(pago.transaction_amount);
     const items = Array.isArray(order.order_items) ? order.order_items : [];
     const pisoCatalogo = items.reduce(
-      (sum: number, it: any) => sum + precioMinimo(it?.product) * (Number(it?.quantity) || 1),
+      (sum: number, it: any) => sum + precioReal(it?.product, it?.formato) * (Number(it?.quantity) || 1),
       0,
     );
 

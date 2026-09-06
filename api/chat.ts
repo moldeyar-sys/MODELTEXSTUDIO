@@ -7,6 +7,9 @@ const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiol
 const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
   'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImpvdGlicWd5cmNnd2N0aW9saGN3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE1MjkyNjgsImV4cCI6MjA5NzEwNTI2OH0.GeBsY6QvZMBe2k7YqSXh5aaRBjO9upgCO_0nb1mB8bU';
+// Secreta: solo para escribir el historial server-side (migración 033 cierra
+// el INSERT público en chat_messages, así que esta escritura debe ignorar RLS).
+const SUPABASE_SERVICE_ROLE_KEY = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
 const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY || '';
 const OPENROUTER_MODEL = process.env.OPENROUTER_MODEL || 'openai/gpt-4o-mini';
@@ -71,13 +74,16 @@ async function countSessionMessages(sessionId: string): Promise<number> {
 }
 
 // Guarda un mensaje en el historial (best-effort: si falla, no interrumpe el chat).
+// Usa la service role: chat_messages ya no acepta INSERT público (migración 033),
+// asi que solo este endpoint (server-side) puede escribir el historial real.
 async function logMessage(sessionId: string, userId: string | null, role: 'user' | 'assistant', content: string): Promise<void> {
+  if (!SUPABASE_SERVICE_ROLE_KEY) return;
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/chat_messages`, {
       method: 'POST',
       headers: {
-        apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        apikey: SUPABASE_SERVICE_ROLE_KEY,
+        Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },

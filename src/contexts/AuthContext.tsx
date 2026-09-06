@@ -7,6 +7,8 @@ interface AuthContextType {
   user: User | null;
   profile: Profile | null;
   loading: boolean;
+  /** true una vez que el perfil terminó de intentar cargarse (haya o no encontrado uno). */
+  profileLoaded: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
   signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
@@ -21,14 +23,25 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  // Separado de `profile`: sin esto, "no encontré perfil" (null) y "todavía no
+  // terminó de buscarlo" (también null hasta que resuelva) son indistinguibles,
+  // y AdminRoute quedaba esperando para siempre si la fila de perfil no existía
+  // o la consulta fallaba.
+  const [profileLoaded, setProfileLoaded] = useState(false);
 
   const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from('profiles')
-      .select('*')
-      .eq('id', userId)
-      .maybeSingle();
-    setProfile(data as Profile | null);
+    setProfileLoaded(false);
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', userId)
+        .maybeSingle();
+      if (error) console.error('fetchProfile error', error);
+      setProfile(data as Profile | null);
+    } finally {
+      setProfileLoaded(true);
+    }
   };
 
   useEffect(() => {
@@ -36,6 +49,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         fetchProfile(session.user.id);
+      } else {
+        setProfileLoaded(true);
       }
       setLoading(false);
     });
@@ -46,6 +61,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         fetchProfile(session.user.id);
       } else {
         setProfile(null);
+        setProfileLoaded(true);
       }
     });
 
@@ -92,7 +108,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = profile?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, signIn, signUp, signOut, resetPassword, updateProfile, isAdmin }}>
+    <AuthContext.Provider value={{ user, profile, loading, profileLoaded, signIn, signUp, signOut, resetPassword, updateProfile, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );
