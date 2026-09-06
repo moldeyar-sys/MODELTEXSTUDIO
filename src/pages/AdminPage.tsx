@@ -1161,10 +1161,16 @@ export default function AdminPage() {
                 <span className="w-7 h-7 rounded-lg bg-blue-100 flex items-center justify-center text-blue-700 text-xs font-bold">PP</span>
                 PayPal
               </h3>
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5 mb-3">
+                <p className="text-xs text-amber-800">
+                  ⚠️ Usá el link de una cuenta <strong>PayPal Business a nombre de "Modeltex"</strong>, no un link personal.
+                  Un comprador que investiga antes de pagar y ve un titular distinto a la marca desconfía y no compra.
+                </p>
+              </div>
               <div className="space-y-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Link de pago PayPal (opcional)</label>
-                  <input type="url" value={payForm.paypal_link} onChange={e => setPayForm(f => ({ ...f, paypal_link: e.target.value }))} className="input-field" placeholder="https://paypal.me/..." />
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Link de pago PayPal Business</label>
+                  <input type="url" value={payForm.paypal_link} onChange={e => setPayForm(f => ({ ...f, paypal_link: e.target.value }))} className="input-field" placeholder="https://paypal.me/Modeltex..." />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">URL del QR de PayPal</label>
@@ -1172,7 +1178,45 @@ export default function AdminPage() {
                   {payForm.paypal_qr_url && (
                     <img src={payForm.paypal_qr_url} alt="QR PayPal" className="mt-2 w-28 h-28 object-contain border border-gray-200 rounded-lg" onError={e => { (e.target as HTMLImageElement).style.display = 'none'; }} />
                   )}
-                  <p className="text-xs text-gray-400 mt-1">Subí el QR al bucket de imágenes y pegá la URL acá.</p>
+                  <p className="text-xs text-gray-400 mt-1">Subí el QR (de la cuenta Business) al bucket de imágenes y pegá la URL acá.</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Payoneer */}
+            <div className="card p-5 mb-4">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-orange-100 flex items-center justify-center text-orange-700 text-xs font-bold">PO</span>
+                Payoneer
+              </h3>
+              <p className="text-xs text-gray-500 mb-3">Cobro internacional en USD. Recomendado para compradores B2B/fábricas que prefieren no usar PayPal.</p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Email de Payoneer</label>
+                  <input type="email" value={payForm.payoneer_email} onChange={e => setPayForm(f => ({ ...f, payoneer_email: e.target.value }))} className="input-field" placeholder="cobros@modeltex.com.ar" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Link de pago (opcional)</label>
+                  <input type="url" value={payForm.payoneer_link} onChange={e => setPayForm(f => ({ ...f, payoneer_link: e.target.value }))} className="input-field" placeholder="Link de solicitud de pago de Payoneer" />
+                </div>
+              </div>
+            </div>
+
+            {/* Wise */}
+            <div className="card p-5 mb-4">
+              <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
+                <span className="w-7 h-7 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-700 text-xs font-bold">WS</span>
+                Wise
+              </h3>
+              <p className="text-xs text-gray-500 mb-3">Cobro internacional en USD/EUR con bajas comisiones. Alternativa a PayPal para compradores de Europa/UK.</p>
+              <div className="grid sm:grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Email de Wise</label>
+                  <input type="email" value={payForm.wise_email} onChange={e => setPayForm(f => ({ ...f, wise_email: e.target.value }))} className="input-field" placeholder="cobros@modeltex.com.ar" />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Link de pago (ej: wise.me/...)</label>
+                  <input type="url" value={payForm.wise_link} onChange={e => setPayForm(f => ({ ...f, wise_link: e.target.value }))} className="input-field" placeholder="https://wise.com/pay/me/..." />
                 </div>
               </div>
             </div>
@@ -1661,6 +1705,15 @@ function ProductForm({
     precio_usd_carton: product?.precio_usd_carton != null ? String(product.precio_usd_carton) : '',
     precio_usd_pdf_a4: product?.precio_usd_pdf_a4 != null ? String(product.precio_usd_pdf_a4) : '',
     precio_usd_pdf_ploter: product?.precio_usd_pdf_ploter != null ? String(product.precio_usd_pdf_ploter) : '',
+    // Formatos industriales CAD (para fábricas y departamentos de patronaje)
+    precio_dxf: product?.precio_dxf != null ? String(product.precio_dxf) : '',
+    precio_pds: product?.precio_pds != null ? String(product.precio_pds) : '',
+    precio_mrk: product?.precio_mrk != null ? String(product.precio_mrk) : '',
+    precio_ads: product?.precio_ads != null ? String(product.precio_ads) : '',
+    precio_usd_dxf: product?.precio_usd_dxf != null ? String(product.precio_usd_dxf) : '',
+    precio_usd_pds: product?.precio_usd_pds != null ? String(product.precio_usd_pds) : '',
+    precio_usd_mrk: product?.precio_usd_mrk != null ? String(product.precio_usd_mrk) : '',
+    precio_usd_ads: product?.precio_usd_ads != null ? String(product.precio_usd_ads) : '',
     disponible_carton: product?.disponible_carton ?? true,
     disponible_pdf_a4: product?.disponible_pdf_a4 ?? true,
     mostrar_consulta_otro_formato: product?.mostrar_consulta_otro_formato ?? true,
@@ -1897,6 +1950,14 @@ function ProductForm({
       precio_usd_carton: form.precio_usd_carton ? parseFloat(form.precio_usd_carton) : null,
       precio_usd_pdf_a4: form.precio_usd_pdf_a4 ? parseFloat(form.precio_usd_pdf_a4) : null,
       precio_usd_pdf_ploter: form.precio_usd_pdf_ploter ? parseFloat(form.precio_usd_pdf_ploter) : null,
+      precio_dxf: form.precio_dxf ? parseFloat(form.precio_dxf) : null,
+      precio_pds: form.precio_pds ? parseFloat(form.precio_pds) : null,
+      precio_mrk: form.precio_mrk ? parseFloat(form.precio_mrk) : null,
+      precio_ads: form.precio_ads ? parseFloat(form.precio_ads) : null,
+      precio_usd_dxf: form.precio_usd_dxf ? parseFloat(form.precio_usd_dxf) : null,
+      precio_usd_pds: form.precio_usd_pds ? parseFloat(form.precio_usd_pds) : null,
+      precio_usd_mrk: form.precio_usd_mrk ? parseFloat(form.precio_usd_mrk) : null,
+      precio_usd_ads: form.precio_usd_ads ? parseFloat(form.precio_usd_ads) : null,
       disponible_carton: form.disponible_carton,
       disponible_pdf_a4: form.disponible_pdf_a4,
       mostrar_consulta_otro_formato: form.mostrar_consulta_otro_formato,
@@ -2100,6 +2161,44 @@ function ProductForm({
                   </div>
                 </div>
                 <p className="text-xs text-gray-400 mt-2">Los clientes fuera de Argentina ven estos precios en dólares. Vacío = no se muestra.</p>
+              </div>
+              <div className="sm:col-span-2 border-t border-gray-200 pt-4 mt-1">
+                <p className="text-sm font-semibold text-gray-700 mb-1">🏭 Formatos industriales (CAD) <span className="text-gray-400 font-normal">— fábricas y departamentos de patronaje</span></p>
+                <p className="text-xs text-gray-400 mb-3">Incluyen la curva completa de talles (sin ajuste por talle). Vacío = no se muestra ese formato.</p>
+                <div className="grid sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">DXF / AAMA — ARS</label>
+                    <input name="precio_dxf" type="number" step="0.01" value={form.precio_dxf} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">DXF / AAMA — USD</label>
+                    <input name="precio_usd_dxf" type="number" step="0.01" value={form.precio_usd_dxf} onChange={handleChange} className="input-field" placeholder="Ej: 60.00" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">PDS (Optitex) — ARS</label>
+                    <input name="precio_pds" type="number" step="0.01" value={form.precio_pds} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">PDS (Optitex) — USD</label>
+                    <input name="precio_usd_pds" type="number" step="0.01" value={form.precio_usd_pds} onChange={handleChange} className="input-field" placeholder="Ej: 70.00" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">MRK (Tizado) — ARS</label>
+                    <input name="precio_mrk" type="number" step="0.01" value={form.precio_mrk} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">MRK (Tizado) — USD</label>
+                    <input name="precio_usd_mrk" type="number" step="0.01" value={form.precio_usd_mrk} onChange={handleChange} className="input-field" placeholder="Ej: 80.00" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">ADS (Audaces) — ARS</label>
+                    <input name="precio_ads" type="number" step="0.01" value={form.precio_ads} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">ADS (Audaces) — USD</label>
+                    <input name="precio_usd_ads" type="number" step="0.01" value={form.precio_usd_ads} onChange={handleChange} className="input-field" placeholder="Ej: 70.00" />
+                  </div>
+                </div>
               </div>
             </div>
             <label className="flex items-center gap-2 text-xs text-gray-600 mt-3">

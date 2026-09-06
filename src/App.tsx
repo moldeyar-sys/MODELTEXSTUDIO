@@ -26,6 +26,7 @@ const IaTextilPage = lazy(() => import('./pages/IaTextilPage'));
 const FreeMoldsPage = lazy(() => import('./pages/FreeMoldsPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const TrustPage = lazy(() => import('./pages/TrustPage'));
+const RespaldoDrivePage = lazy(() => import('./pages/RespaldoDrivePage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
 const MoldesPdfPage = lazy(() => import('./pages/MoldesPdfPage'));
 const MoldesPdfA4Page = lazy(() => import('./pages/MoldesPdfA4Page'));
@@ -76,6 +77,7 @@ function AppLayout() {
             <Route path="/politica-descargas" element={<TrustPage variant="politica-descargas" />} />
             <Route path="/terminos" element={<TrustPage variant="terminos" />} />
             <Route path="/privacidad" element={<TrustPage variant="privacidad" />} />
+            <Route path="/legal/respaldo-drive-denis" element={<RespaldoDrivePage />} />
             <Route path="/admin" element={<AdminRoute><AdminPage /></AdminRoute>} />
             <Route path="*" element={<NotFoundPage />} />
           </Routes>

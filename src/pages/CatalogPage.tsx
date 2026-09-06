@@ -74,7 +74,10 @@ const FORMAT_ALIASES: Array<{ value: string; aliases: string[] }> = [
   { value: 'PDF A4', aliases: ['pdf a4', 'a4', 'hoja a4', 'imprimir en casa'] },
   { value: 'PDF Plotter', aliases: ['plotter', 'ploter', 'pdf plotter', 'pdf ploter', 'rollo'] },
   { value: 'PLT', aliases: ['plt'] },
-  { value: 'DXF', aliases: ['dxf', 'cad'] },
+  { value: 'DXF', aliases: ['dxf', 'cad', 'aama', 'gerber', 'lectra'] },
+  { value: 'PDS (Optitex)', aliases: ['pds', 'optitex'] },
+  { value: 'MRK (Tizado)', aliases: ['mrk', 'tizado', 'marker'] },
+  { value: 'ADS (Audaces)', aliases: ['audaces'] },
   { value: 'CDR', aliases: ['cdr', 'corel', 'coreldraw'] },
   { value: 'Sublimacion', aliases: ['sublimacion', 'sublimar', 'sublimable', 'subli'] },
 ];
@@ -392,7 +395,7 @@ export default function CatalogPage() {
 
     const fromExamples = SMART_SEARCH_EXAMPLES
       .filter((example) => normalizeText(example).includes(query))
-      .map((example) => ({ label: example, value: example, hint: 'Busqueda sugerida' }));
+      .map((example) => ({ label: example, value: example, hint: t('catalog.suggestedHint', 'Busqueda sugerida') }));
 
     const fromProducts = products
       .map((product) => ({
@@ -411,7 +414,7 @@ export default function CatalogPage() {
     return [...fromExamples, ...fromProducts]
       .filter((item, index, list) => list.findIndex((candidate) => candidate.label === item.label) === index)
       .slice(0, 6);
-  }, [liveIntent, products]);
+  }, [liveIntent, products, t]);
 
   const currentCategoryLabel = CATEGORIES.find((item) => item.value === category)?.label || 'Todos los productos';
   const currentSeasonLabel = SEASON_OPTIONS.find((item) => item.value === temporada)?.label || 'Todas';
@@ -432,7 +435,7 @@ export default function CatalogPage() {
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="max-w-3xl">
               <h1 className="font-sans text-xl sm:text-3xl md:text-4xl font-extrabold text-primary-900 tracking-tight text-balance">
-                Moldes aprobados con muestra
+                {t('catalog.title', 'Moldes aprobados con muestra')}
               </h1>
               {/* El volumen del catalogo es el mejor argumento de venta: va como dato, no como pie de pagina. */}
               <p className="mt-2 flex items-baseline gap-2 flex-wrap">
@@ -441,8 +444,10 @@ export default function CatalogPage() {
                 </span>
                 <span className="text-sm sm:text-base text-gray-500">
                   {loading
-                    ? 'Cargando catálogo...'
-                    : `${visibleProducts.length === 1 ? 'molde listo' : 'moldes listos'} para producir`}
+                    ? t('catalog.loading', 'Cargando catálogo...')
+                    : visibleProducts.length === 1
+                      ? t('catalog.readyOne', 'molde listo para producir')
+                      : t('catalog.readyMany', 'moldes listos para producir')}
                 </span>
               </p>
             </div>
@@ -451,7 +456,7 @@ export default function CatalogPage() {
                 onClick={clearFilters}
                 className="text-sm text-primary-600 hover:text-primary-800 flex items-center gap-1.5 bg-primary-50 px-3 py-2 rounded-xl font-medium transition-colors"
               >
-                <X className="w-3.5 h-3.5" /> Limpiar filtros
+                <X className="w-3.5 h-3.5" /> {t('catalog.clear', 'Limpiar filtros')}
               </button>
             )}
           </div>
@@ -471,7 +476,7 @@ export default function CatalogPage() {
                   temporada === value ? 'bg-petroleum-600 text-white border-petroleum-600' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {label}
+                <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> {t(`catalog.season.${value || 'todas'}`, label)}
               </button>
             ))}
           </div>
@@ -485,7 +490,7 @@ export default function CatalogPage() {
                 !category ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
               }`}
             >
-              Todos
+              {t('catalog.all', 'Todos')}
             </button>
             {CATEGORIES.map((item) => (
               <button
@@ -495,7 +500,7 @@ export default function CatalogPage() {
                   category === item.value ? 'bg-primary-800 text-white border-primary-800' : 'bg-white text-gray-600 border-gray-200 hover:bg-gray-50'
                 }`}
               >
-                {item.label}
+                {t(`cat.${item.value}`, item.label)}
               </button>
             ))}
           </div>
@@ -512,7 +517,7 @@ export default function CatalogPage() {
                   className="w-full flex items-center gap-2 px-4 py-2.5 rounded-xl border border-gray-200 bg-white text-gray-400 text-sm"
                 >
                   <Search className="w-4 h-4" />
-                  {search ? <span className="text-gray-700 truncate">{search}</span> : <span>Buscar</span>}
+                  {search ? <span className="text-gray-700 truncate">{search}</span> : <span>{t('catalog.searchBtn', 'Buscar')}</span>}
                 </button>
               ) : (
                 <form onSubmit={handleSearch} className="flex items-center gap-2">
@@ -523,7 +528,7 @@ export default function CatalogPage() {
                       type="text"
                       value={search}
                       onChange={(e) => setSearch(e.target.value)}
-                      placeholder="Buscar molde, prenda, uso o formato"
+                      placeholder={t('catalog.searchPlaceholder', 'Buscar molde, prenda, uso o formato')}
                       className="input-field pl-10 pr-10"
                     />
                     {search && (
@@ -545,7 +550,7 @@ export default function CatalogPage() {
                     onClick={() => setMobileSearchOpen(false)}
                     className="shrink-0 text-sm text-gray-500 px-1"
                   >
-                    Cerrar
+                    {t('common.close', 'Cerrar')}
                   </button>
                 </form>
               )}
@@ -559,7 +564,7 @@ export default function CatalogPage() {
                   type="text"
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Buscar molde, prenda, uso o formato"
+                  placeholder={t('catalog.searchPlaceholder', 'Buscar molde, prenda, uso o formato')}
                   className="input-field pl-10 pr-10"
                 />
                 {search && (
@@ -573,29 +578,29 @@ export default function CatalogPage() {
                   </button>
                 )}
               </div>
-              <button type="submit" className="btn-primary px-4 shrink-0">Buscar</button>
+              <button type="submit" className="btn-primary px-4 shrink-0">{t('catalog.searchBtn', 'Buscar')}</button>
             </form>
 
             {search.trim() && (
               <div className="rounded-xl border border-petroleum-100 bg-petroleum-50 px-3 py-3 space-y-2">
                 <div className="flex flex-wrap items-center gap-2 text-sm text-petroleum-900">
-                  <span className="font-semibold">Estoy entendiendo:</span>
+                  <span className="font-semibold">{t('catalog.understanding', 'Estoy entendiendo:')}</span>
                   {liveIntent.labels.length > 0 ? liveIntent.labels.map((label) => (
                     <span key={label} className="rounded-full bg-white px-2.5 py-1 text-xs font-medium text-petroleum-700 border border-petroleum-100">
                       {label}
                     </span>
                   )) : (
-                    <span className="text-petroleum-700">voy a buscar por nombre, descripcion y formato.</span>
+                    <span className="text-petroleum-700">{t('catalog.understandingFallback', 'voy a buscar por nombre, descripcion y formato.')}</span>
                   )}
                 </div>
                 {liveIntent.corrected && (
                   <p className="text-xs text-petroleum-700">
-                    Corrigiendo busqueda a: <span className="font-semibold">{liveIntent.correctedQuery}</span>
+                    {t('catalog.correcting', 'Corrigiendo busqueda a:')} <span className="font-semibold">{liveIntent.correctedQuery}</span>
                   </p>
                 )}
                 {liveSuggestions.length > 0 && (
                   <div className="flex flex-col gap-2">
-                    <p className="text-xs font-medium uppercase tracking-wide text-petroleum-600">Sugerencias en vivo</p>
+                    <p className="text-xs font-medium uppercase tracking-wide text-petroleum-600">{t('catalog.liveSuggestions', 'Sugerencias en vivo')}</p>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                       {liveSuggestions.map((suggestion) => (
                         <button
@@ -629,7 +634,7 @@ export default function CatalogPage() {
 
             {busqueda && smartIntent.labels.length > 0 && (
               <div className="rounded-xl border border-primary-100 bg-primary-50 px-3 py-2.5 text-sm text-primary-900">
-                <span className="font-semibold">Busqueda inteligente:</span> estoy priorizando {smartIntent.labels.join(', ')}.
+                <span className="font-semibold">{t('catalog.smartPrefix', 'Busqueda inteligente:')}</span> {t('catalog.smartBody', 'estoy priorizando')} {smartIntent.labels.join(', ')}.
               </div>
             )}
 
@@ -641,8 +646,8 @@ export default function CatalogPage() {
                 }`}
               >
                 <span className="inline-flex items-center gap-2">
-                  <SlidersHorizontal className="w-4 h-4" /> Filtros
-                  <span className="sm:hidden text-gray-400 font-normal">· {SORT_LABELS[sort]}{format ? ` · ${format}` : ''}</span>
+                  <SlidersHorizontal className="w-4 h-4" /> {t('catalog.filters', 'Filtros')}
+                  <span className="sm:hidden text-gray-400 font-normal">· {t(`catalog.sort.${sort}`, SORT_LABELS[sort])}{format ? ` · ${format}` : ''}</span>
                 </span>
                 <span className="text-xs px-2 py-0.5 rounded-full bg-primary-100 text-primary-800">
                   {activeFiltersCount}
@@ -656,12 +661,12 @@ export default function CatalogPage() {
                   value={sort}
                   onChange={(e) => updateFilter('orden', e.target.value)}
                   className="input-field pl-10"
-                  aria-label="Ordenar catalogo"
+                  aria-label={t('catalog.sortBy', 'Ordenar por')}
                 >
-                  <option value="reciente">Mas recientes</option>
-                  <option value="precio_asc">Precio: menor a mayor</option>
-                  <option value="precio_desc">Precio: mayor a menor</option>
-                  <option value="nombre">Nombre A-Z</option>
+                  <option value="reciente">{t('catalog.sort.reciente', 'Mas recientes')}</option>
+                  <option value="precio_asc">{t('catalog.sort.precio_asc', 'Precio: menor a mayor')}</option>
+                  <option value="precio_desc">{t('catalog.sort.precio_desc', 'Precio: mayor a menor')}</option>
+                  <option value="nombre">{t('catalog.sort.nombre', 'Nombre A-Z')}</option>
                 </select>
               </label>
 
@@ -671,9 +676,9 @@ export default function CatalogPage() {
                   value={format}
                   onChange={(e) => updateFilter('formato', e.target.value)}
                   className="input-field pl-10"
-                  aria-label="Filtrar por formato"
+                  aria-label={t('catalog.format', 'Formato')}
                 >
-                  <option value="">Todos los formatos</option>
+                  <option value="">{t('catalog.allFormats', 'Todos los formatos')}</option>
                   {FORMATS.map((item) => (
                     <option key={item} value={item}>{item}</option>
                   ))}
@@ -689,7 +694,7 @@ export default function CatalogPage() {
                     onClick={() => updateFilter('categoria', '')}
                     className="inline-flex items-center gap-1.5 rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-800"
                   >
-                    Categoria: {currentCategoryLabel}
+                    {t('catalog.chipCategory', 'Categoria:')} {category ? t(`cat.${category}`, currentCategoryLabel) : currentCategoryLabel}
                     <X className="w-3 h-3" />
                   </button>
                 )}
@@ -699,7 +704,7 @@ export default function CatalogPage() {
                     onClick={() => updateFilter('temporada', '')}
                     className="inline-flex items-center gap-1.5 rounded-full border border-petroleum-200 bg-petroleum-50 px-3 py-1.5 text-xs font-medium text-petroleum-700"
                   >
-                    Temporada: {currentSeasonLabel}
+                    {t('catalog.chipSeason', 'Temporada:')} {t(`catalog.season.${temporada || 'todas'}`, currentSeasonLabel)}
                     <X className="w-3 h-3" />
                   </button>
                 )}
@@ -709,7 +714,7 @@ export default function CatalogPage() {
                     onClick={() => updateFilter('formato', '')}
                     className="inline-flex items-center gap-1.5 rounded-full border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-medium text-gray-700"
                   >
-                    Formato: {format}
+                    {t('catalog.chipFormat', 'Formato:')} {format}
                     <X className="w-3 h-3" />
                   </button>
                 )}
@@ -722,7 +727,7 @@ export default function CatalogPage() {
                     }}
                     className="inline-flex items-center gap-1.5 rounded-full border border-accent-200 bg-accent-50 px-3 py-1.5 text-xs font-medium text-accent-700"
                   >
-                    Busqueda: {busqueda}
+                    {t('catalog.chipSearch', 'Busqueda:')} {busqueda}
                     <X className="w-3 h-3" />
                   </button>
                 )}
@@ -735,53 +740,53 @@ export default function CatalogPage() {
           <div className="card p-4 sm:p-6 mb-8">
             <div className="flex items-center justify-between mb-4 gap-3">
               <div>
-                <h3 className="font-semibold text-gray-900">Filtrar por</h3>
-                <p className="text-sm text-gray-500 mt-1">Deja listo el catalogo segun categoria, formato o prioridad.</p>
+                <h3 className="font-semibold text-gray-900">{t('catalog.filterBy', 'Filtrar por')}</h3>
+                <p className="text-sm text-gray-500 mt-1">{t('catalog.filterHint', 'Deja listo el catalogo segun categoria, formato o prioridad.')}</p>
               </div>
               {hasActiveFilters && (
                 <button onClick={clearFilters} className="text-sm text-primary-600 hover:text-primary-800 flex items-center gap-1">
-                  <X className="w-3 h-3" /> Limpiar filtros
+                  <X className="w-3 h-3" /> {t('catalog.clear', 'Limpiar filtros')}
                 </button>
               )}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Categoria</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.category', 'Categoria')}</label>
                 <select
                   value={category}
                   onChange={(e) => updateFilter('categoria', e.target.value)}
                   className="input-field"
                 >
-                  <option value="">Todas las categorias</option>
+                  <option value="">{t('catalog.allCategories', 'Todas las categorias')}</option>
                   {CATEGORIES.map((item) => (
-                    <option key={item.value} value={item.value}>{item.label}</option>
+                    <option key={item.value} value={item.value}>{t(`cat.${item.value}`, item.label)}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Formato</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.format', 'Formato')}</label>
                 <select
                   value={format}
                   onChange={(e) => updateFilter('formato', e.target.value)}
                   className="input-field"
                 >
-                  <option value="">Todos los formatos</option>
+                  <option value="">{t('catalog.allFormats', 'Todos los formatos')}</option>
                   {FORMATS.map((item) => (
                     <option key={item} value={item}>{item}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Ordenar por</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.sortBy', 'Ordenar por')}</label>
                 <select
                   value={sort}
                   onChange={(e) => updateFilter('orden', e.target.value)}
                   className="input-field"
                 >
-                  <option value="reciente">Mas recientes</option>
-                  <option value="precio_asc">Precio: menor a mayor</option>
-                  <option value="precio_desc">Precio: mayor a menor</option>
-                  <option value="nombre">Nombre A-Z</option>
+                  <option value="reciente">{t('catalog.sort.reciente', 'Mas recientes')}</option>
+                  <option value="precio_asc">{t('catalog.sort.precio_asc', 'Precio: menor a mayor')}</option>
+                  <option value="precio_desc">{t('catalog.sort.precio_desc', 'Precio: mayor a menor')}</option>
+                  <option value="nombre">{t('catalog.sort.nombre', 'Nombre A-Z')}</option>
                 </select>
               </div>
             </div>
@@ -791,11 +796,11 @@ export default function CatalogPage() {
         {!loading && visibleProducts.length > 0 && (
           <div className="mb-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
             <p className="text-gray-500">
-              Viendo <span className="font-semibold text-primary-900">{visibleProducts.length}</span> resultados
-              {category ? ` en ${currentCategoryLabel}` : ''}
-              {busqueda ? ` para "${busqueda}"` : ''}.
+              {t('catalog.showing', 'Viendo')} <span className="font-semibold text-primary-900">{visibleProducts.length}</span> {t('catalog.results', 'resultados')}
+              {category ? ` ${t('catalog.in', 'en')} ${t(`cat.${category}`, currentCategoryLabel)}` : ''}
+              {busqueda ? ` ${t('catalog.for', 'para')} "${busqueda}"` : ''}.
             </p>
-            <p className="text-gray-400">Orden actual: {SORT_LABELS[sort]}</p>
+            <p className="text-gray-400">{t('catalog.currentSort', 'Orden actual:')} {t(`catalog.sort.${sort}`, SORT_LABELS[sort])}</p>
           </div>
         )}
 

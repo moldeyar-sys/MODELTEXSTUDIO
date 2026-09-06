@@ -7,6 +7,7 @@ import { useCountry } from '../../hooks/useCountry';
 import { ConsultButtons } from './ConsultButtons';
 import {
   cartonPrice, pdfPrice, ploterPrice, cartonAvailable, pdfAvailable, showOtroFormato, PLOTER_SIZES,
+  INDUSTRIAL_FORMATS, industrialPriceArs, industrialPriceUsd,
 } from '../../lib/productFormats';
 import { getDefaultSizes, TALLE_ARS, TALLE_USD } from '../../lib/sizeUtils';
 import { SizeGuide } from './SizeGuide';
@@ -18,7 +19,7 @@ interface FormatOptionsProps {
 
 export function FormatOptions({ product }: FormatOptionsProps) {
   const { addItem, itemCount } = useCart();
-  const { formatPrice } = useLocale();
+  const { formatPrice, t } = useLocale();
   const { isArgentina } = useCountry();
   const [ploterSize, setPloterSize] = useState(PLOTER_SIZES[0]);
   const [added, setAdded] = useState<string | null>(null);
@@ -82,9 +83,10 @@ export function FormatOptions({ product }: FormatOptionsProps) {
     };
   };
 
-  const add = (format: string, unitPrice: number) => {
-    if (!canAdd) return;
-    addItem(product, { format, unitPrice, sizes: hasSizes ? selectedSizes : undefined });
+  const add = (format: string, unitPrice: number, withSizes = true) => {
+    if (withSizes && !canAdd) return;
+    // Los formatos industriales incluyen la curva completa: no llevan talles elegidos.
+    addItem(product, { format, unitPrice, sizes: withSizes && hasSizes ? selectedSizes : undefined });
     setAdded(format);
     setTimeout(() => setAdded(cur => (cur === format ? null : cur)), 1800);
   };
@@ -94,23 +96,27 @@ export function FormatOptions({ product }: FormatOptionsProps) {
     format,
     price,
     disabled,
+    withSizes = true,
   }: {
     format: string;
     price: number | null;
     disabled?: boolean;
+    /** false = formato industrial: no exige ni adjunta talles elegidos. */
+    withSizes?: boolean;
   }) => {
     if (disabled || price === null) {
-      return <span className="text-sm font-semibold text-petroleum-600">Consultar</span>;
+      return <span className="text-sm font-semibold text-petroleum-600">{t('common.consult', 'Consultar')}</span>;
     }
+    const blocked = withSizes && !canAdd;
     const isAdded = added === format;
     return (
       <button
         type="button"
-        onClick={() => add(format, price)}
-        disabled={!canAdd}
-        title={!canAdd ? 'Seleccioná al menos un talle' : undefined}
+        onClick={() => add(format, price, withSizes)}
+        disabled={blocked}
+        title={blocked ? t('fmt.selectSizeTitle', 'Seleccioná al menos un talle') : undefined}
         className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors ${
-          !canAdd
+          blocked
             ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
             : isAdded
               ? 'bg-green-500 text-white'
@@ -118,8 +124,8 @@ export function FormatOptions({ product }: FormatOptionsProps) {
         }`}
       >
         {isAdded
-          ? <><Check className="w-3.5 h-3.5" /> Agregado</>
-          : <><ShoppingCart className="w-3.5 h-3.5" /> Agregar</>}
+          ? <><Check className="w-3.5 h-3.5" /> {t('common.added', 'Agregado')}</>
+          : <><ShoppingCart className="w-3.5 h-3.5" /> {t('common.add', 'Agregar')}</>}
       </button>
     );
   };
@@ -159,7 +165,7 @@ export function FormatOptions({ product }: FormatOptionsProps) {
       {/* Badge de entrega + guía de talles */}
       <div className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-2 px-3 py-2 bg-green-50 border border-green-200 rounded-xl text-xs font-semibold text-green-700 flex-1">
-          <span>⚡</span> Descarga inmediata después del pago
+          <span>⚡</span> {t('fmt.delivery', 'Descarga inmediata después del pago')}
         </div>
         <SizeGuide />
       </div>
@@ -168,19 +174,19 @@ export function FormatOptions({ product }: FormatOptionsProps) {
       {hasSizes && (
         <div className="border border-primary-100 bg-primary-50/40 rounded-xl p-3">
           <div className="flex items-center justify-between mb-1.5">
-            <p className="text-sm font-semibold text-gray-900">Talles del pedido</p>
+            <p className="text-sm font-semibold text-gray-900">{t('fmt.orderSizes', 'Talles del pedido')}</p>
             <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
               selectedSizes.length > 0
                 ? 'bg-primary-100 text-primary-800'
                 : 'bg-red-100 text-red-600'
             }`}>
               {selectedSizes.length > 0
-                ? `${selectedSizes.length} talle${selectedSizes.length > 1 ? 's' : ''}`
-                : 'Seleccioná al menos 1'}
+                ? `${selectedSizes.length} ${selectedSizes.length > 1 ? t('card.sizes', 'talles') : t('card.size', 'talle')}`
+                : t('fmt.selectOne', 'Seleccioná al menos 1')}
             </span>
           </div>
           <p className="text-[11px] text-gray-400 mb-2.5">
-            Azul = incluido · tocá para agregar o quitar · el precio se ajusta automáticamente
+            {t('fmt.sizeHint', 'Azul = incluido · tocá para agregar o quitar · el precio se ajusta automáticamente')}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {availableSizes.map(size => {
@@ -203,7 +209,7 @@ export function FormatOptions({ product }: FormatOptionsProps) {
           </div>
           {!canAdd && (
             <p className="text-[11px] text-red-500 mt-2">
-              ⚠ Seleccioná al menos un talle para poder agregar al carrito.
+              {t('fmt.sizeWarn', '⚠ Seleccioná al menos un talle para poder agregar al carrito.')}
             </p>
           )}
         </div>
@@ -212,8 +218,8 @@ export function FormatOptions({ product }: FormatOptionsProps) {
       {/* 1) Cartón */}
       <div className="flex items-center justify-between gap-3 border border-gray-100 rounded-xl p-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 leading-tight">Moldes en Cartón</p>
-          <p className="text-[11px] text-gray-400">Solo Argentina</p>
+          <p className="text-sm font-semibold text-gray-900 leading-tight">{t('fmt.carton', 'Moldes en Cartón')}</p>
+          <p className="text-[11px] text-gray-400">{t('fmt.argOnly', 'Solo Argentina')}</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           {cartonAvailable(product) && effectiveCarton !== null && (
@@ -233,8 +239,8 @@ export function FormatOptions({ product }: FormatOptionsProps) {
       {/* 2) PDF-A4 */}
       <div className="flex items-center justify-between gap-3 border border-gray-100 rounded-xl p-3">
         <div className="min-w-0">
-          <p className="text-sm font-semibold text-gray-900 leading-tight">Moldes en PDF-A4</p>
-          <p className="text-[11px] text-gray-400">Global</p>
+          <p className="text-sm font-semibold text-gray-900 leading-tight">{t('fmt.pdfA4', 'Moldes en PDF-A4')}</p>
+          <p className="text-[11px] text-gray-400">{t('fmt.global', 'Global')}</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           {pdfAvailable(product) && effectivePdf !== null && (
@@ -255,8 +261,8 @@ export function FormatOptions({ product }: FormatOptionsProps) {
       <div className="border border-gray-100 rounded-xl p-3">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-gray-900 leading-tight">Moldes en PDF Plóter</p>
-            <p className="text-[11px] text-gray-400">Elegí la medida</p>
+            <p className="text-sm font-semibold text-gray-900 leading-tight">{t('fmt.ploter', 'Moldes en PDF Plóter')}</p>
+            <p className="text-[11px] text-gray-400">{t('fmt.chooseWidth', 'Elegí la medida')}</p>
           </div>
           <div className="flex items-center gap-3 flex-shrink-0">
             {effectivePloter !== null && (
@@ -282,17 +288,48 @@ export function FormatOptions({ product }: FormatOptionsProps) {
                   : 'border-gray-200 text-gray-500 hover:border-gray-300'
               }`}
             >
-              Plóter {s}
+              {t('fmt.ploterWord', 'Plóter')} {s}
             </button>
           ))}
         </div>
       </div>
 
+      {/* 3b) Formatos industriales CAD: DXF/AAMA, PDS, MRK, ADS — para fábricas y patronaje */}
+      {INDUSTRIAL_FORMATS.some(fmt => industrialPriceArs(product, fmt.key) !== null || industrialPriceUsd(product, fmt.key) !== null) && (
+        <div className="border border-primary-100 bg-primary-50/30 rounded-xl p-3">
+          <p className="text-sm font-semibold text-gray-900 leading-tight">{t('fmt.industrial', 'Formatos industriales (CAD)')}</p>
+          <p className="text-[11px] text-gray-400 mb-2.5">{t('fmt.industrialHint', 'Archivos nativos para fábricas y departamentos de patronaje. Incluye la curva completa de talles.')}</p>
+          <div className="space-y-2">
+            {INDUSTRIAL_FORMATS.map(fmt => {
+              const priceArs = industrialPriceArs(product, fmt.key);
+              const priceUsd = industrialPriceUsd(product, fmt.key);
+              const effective = isArgentina ? priceArs : priceUsd;
+              if (effective === null) return null;
+              return (
+                <div key={fmt.key} className="flex items-center justify-between gap-3 border border-gray-100 bg-white rounded-lg p-2.5">
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold text-gray-900 leading-tight">{fmt.label}</p>
+                    <p className="text-[10px] text-gray-400 leading-snug">{t(`fmt.${fmt.key}.detail`, fmt.detailEs)}</p>
+                  </div>
+                  <div className="flex items-center gap-2 flex-shrink-0">
+                    <span className="text-sm font-bold text-primary-900 whitespace-nowrap">
+                      {isArgentina ? formatPrice(effective) : `USD ${effective.toFixed(2)}`}
+                    </span>
+                    <AddButton format={fmt.label} price={effective} withSizes={false} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <p className="text-[10px] text-gray-400 mt-2">{t('fmt.fullSet', 'Incluye la curva completa de talles')}</p>
+        </div>
+      )}
+
       {/* 4) ¿Otro formato? */}
       {showOtroFormato(product) && (
         <div className="border border-gray-100 rounded-xl p-3">
-          <p className="text-sm font-semibold text-gray-900 leading-tight">¿Necesitás otro formato?</p>
-          <p className="text-[11px] text-gray-400 mb-2.5">Consultá por WhatsApp o Telegram</p>
+          <p className="text-sm font-semibold text-gray-900 leading-tight">{t('fmt.other', '¿Necesitás otro formato?')}</p>
+          <p className="text-[11px] text-gray-400 mb-2.5">{t('fmt.otherHint', 'Consultá por WhatsApp o Telegram')}</p>
           <ConsultButtons product={product} format="otro" />
         </div>
       )}
@@ -303,7 +340,7 @@ export function FormatOptions({ product }: FormatOptionsProps) {
           to="/carrito"
           className="flex items-center justify-center gap-2 w-full py-3 rounded-xl bg-accent-500 text-white text-sm font-bold hover:bg-accent-600 transition-colors active:scale-[0.98] shadow-sm"
         >
-          <ShoppingCart className="w-4 h-4" /> Comprar ({itemCount})
+          <ShoppingCart className="w-4 h-4" /> {t('common.buy', 'Comprar')} ({itemCount})
         </Link>
       )}
     </div>

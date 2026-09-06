@@ -14,7 +14,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product }: ProductCardProps) {
-  const { formatPrice } = useLocale();
+  const { formatPrice, t } = useLocale();
   const { isArgentina } = useCountry();
   const [showOptions, setShowOptions] = useState(false);
   const categoryLabel =
@@ -57,7 +57,7 @@ export function ProductCard({ product }: ProductCardProps) {
                 {categoryLabel}
               </span>
               <span className="hidden sm:inline-flex text-[11px] font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-1 rounded-full">
-                Descarga rapida
+                {t('card.instant', 'Descarga rapida')}
               </span>
             </div>
           </div>
@@ -70,7 +70,7 @@ export function ProductCard({ product }: ProductCardProps) {
             e.stopPropagation();
             setShowOptions(true);
           }}
-          aria-label="Comprar"
+          aria-label={t('common.buy', 'Comprar')}
           className="sm:hidden absolute bottom-2 right-2 w-9 h-9 rounded-full bg-primary-800 text-white flex items-center justify-center shadow-md active:scale-95 transition-transform"
         >
           <ShoppingCart className="w-4 h-4" />
@@ -85,7 +85,7 @@ export function ProductCard({ product }: ProductCardProps) {
             ? showUsd
               ? `USD ${startingPrice.toFixed(2)}`
               : formatPrice(startingPrice)
-            : 'Consultar'}
+            : t('common.consult', 'Consultar')}
         </p>
       </Link>
 
@@ -105,12 +105,12 @@ export function ProductCard({ product }: ProductCardProps) {
           ))}
           {extraFormats > 0 && (
             <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-medium text-gray-500">
-              +{extraFormats} formatos
+              +{extraFormats} {t('card.formats', 'formatos')}
             </span>
           )}
           {hasManySizes && (
             <span className="inline-flex items-center gap-1 rounded-full bg-primary-50 px-2.5 py-1 text-[11px] font-medium text-primary-700">
-              <Ruler className="w-3 h-3" /> {product.sizes.length} talles
+              <Ruler className="w-3 h-3" /> {product.sizes.length} {t('card.sizes', 'talles')}
             </span>
           )}
         </div>
@@ -121,10 +121,10 @@ export function ProductCard({ product }: ProductCardProps) {
               ? showUsd
                 ? `USD ${startingPrice.toFixed(2)}`
                 : formatPrice(startingPrice)
-              : 'Consultar'}
+              : t('common.consult', 'Consultar')}
           </p>
           {product.codigo && (
-            <span className="text-[11px] font-medium text-gray-400 whitespace-nowrap">Cod. {product.codigo}</span>
+            <span className="text-[11px] font-medium text-gray-400 whitespace-nowrap">{t('card.code', 'Cod.')} {product.codigo}</span>
           )}
         </div>
 
@@ -133,7 +133,7 @@ export function ProductCard({ product }: ProductCardProps) {
             onClick={() => setShowOptions(true)}
             className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl bg-primary-800 px-3 py-2.5 text-xs sm:text-sm font-semibold text-white hover:bg-primary-700 transition-colors active:scale-[0.98]"
           >
-            <ShoppingCart className="w-4 h-4" /> Comprar
+            <ShoppingCart className="w-4 h-4" /> {t('common.buy', 'Comprar')}
           </button>
           <ConsultButtons product={product} format="general" variant="icon" />
         </div>
@@ -150,7 +150,7 @@ export function ProductCard({ product }: ProductCardProps) {
           >
             <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
               <div className="min-w-0">
-                <p className="text-xs text-gray-400">Elegi el formato</p>
+                <p className="text-xs text-gray-400">{t('card.chooseFormat', 'Elegi el formato')}</p>
                 <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
               </div>
               <button onClick={() => setShowOptions(false)} aria-label="Cerrar" className="p-1 hover:bg-gray-100 rounded-lg flex-shrink-0">

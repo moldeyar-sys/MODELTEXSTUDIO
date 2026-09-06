@@ -14,7 +14,7 @@ interface ConsultButtonsProps {
 
 /** Par de botones WhatsApp + Telegram con mensaje prearmado según el producto y formato. */
 export function ConsultButtons({ product, format = 'general', variant = 'full' }: ConsultButtonsProps) {
-  const { formatPrice } = useLocale();
+  const { formatPrice, t } = useLocale();
   const message = whatsappMessage(product, format, formatPrice);
   const webLink = whatsappLink(product, format, formatPrice);
 
@@ -33,8 +33,8 @@ export function ConsultButtons({ product, format = 'general', variant = 'full' }
         target="_blank"
         rel="noopener noreferrer"
         onClick={openWhatsApp}
-        aria-label="Consultar por WhatsApp"
-        title="Consultar por WhatsApp"
+        aria-label={t('product.whatsapp', 'Consultar por WhatsApp')}
+        title={t('product.whatsapp', 'Consultar por WhatsApp')}
         className="flex items-center justify-center flex-shrink-0 w-11 rounded-xl border border-green-200 text-green-700 hover:bg-green-50 transition-colors"
       >
         <MessageCircle className="w-5 h-5" />

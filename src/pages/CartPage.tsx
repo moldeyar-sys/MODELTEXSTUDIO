@@ -9,6 +9,7 @@ import {
   getDefaultSizes, getFormatType, getBasePrice, calcAdjustedPrice,
   TALLE_ARS, TALLE_USD,
 } from '../lib/sizeUtils';
+import { isIndustrialFormat } from '../lib/productFormats';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, updateSizes, total, clearCart } = useCart();
@@ -91,7 +92,9 @@ export default function CartPage() {
               const key      = cartItemKey(item);
               const availSz  = item.product.sizes || [];
               const currSz   = item.sizes ?? getDefaultSizes(availSz);
-              const hasSizes = availSz.length > 0;
+              // Los formatos industriales (DXF, PDS, MRK, ADS) incluyen la curva
+              // completa de talles y no admiten ajuste por talle en el carrito.
+              const hasSizes = availSz.length > 0 && !isIndustrialFormat(item.format || '');
 
               return (
                 <div key={key} className="card p-3.5 sm:p-6">
@@ -102,7 +105,7 @@ export default function CartPage() {
                         {item.product.main_image_url ? (
                           <img src={item.product.main_image_url} alt={item.product.name} loading="lazy" className="w-full h-full object-cover" />
                         ) : (
-                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">Sin imagen</div>
+                          <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">{t('common.noImage', 'Sin imagen')}</div>
                         )}
                       </div>
                     </Link>
@@ -124,10 +127,10 @@ export default function CartPage() {
                       {hasSizes && (
                         <div className="mt-2.5">
                           <div className="flex items-center gap-2 mb-1.5">
-                            <span className="text-[11px] font-medium text-gray-500">Talles</span>
-                            <span className="text-[10px] text-gray-400">· tocá para agregar o quitar</span>
+                            <span className="text-[11px] font-medium text-gray-500">{t('card.sizes', 'Talles')}</span>
+                            <span className="text-[10px] text-gray-400">· {t('cart.tapToToggle', 'tocá para agregar o quitar')}</span>
                             <span className="ml-auto text-[10px] font-medium text-primary-700 bg-primary-50 px-1.5 py-0.5 rounded-full">
-                              {currSz.length} talle{currSz.length !== 1 ? 's' : ''}
+                              {currSz.length} {currSz.length !== 1 ? t('card.sizes', 'talles') : t('card.size', 'talle')}
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-1">
@@ -140,7 +143,7 @@ export default function CartPage() {
                                   type="button"
                                   onClick={() => handleToggleSize(item, size)}
                                   disabled={isLast}
-                                  title={isLast ? 'Mínimo 1 talle' : isSel ? 'Quitar talle' : 'Agregar talle'}
+                                  title={isLast ? t('cart.minOne', 'Mínimo 1 talle') : isSel ? t('cart.removeSize', 'Quitar talle') : t('cart.addSize', 'Agregar talle')}
                                   className={`text-xs font-semibold px-2.5 py-1 rounded-lg border transition-colors ${
                                     isSel
                                       ? 'bg-primary-800 text-white border-primary-800'

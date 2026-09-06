@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { X, Ruler } from 'lucide-react';
+import { useLocale } from '../../lib/locale';
 
 // ── Tablas de medidas MODELTEX (medidas anatómicas en cm) ─────────────────────
 
@@ -56,6 +57,7 @@ const tdCls = 'px-3 py-2 text-sm text-gray-700 text-center';
 const trCls = 'border-b border-gray-100 hover:bg-gray-50/60 transition-colors';
 
 export function SizeGuide() {
+  const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('dama');
 
@@ -67,7 +69,7 @@ export function SizeGuide() {
         onClick={() => setOpen(true)}
         className="inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 hover:text-primary-900 underline underline-offset-2 transition-colors"
       >
-        <Ruler className="w-3.5 h-3.5" /> Guía de talles
+        <Ruler className="w-3.5 h-3.5" /> {t('guide.trigger', 'Guía de talles')}
       </button>
 
       {/* Modal */}
@@ -84,9 +86,9 @@ export function SizeGuide() {
             <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 flex-shrink-0">
               <div>
                 <h3 className="font-semibold text-gray-900 flex items-center gap-2">
-                  <Ruler className="w-4 h-4 text-primary-700" /> Guía de talles Modeltex
+                  <Ruler className="w-4 h-4 text-primary-700" /> {t('guide.title', 'Guía de talles Modeltex')}
                 </h3>
-                <p className="text-[11px] text-gray-400 mt-0.5">Medidas anatómicas del cuerpo en centímetros</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{t('guide.subtitle', 'Medidas anatómicas del cuerpo en centímetros')}</p>
               </div>
               <button onClick={() => setOpen(false)} aria-label="Cerrar" className="p-1.5 hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5 text-gray-500" />
@@ -96,21 +98,21 @@ export function SizeGuide() {
             {/* Tabs */}
             <div className="flex border-b border-gray-100 px-5 gap-1 flex-shrink-0 overflow-x-auto">
               {([
-                { id: 'dama',   label: '👗 Dama'   },
-                { id: 'hombre', label: '👔 Hombre' },
-                { id: 'ninos',  label: '👦 Niños'  },
-                { id: 'bebes',  label: '👶 Bebés'  },
-              ] as { id: Tab; label: string }[]).map(t => (
+                { id: 'dama',   label: t('guide.tab.dama', '👗 Dama')     },
+                { id: 'hombre', label: t('guide.tab.hombre', '👔 Hombre') },
+                { id: 'ninos',  label: t('guide.tab.ninos', '👦 Niños')   },
+                { id: 'bebes',  label: t('guide.tab.bebes', '👶 Bebés')   },
+              ] as { id: Tab; label: string }[]).map(opt => (
                 <button
-                  key={t.id}
-                  onClick={() => setTab(t.id)}
+                  key={opt.id}
+                  onClick={() => setTab(opt.id)}
                   className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                    tab === t.id
+                    tab === opt.id
                       ? 'border-primary-700 text-primary-800'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  {t.label}
+                  {opt.label}
                 </button>
               ))}
             </div>
@@ -121,12 +123,12 @@ export function SizeGuide() {
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className={thCls}>Talle</th>
+                      <th className={thCls}>{t('guide.size', 'Talle')}</th>
                       <th className={thCls}>UK</th>
                       <th className={thCls}>N°</th>
-                      <th className={thCls}>Busto (cm)</th>
-                      <th className={thCls}>Cintura (cm)</th>
-                      <th className={thCls}>Cadera (cm)</th>
+                      <th className={thCls}>{t('guide.bust', 'Busto (cm)')}</th>
+                      <th className={thCls}>{t('guide.waist', 'Cintura (cm)')}</th>
+                      <th className={thCls}>{t('guide.hip', 'Cadera (cm)')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -148,12 +150,12 @@ export function SizeGuide() {
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className={thCls}>Talle</th>
+                      <th className={thCls}>{t('guide.size', 'Talle')}</th>
                       <th className={thCls}>UK</th>
                       <th className={thCls}>N°</th>
-                      <th className={thCls}>Pecho (cm)</th>
-                      <th className={thCls}>Cintura (cm)</th>
-                      <th className={thCls}>Cadera (cm)</th>
+                      <th className={thCls}>{t('guide.chest', 'Pecho (cm)')}</th>
+                      <th className={thCls}>{t('guide.waist', 'Cintura (cm)')}</th>
+                      <th className={thCls}>{t('guide.hip', 'Cadera (cm)')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -175,10 +177,10 @@ export function SizeGuide() {
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className={thCls}>Talle</th>
-                      <th className={thCls}>Busto (cm)</th>
-                      <th className={thCls}>Cintura (cm)</th>
-                      <th className={thCls}>Cadera (cm)</th>
+                      <th className={thCls}>{t('guide.size', 'Talle')}</th>
+                      <th className={thCls}>{t('guide.bust', 'Busto (cm)')}</th>
+                      <th className={thCls}>{t('guide.waist', 'Cintura (cm)')}</th>
+                      <th className={thCls}>{t('guide.hip', 'Cadera (cm)')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -198,11 +200,11 @@ export function SizeGuide() {
                 <table className="w-full">
                   <thead>
                     <tr>
-                      <th className={thCls}>Edad</th>
-                      <th className={thCls}>Talle</th>
-                      <th className={thCls}>Busto (cm)</th>
-                      <th className={thCls}>Cintura (cm)</th>
-                      <th className={thCls}>Cadera (cm)</th>
+                      <th className={thCls}>{t('guide.age', 'Edad')}</th>
+                      <th className={thCls}>{t('guide.size', 'Talle')}</th>
+                      <th className={thCls}>{t('guide.bust', 'Busto (cm)')}</th>
+                      <th className={thCls}>{t('guide.waist', 'Cintura (cm)')}</th>
+                      <th className={thCls}>{t('guide.hip', 'Cadera (cm)')}</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -223,7 +225,7 @@ export function SizeGuide() {
             {/* Footer */}
             <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 flex-shrink-0">
               <p className="text-[11px] text-gray-400 text-center">
-                Todas las medidas son anatómicas (del cuerpo) en centímetros · Modeltex Moldería Textil
+                {t('guide.note', 'Todas las medidas son anatómicas (del cuerpo) en centímetros · Modeltex Moldería Textil')}
               </p>
             </div>
           </div>

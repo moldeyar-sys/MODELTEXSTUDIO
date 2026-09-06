@@ -1,5 +1,6 @@
 import { MessageCircle } from 'lucide-react';
 import { isMobileDevice, whatsappAppLink, whatsappWebLink } from '../../lib/whatsapp';
+import { useLocale } from '../../lib/locale';
 
 interface WhatsAppConsultButtonProps {
   /** Mensaje prearmado que se abre en WhatsApp. */
@@ -17,8 +18,10 @@ interface WhatsAppConsultButtonProps {
 export function WhatsAppConsultButton({
   message = 'Hola Modeltex, tengo una duda con mi compra.',
   className = '',
-  label = 'Consultar por WhatsApp',
+  label,
 }: WhatsAppConsultButtonProps) {
+  const { t } = useLocale();
+  const buttonLabel = label ?? t('product.whatsapp', 'Consultar por WhatsApp');
   const url = whatsappWebLink(message);
   const openWhatsApp = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation();
@@ -37,7 +40,7 @@ export function WhatsAppConsultButton({
       className={`flex items-center justify-center gap-1.5 w-full py-1.5 text-xs font-medium text-green-700 border border-green-200 rounded-lg hover:bg-green-50 transition-colors ${className}`}
     >
       <MessageCircle className="w-3.5 h-3.5" />
-      {label}
+      {buttonLabel}
     </a>
   );
 }

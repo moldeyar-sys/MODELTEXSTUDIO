@@ -25,21 +25,26 @@ import { FormatOptions } from '../components/ui/FormatOptions';
 import { ReviewsSection } from '../components/ui/ReviewsSection';
 import { productCode, cartonPrice, pdfPrice, ploterPrice, productUrl } from '../lib/productFormats';
 import { fetchReviews, reviewSummary } from '../lib/reviews';
+import { useLocale } from '../lib/locale';
 
-const formatDescription = (format: string) => {
+const formatDescription = (format: string, t: (key: string, es: string) => string) => {
   const normalized = format.toLowerCase();
-  if (normalized.includes('a4')) return 'Para imprimir en hojas A4, unir y producir sin plotter.';
-  if (normalized.includes('plot') || normalized.includes('plóter') || normalized.includes('ploter')) return 'Para imprimir en rollo o enviar directo a una gráfica.';
-  if (normalized.includes('dxf')) return 'Formato editable compatible con CAD y maquinaria textil.';
-  if (normalized.includes('cdr')) return 'Editable en CorelDRAW para adaptar piezas y detalles.';
-  if (normalized.includes('plt')) return 'Formato vectorial preparado para ploteo profesional.';
-  if (normalized.includes('sublim')) return 'Pensado para trabajar estampas y producción sublimada.';
-  return 'Formato profesional para producción textil.';
+  if (normalized.includes('a4')) return t('fmtdesc.a4', 'Para imprimir en hojas A4, unir y producir sin plotter.');
+  if (normalized.includes('plot') || normalized.includes('plóter') || normalized.includes('ploter')) return t('fmtdesc.plotter', 'Para imprimir en rollo o enviar directo a una gráfica.');
+  if (normalized.includes('pds')) return t('fmtdesc.pds', 'Archivo nativo de Optitex para departamentos de patronaje.');
+  if (normalized.includes('mrk') || normalized.includes('tizado')) return t('fmtdesc.mrk', 'Tizado computarizado (Optitex) listo para el corte de tela.');
+  if (normalized.includes('ads') || normalized.includes('audaces')) return t('fmtdesc.ads', 'Archivo nativo de Audaces para departamentos de patronaje.');
+  if (normalized.includes('dxf') || normalized.includes('aama')) return t('fmtdesc.dxf', 'Estándar industrial DXF/AAMA, compatible con sistemas CAD (Gerber, Lectra, Optitex, Audaces) y maquinaria textil.');
+  if (normalized.includes('cdr')) return t('fmtdesc.cdr', 'Editable en CorelDRAW para adaptar piezas y detalles.');
+  if (normalized.includes('plt')) return t('fmtdesc.plt', 'Formato vectorial preparado para ploteo profesional.');
+  if (normalized.includes('sublim')) return t('fmtdesc.sublim', 'Pensado para trabajar estampas y producción sublimada.');
+  return t('fmtdesc.default', 'Formato profesional para producción textil.');
 };
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
   const { user, isAdmin } = useAuth();
+  const { t } = useLocale();
   const [product, setProduct] = useState<Product | null>(null);
   const [related, setRelated] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -97,8 +102,8 @@ export default function ProductDetailPage() {
   const availableSizes = product?.sizes || [];
   const availableFormats = product?.formats || [];
   const fabrics = product?.recommended_fabrics || [];
-  const deliveryLabel = 'Descarga inmediata';
-  const deliveryDescription = 'Apenas se confirma el pago, accedes desde tu cuenta.';
+  const deliveryLabel = t('pd.instant', 'Descarga inmediata');
+  const deliveryDescription = t('pd.instantDesc', 'Apenas se confirma el pago, accedes desde tu cuenta.');
 
   useSeo({
     title: product ? product.name : 'Producto',
@@ -198,40 +203,40 @@ export default function ProductDetailPage() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-petroleum-50">
         <div className="text-center bg-white border border-gray-100 rounded-2xl px-8 py-10 shadow-sm">
-          <p className="text-gray-500 text-lg mb-4">Producto no encontrado</p>
-          <Link to="/catalogo" className="btn-primary">Volver al catálogo</Link>
+          <p className="text-gray-500 text-lg mb-4">{t('pd.notFound', 'Producto no encontrado')}</p>
+          <Link to="/catalogo" className="btn-primary">{t('pd.back', 'Volver al catálogo')}</Link>
         </div>
       </div>
     );
   }
 
   const summaryItems = [
-    { label: 'Código', value: productCode(product), icon: Tags },
-    { label: 'Categoría', value: categoryLabel, icon: PackageCheck },
-    { label: 'Talles', value: availableSizes.length > 0 ? `${availableSizes.length} incluidos` : 'A consultar', icon: Ruler },
-    { label: 'Formatos', value: availableFormats.length > 0 ? `${availableFormats.length} disponibles` : 'A consultar', icon: FileText },
+    { label: t('pd.code', 'Código'), value: productCode(product), icon: Tags },
+    { label: t('pd.category', 'Categoría'), value: categoryLabel, icon: PackageCheck },
+    { label: t('pd.sizes', 'Talles'), value: availableSizes.length > 0 ? `${availableSizes.length} ${t('pd.included', 'incluidos')}` : t('common.consult', 'A consultar'), icon: Ruler },
+    { label: t('pd.formats', 'Formatos'), value: availableFormats.length > 0 ? `${availableFormats.length} ${t('pd.available', 'disponibles')}` : t('common.consult', 'A consultar'), icon: FileText },
   ];
 
   const trustItems = [
     { icon: Download, title: deliveryLabel, text: deliveryDescription },
-    { icon: ShieldCheck, title: 'Compra segura', text: 'Pago protegido y acceso desde tu cuenta.' },
-    { icon: Headphones, title: 'Soporte post-compra', text: 'Te ayudamos con impresión, talles y uso del archivo.' },
+    { icon: ShieldCheck, title: t('pd.secure', 'Compra segura'), text: t('pd.secureDesc', 'Pago protegido y acceso desde tu cuenta.') },
+    { icon: Headphones, title: t('pd.support', 'Soporte post-compra'), text: t('pd.supportDesc', 'Te ayudamos con impresión, talles y uso del archivo.') },
   ];
 
   const includedItems = [
-    'Molde profesional listo para imprimir o enviar a producción.',
-    'Talles seleccionables según el rango disponible del producto.',
-    'Archivos digitales desde tu cuenta de Modeltex.',
-    'Opciones para A4, plotter y formatos editables cuando estén disponibles.',
-    'Referencia de telas recomendadas para producir con mejor resultado.',
-    'Asistencia por WhatsApp si necesitás ayuda con la descarga o impresión.',
+    t('pd.inc.1', 'Molde profesional listo para imprimir o enviar a producción.'),
+    t('pd.inc.2', 'Talles seleccionables según el rango disponible del producto.'),
+    t('pd.inc.3', 'Archivos digitales desde tu cuenta de Modeltex.'),
+    t('pd.inc.4', 'Opciones para A4, plotter y formatos industriales (DXF/AAMA, PDS, MRK, ADS) cuando estén disponibles.'),
+    t('pd.inc.5', 'Referencia de telas recomendadas para producir con mejor resultado.'),
+    t('pd.inc.6', 'Asistencia por WhatsApp si necesitás ayuda con la descarga o impresión.'),
   ];
 
   return (
     <div className="min-h-screen bg-petroleum-50">
       <div className="container-custom py-5 md:py-8">
         <Link to="/catalogo" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-800 transition-colors mb-6">
-          <ArrowLeft className="w-4 h-4" /> Volver al catálogo
+          <ArrowLeft className="w-4 h-4" /> {t('pd.back', 'Volver al catálogo')}
         </Link>
 
         <div className="grid lg:grid-cols-[minmax(0,1fr)_minmax(360px,0.86fr)] gap-8 lg:gap-12 items-start">
@@ -252,7 +257,7 @@ export default function ProductDetailPage() {
                   </div>
                 )}
                 <div className="absolute left-4 top-4 inline-flex items-center gap-1.5 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-primary-800 shadow-sm border border-white">
-                  <BadgeCheck className="w-3.5 h-3.5" /> Molde aprobado
+                  <BadgeCheck className="w-3.5 h-3.5" /> {t('pd.approved', 'Molde aprobado')}
                 </div>
               </div>
             </div>
@@ -296,7 +301,7 @@ export default function ProductDetailPage() {
               </h1>
 
               <p className="text-gray-600 leading-relaxed">
-                {product.long_description || product.short_description || 'Molde profesional preparado para producción textil.'}
+                {product.long_description || product.short_description || t('pd.defaultDesc', 'Molde profesional preparado para producción textil.')}
               </p>
             </div>
 
@@ -332,14 +337,14 @@ export default function ProductDetailPage() {
             <div className="bg-white border border-gray-100 rounded-2xl p-5 shadow-sm lg:sticky lg:top-24">
               <div className="flex items-start justify-between gap-4 mb-4">
                 <div>
-                  <h2 className="font-display text-xl font-bold text-primary-900">Elegí formato y talles</h2>
-                  <p className="text-sm text-gray-500 mt-1">El precio se ajusta automáticamente según los talles seleccionados.</p>
+                  <h2 className="font-display text-xl font-bold text-primary-900">{t('pd.chooseTitle', 'Elegí formato y talles')}</h2>
+                  <p className="text-sm text-gray-500 mt-1">{t('pd.chooseHint', 'El precio se ajusta automáticamente según los talles seleccionados.')}</p>
                 </div>
                 <Sparkles className="w-5 h-5 text-accent-500 flex-shrink-0 mt-1" />
               </div>
               <FormatOptions product={product} />
               <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
-                Producto digital. Revisá el formato elegido antes de finalizar la compra. Si necesitás una adaptación especial, consultanos antes de pagar.
+                {t('pd.digitalNote', 'Producto digital. Revisá el formato elegido antes de finalizar la compra. Si necesitás una adaptación especial, consultanos antes de pagar.')}
               </p>
             </div>
           </div>
@@ -348,7 +353,7 @@ export default function ProductDetailPage() {
         {/* Product details */}
         <section className="mt-8 md:mt-10 grid lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)] gap-6">
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h2 className="font-display text-2xl font-bold text-primary-900 mb-4">Qué incluye este molde</h2>
+            <h2 className="font-display text-2xl font-bold text-primary-900 mb-4">{t('pd.includesTitle', 'Qué incluye este molde')}</h2>
             <div className="grid sm:grid-cols-2 gap-3">
               {includedItems.map(item => (
                 <div key={item} className="flex items-start gap-3 rounded-xl bg-gray-50 px-4 py-3">
@@ -362,21 +367,21 @@ export default function ProductDetailPage() {
           <div className="bg-primary-900 rounded-2xl p-6 text-white shadow-sm">
             <div className="flex items-center gap-2 mb-3">
               <Clock className="w-5 h-5 text-accent-400" />
-              <h2 className="font-display text-xl font-bold">Antes de imprimir</h2>
+              <h2 className="font-display text-xl font-bold">{t('pd.beforePrint', 'Antes de imprimir')}</h2>
             </div>
             <p className="text-sm text-primary-100 leading-relaxed">
-              Para PDF A4, imprimí en tamaño real al 100% y verificá la escala antes de unir hojas. Para plotter, confirmá el ancho de rollo de tu gráfica o equipo.
+              {t('pd.beforePrintText', 'Para PDF A4, imprimí en tamaño real al 100% y verificá la escala antes de unir hojas. Para plotter, confirmá el ancho de rollo de tu gráfica o equipo.')}
             </p>
             <div className="mt-5 rounded-xl bg-white/10 border border-white/10 p-4">
-              <p className="text-sm font-semibold">¿Tenés dudas?</p>
-              <p className="text-xs text-primary-100 mt-1 leading-relaxed">Usá WhatsApp o Telegram y mandanos el nombre del molde para ayudarte más rápido.</p>
+              <p className="text-sm font-semibold">{t('pd.doubts', '¿Tenés dudas?')}</p>
+              <p className="text-xs text-primary-100 mt-1 leading-relaxed">{t('pd.doubtsText', 'Usá WhatsApp o Telegram y mandanos el nombre del molde para ayudarte más rápido.')}</p>
             </div>
           </div>
         </section>
 
         <section className="mt-6 grid md:grid-cols-3 gap-6">
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-sm font-bold text-primary-900 mb-3">Talles incluidos</h2>
+            <h2 className="text-sm font-bold text-primary-900 mb-3">{t('pd.sizesIncluded', 'Talles incluidos')}</h2>
             {availableSizes.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {availableSizes.map(s => (
@@ -386,12 +391,12 @@ export default function ProductDetailPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">Consultar talles disponibles.</p>
+              <p className="text-sm text-gray-500">{t('pd.sizesConsult', 'Consultar talles disponibles.')}</p>
             )}
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-sm font-bold text-primary-900 mb-3">Formatos disponibles</h2>
+            <h2 className="text-sm font-bold text-primary-900 mb-3">{t('pd.formatsAvailable', 'Formatos disponibles')}</h2>
             {availableFormats.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {availableFormats.map(f => (
@@ -401,12 +406,12 @@ export default function ProductDetailPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">Consultar formatos disponibles.</p>
+              <p className="text-sm text-gray-500">{t('pd.formatsConsult', 'Consultar formatos disponibles.')}</p>
             )}
           </div>
 
           <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h2 className="text-sm font-bold text-primary-900 mb-3">Telas recomendadas</h2>
+            <h2 className="text-sm font-bold text-primary-900 mb-3">{t('pd.fabrics', 'Telas recomendadas')}</h2>
             {fabrics.length > 0 ? (
               <div className="flex flex-wrap gap-2">
                 {fabrics.map(f => (
@@ -416,19 +421,19 @@ export default function ProductDetailPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-gray-500">Consultanos qué tela conviene para este molde.</p>
+              <p className="text-sm text-gray-500">{t('pd.fabricsConsult', 'Consultanos qué tela conviene para este molde.')}</p>
             )}
           </div>
         </section>
 
         {availableFormats.length > 0 && (
           <section className="mt-6 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
-            <h2 className="font-display text-2xl font-bold text-primary-900 mb-4">Compatibilidad de archivos</h2>
+            <h2 className="font-display text-2xl font-bold text-primary-900 mb-4">{t('pd.compat', 'Compatibilidad de archivos')}</h2>
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {availableFormats.map(format => (
                 <div key={format} className="rounded-xl border border-gray-100 bg-gray-50 px-4 py-3">
                   <p className="text-sm font-bold text-primary-900">{format}</p>
-                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">{formatDescription(format)}</p>
+                  <p className="text-xs text-gray-500 mt-1 leading-relaxed">{formatDescription(format, t)}</p>
                 </div>
               ))}
             </div>
@@ -443,7 +448,7 @@ export default function ProductDetailPage() {
         {/* Related */}
         {related.length > 0 && (
           <div className="mt-16">
-            <h2 className="font-display text-2xl font-bold text-primary-900 mb-8">Productos relacionados</h2>
+            <h2 className="font-display text-2xl font-bold text-primary-900 mb-8">{t('pd.related', 'Productos relacionados')}</h2>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {related.map(p => (
                 <ProductCard key={p.id} product={p} />

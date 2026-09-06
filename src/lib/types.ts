@@ -1,6 +1,6 @@
 export type CustomerType = 'emprendedor' | 'fabricante' | 'disenador' | 'taller' | 'otro';
 export type UserRole = 'user' | 'admin';
-export type PaymentMethod = 'mercadopago' | 'paypal' | 'stripe' | 'transfer' | 'binance';
+export type PaymentMethod = 'mercadopago' | 'paypal' | 'payoneer' | 'wise' | 'stripe' | 'transfer' | 'binance';
 export type PaymentStatus = 'pendiente' | 'pagado' | 'rechazado' | 'cancelado';
 export type OrderStatus = 'pendiente' | 'entregado' | 'cancelado';
 export type CustomRequestStatus = 'pendiente' | 'contactando' | 'en_proceso' | 'completado';
@@ -44,6 +44,15 @@ export interface Product {
   precio_usd_carton?: number | null;
   precio_usd_pdf_a4?: number | null;
   precio_usd_pdf_ploter?: number | null;
+  // Formatos industriales CAD (opcionales: resilientes si la columna aún no existe)
+  precio_dxf?: number | null;
+  precio_pds?: number | null;
+  precio_mrk?: number | null;
+  precio_ads?: number | null;
+  precio_usd_dxf?: number | null;
+  precio_usd_pds?: number | null;
+  precio_usd_mrk?: number | null;
+  precio_usd_ads?: number | null;
   free_until?: string | null; // si > ahora, está en promo gratis (se muestra en Moldes Gratis)
   season?: string;
   entrega_inmediata?: boolean; // true = descarga al instante; false/undefined = listo en 24 hs // 'verano' | 'invierno' | 'todo-el-anio' (los de "todo el año" se muestran en todas las temporadas)
@@ -158,7 +167,7 @@ export const CATEGORIES: { value: ProductCategory; label: string }[] = [
   { value: 'ninos-unisex', label: 'Niños unisex' },
 ];
 
-export const FORMATS = ['PDF A4', 'PDF Plotter', 'PLT', 'DXF', 'CDR', 'Sublimación'];
+export const FORMATS = ['PDF A4', 'PDF Plotter', 'DXF', 'PDS (Optitex)', 'MRK (Tizado)', 'ADS (Audaces)', 'PLT', 'CDR', 'Sublimación'];
 
 // Temporadas del catálogo. "todo-el-anio" se muestra en TODAS las temporadas
 // (en Todas, Verano e Invierno).
@@ -270,6 +279,8 @@ export const CUSTOMER_TYPES: { value: CustomerType; label: string }[] = [
 export const PAYMENT_METHODS: { value: PaymentMethod; label: string; description: string }[] = [
   { value: 'mercadopago', label: 'Mercado Pago', description: 'Pagá con Mercado Pago de forma segura' },
   { value: 'paypal', label: 'PayPal', description: 'Pagá con PayPal desde cualquier país' },
+  { value: 'payoneer', label: 'Payoneer', description: 'Pago internacional en USD vía Payoneer' },
+  { value: 'wise', label: 'Wise', description: 'Pago internacional en USD/EUR vía Wise' },
   { value: 'stripe', label: 'Tarjeta de crédito/débito', description: 'Pagá con tarjeta a través de Stripe' },
   { value: 'transfer', label: 'Transferencia bancaria', description: 'Transferí al alias MOLDEY.DIGITAL y confirmá tu pago' },
   { value: 'binance', label: 'Binance / Criptomonedas', description: 'Pagá con criptomonedas a través de Binance' },

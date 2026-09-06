@@ -38,6 +38,47 @@ export function ploterPrice(p: Product): number | null {
 /** Medidas de plóter disponibles (mismo precio). */
 export const PLOTER_SIZES = ['90 cm', '120 cm', '150 cm'];
 
+// ===== Formatos industriales CAD (para fábricas y departamentos de patronaje) =====
+// Se venden con la curva completa de talles incluida (sin ajuste por talle).
+export type IndustrialKey = 'dxf' | 'pds' | 'mrk' | 'ads';
+
+export interface IndustrialFormat {
+  key: IndustrialKey;
+  /** Nombre comercial: se muestra y queda guardado en el pedido. */
+  label: string;
+  /** Clave de traducción del detalle (fmt.<key>.detail). */
+  detailEs: string;
+}
+
+export const INDUSTRIAL_FORMATS: IndustrialFormat[] = [
+  { key: 'dxf', label: 'DXF / AAMA', detailEs: 'Estándar universal CAD (Gerber, Lectra, Optitex, Audaces)' },
+  { key: 'pds', label: 'PDS (Optitex)', detailEs: 'Archivo nativo de Optitex, listo para tu sistema' },
+  { key: 'mrk', label: 'MRK (Tizado Optitex)', detailEs: 'Tizado computarizado listo para el corte' },
+  { key: 'ads', label: 'ADS (Audaces)', detailEs: 'Archivo nativo de Audaces' },
+];
+
+/** Precio ARS de un formato industrial. null → "Consultar". Nunca 0. */
+export function industrialPriceArs(p: Product, key: IndustrialKey): number | null {
+  const v = p[`precio_${key}`];
+  return typeof v === 'number' && v > 0 ? v : null;
+}
+
+/** Precio USD de un formato industrial. null → "Consultar". Nunca 0. */
+export function industrialPriceUsd(p: Product, key: IndustrialKey): number | null {
+  const v = p[`precio_usd_${key}`];
+  return typeof v === 'number' && v > 0 ? v : null;
+}
+
+/**
+ * Detecta si un formato del carrito es industrial (CAD). Estos ítems incluyen
+ * la curva completa de talles, así que el carrito no debe reajustar su precio.
+ */
+export function isIndustrialFormat(format: string): boolean {
+  const f = (format || '').toLowerCase();
+  return f.includes('dxf') || f.includes('aama') || f.includes('pds')
+    || f.includes('mrk') || f.includes('tizado') || f.includes('audaces');
+}
+
 export function cartonAvailable(p: Product): boolean {
   return p.disponible_carton !== false; // undefined = disponible
 }

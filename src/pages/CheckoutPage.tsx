@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet, Copy, Check } from 'lucide-react';
+import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet, Copy, Check, Globe } from 'lucide-react';
 import { useCart, cartUnitPrice, cartItemKey } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../lib/locale';
@@ -14,7 +14,7 @@ import type { PaymentSettings } from '../lib/paymentSettings';
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
-  const { formatPrice } = useLocale();
+  const { formatPrice, t } = useLocale();
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mercadopago');
   const [processing, setProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -188,14 +188,14 @@ export default function CheckoutPage() {
 
   const AmountBox = () => (
     <div className="bg-white border-2 border-primary-200 rounded-xl p-4 mb-4 text-center">
-      <p className="text-xs text-gray-500 mb-1">Monto exacto a pagar</p>
+      <p className="text-xs text-gray-500 mb-1">{t('co.amount', 'Monto exacto a pagar')}</p>
       <p className="text-2xl sm:text-3xl font-bold text-primary-900 mb-3">{formatPrice(confirmedTotal)}</p>
       <button
         onClick={copyAmount}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-800 text-sm font-medium transition-colors"
       >
         {copied ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-        {copied ? '¡Copiado!' : 'Copiar monto'}
+        {copied ? t('co.copied', '¡Copiado!') : t('co.copyAmount', 'Copiar monto')}
       </button>
     </div>
   );
@@ -204,8 +204,8 @@ export default function CheckoutPage() {
     return (
       <div className="min-h-screen flex items-center justify-center px-4">
         <div className="text-center">
-          <p className="text-gray-500 mb-4">Tu carrito está vacío</p>
-          <Link to="/catalogo" className="btn-primary">Ver catálogo</Link>
+          <p className="text-gray-500 mb-4">{t('co.emptyCart', 'Tu carrito está vacío')}</p>
+          <Link to="/catalogo" className="btn-primary">{t('common.viewCatalog', 'Ver catálogo')}</Link>
         </div>
       </div>
     );
@@ -213,52 +213,53 @@ export default function CheckoutPage() {
 
   // Success state
   if (orderId) {
-    const isManual = paymentMethod === 'transfer' || paymentMethod === 'binance' || paymentMethod === 'paypal' || paymentMethod === 'mercadopago';
+    const isManual = paymentMethod === 'transfer' || paymentMethod === 'binance' || paymentMethod === 'paypal'
+      || paymentMethod === 'payoneer' || paymentMethod === 'wise' || paymentMethod === 'mercadopago';
     return (
       <div className="min-h-screen bg-petroleum-50 flex items-center justify-center">
         <div className="card p-5 sm:p-8 max-w-lg w-full mx-4 text-center">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h2 className="font-display text-2xl font-bold text-primary-900 mb-2">
-            {isManual ? 'Pedido recibido' : 'Pedido creado'}
+            {isManual ? t('co.received', 'Pedido recibido') : t('co.created', 'Pedido creado')}
           </h2>
           <p className="text-gray-600 mb-6">
             {isManual
-              ? 'Tu pedido fue creado correctamente. Debemos confirmar tu pago manualmente, esto puede demorar hasta 24 horas.'
-              : 'Tu pedido fue creado correctamente. Serás redirigido al pago.'}
+              ? t('co.manualMsg', 'Tu pedido fue creado correctamente. Debemos confirmar tu pago manualmente, esto puede demorar hasta 24 horas.')
+              : t('co.autoMsg', 'Tu pedido fue creado correctamente. Serás redirigido al pago.')}
           </p>
 
           {!user && (
             <div className="bg-primary-50 border border-primary-200 rounded-xl p-4 mb-6 text-left">
-              <p className="text-sm font-semibold text-primary-900 mb-1">Guardá este link para descargar tu pedido</p>
+              <p className="text-sm font-semibold text-primary-900 mb-1">{t('co.saveLink', 'Guardá este link para descargar tu pedido')}</p>
               <p className="text-sm text-primary-800">
-                Como compraste sin cuenta, te avisamos por mail a <b>{guestEmail}</b> apenas confirmemos el pago, con un link para ver y descargar tus archivos. También podés volver cuando quieras a{' '}
+                {t('co.guestNotice', 'Como compraste sin cuenta, te avisamos por mail a')} <b>{guestEmail}</b> {t('co.guestNotice2', 'apenas confirmemos el pago, con un link para ver y descargar tus archivos. También podés volver cuando quieras a')}{' '}
                 <Link to={`/mi-pedido?order=${orderId}&email=${encodeURIComponent(guestEmail)}`} className="underline font-medium">
                   modeltex.com.ar/mi-pedido
                 </Link>{' '}
-                con tu número de pedido (<span className="font-mono">#{orderId.slice(0, 8)}</span>) y tu email.
+                {t('co.guestNotice3', 'con tu número de pedido')} (<span className="font-mono">#{orderId.slice(0, 8)}</span>) {t('co.guestNotice4', 'y tu email.')}
               </p>
             </div>
           )}
 
           {isManual && paymentMethod === 'transfer' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6 text-left">
-              <h3 className="font-semibold text-gray-900 mb-3">Datos para transferencia</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t('co.transferData', 'Datos para transferencia')}</h3>
               <AmountBox />
               <div className="space-y-2 text-sm text-gray-600 mb-3">
                 {paySettings.transfer_alias  && <p><span className="font-medium text-gray-700">Alias:</span> {paySettings.transfer_alias}</p>}
-                {paySettings.transfer_holder && <p><span className="font-medium text-gray-700">Titular:</span> {paySettings.transfer_holder}</p>}
-                {paySettings.transfer_bank   && <p><span className="font-medium text-gray-700">Banco:</span> {paySettings.transfer_bank}</p>}
+                {paySettings.transfer_holder && <p><span className="font-medium text-gray-700">{t('co.holder', 'Titular:')}</span> {paySettings.transfer_holder}</p>}
+                {paySettings.transfer_bank   && <p><span className="font-medium text-gray-700">{t('co.bank', 'Banco:')}</span> {paySettings.transfer_bank}</p>}
                 {paySettings.transfer_cbu    && <p><span className="font-medium text-gray-700">CBU/CVU:</span> {paySettings.transfer_cbu}</p>}
               </div>
               <p className="text-xs text-petroleum-600">
-                Una vez realizada la transferencia, envianos el comprobante por WhatsApp para agilizar la confirmación.
+                {t('co.transferProof', 'Una vez realizada la transferencia, envianos el comprobante por WhatsApp para agilizar la confirmación.')}
               </p>
             </div>
           )}
 
           {isManual && paymentMethod === 'binance' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6 text-left">
-              <h3 className="font-semibold text-gray-900 mb-3">Pago con criptomonedas</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t('co.cryptoTitle', 'Pago con criptomonedas')}</h3>
               <AmountBox />
               <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-3">
                 <p className="text-xs text-amber-800 font-medium">
@@ -268,7 +269,7 @@ export default function CheckoutPage() {
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-800 text-sm font-medium transition-colors mb-3"
                 >
                   {copiedWallet ? <Check className="w-4 h-4 text-green-600" /> : <Copy className="w-4 h-4" />}
-                  {copiedWallet ? 'Wallet copiada' : 'Copiar wallet'}
+                  {copiedWallet ? t('co.walletCopied', 'Wallet copiada') : t('co.copyWallet', 'Copiar wallet')}
                 </button>
               )}
               {paySettings.binance_qr_url && (
@@ -278,30 +279,30 @@ export default function CheckoutPage() {
                   className="w-56 max-w-full rounded-xl border border-gray-200 mb-3"
                 />
               )}
-                  ⚠️ El monto en pesos es referencial. Convertilo al equivalente en USDT antes de enviar.
+                  {t('co.cryptoNote', '⚠️ El monto en pesos es referencial. Convertilo al equivalente en USDT antes de enviar.')}
                 </p>
               </div>
               <div className="space-y-2 text-sm text-gray-600 mb-3">
                 {paySettings.binance_wallet  && <p><span className="font-medium text-gray-700">Wallet:</span> <span className="font-mono text-xs break-all">{paySettings.binance_wallet}</span></p>}
-                {paySettings.binance_network && <p><span className="font-medium text-gray-700">Red:</span> {paySettings.binance_network}</p>}
+                {paySettings.binance_network && <p><span className="font-medium text-gray-700">{t('co.network', 'Red:')}</span> {paySettings.binance_network}</p>}
               </div>
               <p className="text-xs text-petroleum-600">
-                Una vez realizado el pago, envianos el hash de la transacción por WhatsApp para confirmar.
+                {t('co.cryptoProof', 'Una vez realizado el pago, envianos el hash de la transacción por WhatsApp para confirmar.')}
               </p>
             </div>
           )}
 
           {isManual && paymentMethod === 'paypal' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Pagá con PayPal</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t('co.payWith', 'Pagá con')} PayPal</h3>
               <AmountBox />
               <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
                 <p className="text-xs text-amber-800 font-medium">
-                  ⚠️ El monto en pesos es referencial. Ingresá el equivalente en USD al escanear el QR.
+                  {t('co.usdNote', '⚠️ El monto en pesos es referencial. Ingresá el equivalente en USD al escanear el QR.')}
                 </p>
               </div>
               <p className="text-sm text-gray-600 mb-4 text-center">
-                Escaneá el código con la app de PayPal o tu cámara para pagar.
+                {t('co.scanQr', 'Escaneá el código con la app de PayPal o tu cámara para pagar.')}
               </p>
               {paySettings.paypal_qr_url && (
                 <img
@@ -312,24 +313,72 @@ export default function CheckoutPage() {
               )}
               {paySettings.paypal_link && (
                 <a href={paySettings.paypal_link} target="_blank" rel="noopener noreferrer" className="btn-primary inline-flex items-center justify-center gap-2 mt-3 w-full">
-                  Pagar con PayPal
+                  {t('co.openLink', 'Pagar con PayPal')}
                 </a>
               )}
               <p className="mt-4 text-xs text-petroleum-600">
-                Después de pagar, envianos el comprobante por WhatsApp para confirmar tu compra y habilitar la descarga.
+                {t('co.sendProof', 'Después de pagar, envianos el comprobante por WhatsApp para confirmar tu compra y habilitar la descarga.')}
+              </p>
+            </div>
+          )}
+
+          {isManual && paymentMethod === 'payoneer' && (
+            <div className="bg-gray-50 rounded-xl p-6 mb-6">
+              <h3 className="font-semibold text-gray-900 mb-3">{t('co.payWith', 'Pagá con')} Payoneer</h3>
+              <AmountBox />
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
+                <p className="text-xs text-amber-800 font-medium">{t('co.usdNoteGeneric', '⚠️ El monto en pesos es referencial. Pagá el equivalente en USD.')}</p>
+              </div>
+              <div className="space-y-2 text-sm text-gray-600 mb-3">
+                {paySettings.payoneer_email && <p><span className="font-medium text-gray-700">Email:</span> {paySettings.payoneer_email}</p>}
+                {paySettings.payoneer_link && (
+                  <a href={paySettings.payoneer_link} target="_blank" rel="noopener noreferrer" className="btn-primary inline-flex items-center justify-center gap-2 mt-2 w-full">
+                    {t('co.payWith', 'Pagá con')} Payoneer
+                  </a>
+                )}
+                {!paySettings.payoneer_email && !paySettings.payoneer_link && (
+                  <p className="text-petroleum-600">{t('co.paymentPending', 'Este medio de pago todavía no está configurado. Consultanos por WhatsApp.')}</p>
+                )}
+              </div>
+              <p className="text-xs text-petroleum-600">
+                {t('co.sendProof', 'Después de pagar, envianos el comprobante por WhatsApp para confirmar tu compra y habilitar la descarga.')}
+              </p>
+            </div>
+          )}
+
+          {isManual && paymentMethod === 'wise' && (
+            <div className="bg-gray-50 rounded-xl p-6 mb-6">
+              <h3 className="font-semibold text-gray-900 mb-3">{t('co.payWith', 'Pagá con')} Wise</h3>
+              <AmountBox />
+              <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
+                <p className="text-xs text-amber-800 font-medium">{t('co.usdNoteGeneric', '⚠️ El monto en pesos es referencial. Pagá el equivalente en USD.')}</p>
+              </div>
+              <div className="space-y-2 text-sm text-gray-600 mb-3">
+                {paySettings.wise_email && <p><span className="font-medium text-gray-700">Email:</span> {paySettings.wise_email}</p>}
+                {paySettings.wise_link && (
+                  <a href={paySettings.wise_link} target="_blank" rel="noopener noreferrer" className="btn-primary inline-flex items-center justify-center gap-2 mt-2 w-full">
+                    {t('co.payWith', 'Pagá con')} Wise
+                  </a>
+                )}
+                {!paySettings.wise_email && !paySettings.wise_link && (
+                  <p className="text-petroleum-600">{t('co.paymentPending', 'Este medio de pago todavía no está configurado. Consultanos por WhatsApp.')}</p>
+                )}
+              </div>
+              <p className="text-xs text-petroleum-600">
+                {t('co.sendProof', 'Después de pagar, envianos el comprobante por WhatsApp para confirmar tu compra y habilitar la descarga.')}
               </p>
             </div>
           )}
 
           {isManual && paymentMethod === 'mercadopago' && (
             <div className="bg-gray-50 rounded-xl p-6 mb-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Pagá con Mercado Pago</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t('co.payWith', 'Pagá con')} Mercado Pago</h3>
 
               <AmountBox />
 
               <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
                 <p className="text-xs text-amber-800 font-medium">
-                  ⚠️ Al abrir el link de Mercado Pago, ingresá exactamente <strong>{formatPrice(confirmedTotal)}</strong> como monto a pagar.
+                  {t('co.mpNote', '⚠️ Al abrir el link de Mercado Pago, ingresá exactamente')} <strong>{formatPrice(confirmedTotal)}</strong> {t('co.mpNote2', 'como monto a pagar.')}
                 </p>
               </div>
 
@@ -339,21 +388,21 @@ export default function CheckoutPage() {
                 rel="noopener noreferrer"
                 className="btn-primary w-full inline-flex items-center justify-center gap-2"
               >
-                <Wallet className="w-4 h-4" /> Abrir Mercado Pago
+                <Wallet className="w-4 h-4" /> {t('co.openMp', 'Abrir Mercado Pago')}
               </a>
               <p className="mt-4 text-xs text-petroleum-600">
-                Después de pagar, envianos el comprobante por WhatsApp para confirmar tu compra y habilitar la descarga.
+                {t('co.sendProof', 'Después de pagar, envianos el comprobante por WhatsApp para confirmar tu compra y habilitar la descarga.')}
               </p>
             </div>
           )}
 
           <div className="flex flex-col gap-3">
             {user ? (
-              <Link to="/mis-compras" className="btn-primary">Ver mis compras</Link>
+              <Link to="/mis-compras" className="btn-primary">{t('co.viewOrders', 'Ver mis compras')}</Link>
             ) : (
-              <Link to={`/mi-pedido?order=${orderId}&email=${encodeURIComponent(guestEmail)}`} className="btn-primary">Ver mi pedido</Link>
+              <Link to={`/mi-pedido?order=${orderId}&email=${encodeURIComponent(guestEmail)}`} className="btn-primary">{t('co.viewOrder', 'Ver mi pedido')}</Link>
             )}
-            <Link to="/catalogo" onClick={() => { /* Navigate cleanly without filter params */ }} className="btn-secondary">Seguir comprando</Link>
+            <Link to="/catalogo" onClick={() => { /* Navigate cleanly without filter params */ }} className="btn-secondary">{t('co.keepShopping', 'Seguir comprando')}</Link>
             <WhatsAppConsultButton
               message={`Hola Modeltex, tengo una consulta sobre mi pedido #${orderId.slice(0, 8)} (pago por ${PAYMENT_METHODS.find(m => m.value === paymentMethod)?.label || paymentMethod}).`}
             />
@@ -367,6 +416,8 @@ export default function CheckoutPage() {
     switch (method) {
       case 'mercadopago': return <Wallet className="w-5 h-5" />;
       case 'paypal': return <CreditCard className="w-5 h-5" />;
+      case 'payoneer': return <Globe className="w-5 h-5" />;
+      case 'wise': return <Globe className="w-5 h-5" />;
       case 'stripe': return <CreditCard className="w-5 h-5" />;
       case 'transfer': return <Banknote className="w-5 h-5" />;
       case 'binance': return <Wallet className="w-5 h-5" />;
@@ -377,16 +428,16 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-petroleum-50">
       <div className="container-custom py-5 sm:py-8">
         <Link to="/carrito" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-800 transition-colors mb-6">
-          <ArrowLeft className="w-4 h-4" /> Volver al carrito
+          <ArrowLeft className="w-4 h-4" /> {t('co.backToCart', 'Volver al carrito')}
         </Link>
 
-        <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary-900 mb-8">Finalizar compra</h1>
+        <h1 className="font-display text-2xl sm:text-3xl font-bold text-primary-900 mb-8">{t('co.title', 'Finalizar compra')}</h1>
 
         <div className="grid lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2 space-y-6">
             {/* Client info */}
             <div className="card p-5 sm:p-6">
-              <h2 className="font-semibold text-gray-900 text-lg mb-4">Datos del cliente</h2>
+              <h2 className="font-semibold text-gray-900 text-lg mb-4">{t('co.clientData', 'Datos del cliente')}</h2>
               {user ? (
                 <div className="flex items-center gap-3 bg-gray-50 rounded-xl p-4">
                   <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
@@ -396,26 +447,26 @@ export default function CheckoutPage() {
                   </div>
                   <div>
                     <p className="font-medium text-gray-900 text-sm">{user.email}</p>
-                    <p className="text-xs text-gray-500">Verificá tus datos en tu perfil antes de pagar</p>
+                    <p className="text-xs text-gray-500">{t('co.verifyProfile', 'Verificá tus datos en tu perfil antes de pagar')}</p>
                   </div>
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Tu email</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('co.yourEmail', 'Tu email')}</label>
                   <input
                     type="email"
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
                     onBlur={() => setGuestEmailTouched(true)}
-                    placeholder="tu@email.com"
+                    placeholder={t('co.emailPlaceholder', 'tu@email.com')}
                     className="input-field"
                   />
                   {guestEmailTouched && !guestEmailValid && (
-                    <p className="text-xs text-red-600 mt-1">Ingresá un email válido.</p>
+                    <p className="text-xs text-red-600 mt-1">{t('co.emailInvalid', 'Ingresá un email válido.')}</p>
                   )}
                   <p className="text-xs text-gray-500 mt-2">
-                    Comprás sin crear cuenta — a este email te avisamos y te mandamos el link para descargar cuando confirmemos el pago.
-                    {' '}¿Ya tenés cuenta? <Link to="/login" className="text-primary-700 font-medium hover:underline">Iniciá sesión</Link>.
+                    {t('co.guestHint', 'Comprás sin crear cuenta — a este email te avisamos y te mandamos el link para descargar cuando confirmemos el pago.')}
+                    {' '}{t('co.alreadyAccount', '¿Ya tenés cuenta?')} <Link to="/login" className="text-primary-700 font-medium hover:underline">{t('co.signIn', 'Iniciá sesión')}</Link>.
                   </p>
                 </div>
               )}
@@ -423,7 +474,7 @@ export default function CheckoutPage() {
 
             {/* Payment method */}
             <div className="card p-5 sm:p-6">
-              <h2 className="font-semibold text-gray-900 text-lg mb-4">Método de pago</h2>
+              <h2 className="font-semibold text-gray-900 text-lg mb-4">{t('co.paymentMethod', 'Método de pago')}</h2>
               <div className="space-y-3">
                 {PAYMENT_METHODS.map(method => (
                   <button
@@ -442,7 +493,7 @@ export default function CheckoutPage() {
                     </div>
                     <div className="flex-1">
                       <p className="font-medium text-gray-900 text-sm">{method.label}</p>
-                      <p className="text-xs text-gray-500">{method.description}</p>
+                      <p className="text-xs text-gray-500">{t(`pay.${method.value}.desc`, method.description)}</p>
                     </div>
                     <div className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center ${
                       paymentMethod === method.value ? 'border-primary-500' : 'border-gray-300'
@@ -458,7 +509,7 @@ export default function CheckoutPage() {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 text-petroleum-600 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-petroleum-700">
-                      Al confirmar te mostramos cómo pagar ({paymentMethod === 'paypal' ? 'QR de PayPal' : 'link de Mercado Pago'}). La descarga se habilita cuando confirmamos tu pago.
+                      {t('co.confirmShowsHow', 'Al confirmar te mostramos cómo pagar')} ({paymentMethod === 'paypal' ? t('co.methodDesc.paypal', 'QR de PayPal') : t('co.mpDescLabel', 'link de Mercado Pago')}). {t('co.downloadEnabled', 'La descarga se habilita cuando confirmamos tu pago.')}
                     </p>
                   </div>
                 </div>
@@ -469,7 +520,7 @@ export default function CheckoutPage() {
                   <div className="flex items-start gap-2">
                     <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 flex-shrink-0" />
                     <p className="text-sm text-amber-700">
-                      Esta pasarela se habilitará pronto. Por ahora podés pagar con Mercado Pago, transferencia o PayPal.
+                      {t('co.stripeSoon', 'Esta pasarela se habilitará pronto. Por ahora podés pagar con Mercado Pago, transferencia o PayPal.')}
                     </p>
                   </div>
                 </div>
@@ -478,7 +529,7 @@ export default function CheckoutPage() {
 
             {/* Order items */}
             <div className="card p-5 sm:p-6">
-              <h2 className="font-semibold text-gray-900 text-lg mb-4">Productos</h2>
+              <h2 className="font-semibold text-gray-900 text-lg mb-4">{t('co.orderItemsTitle', 'Productos')}</h2>
               <div className="divide-y divide-gray-100">
                 {items.map(item => (
                   <div key={cartItemKey(item)} className="flex items-start justify-between gap-3 py-3 first:pt-0 last:pb-0">
@@ -493,7 +544,7 @@ export default function CheckoutPage() {
                       <div className="min-w-0">
                         <p className="text-sm font-medium text-gray-900 truncate">{item.product.name}</p>
                         {item.format && <p className="text-xs text-primary-700">{item.format}</p>}
-                        <p className="text-xs text-gray-500">Cantidad: {item.quantity}</p>
+                        <p className="text-xs text-gray-500">{t('co.qty', 'Cantidad:')} {item.quantity}</p>
                       </div>
                     </div>
                     <span className="text-sm font-semibold text-gray-900 flex-shrink-0 ml-3">
@@ -508,9 +559,9 @@ export default function CheckoutPage() {
           {/* Summary */}
           <div>
             <div className="card p-5 sm:p-6 lg:sticky lg:top-24">
-              <h3 className="font-semibold text-gray-900 text-lg mb-6">Resumen</h3>
+              <h3 className="font-semibold text-gray-900 text-lg mb-6">{t('co.summaryTitle', 'Resumen')}</h3>
               <div className="flex justify-between items-baseline mb-6">
-                <span className="text-lg font-semibold text-gray-900">Total</span>
+                <span className="text-lg font-semibold text-gray-900">{t('co.total', 'Total')}</span>
                 <span className="text-2xl font-bold text-primary-900">{formatPrice(total)}</span>
               </div>
 
@@ -522,16 +573,16 @@ export default function CheckoutPage() {
 
               <button
                 onClick={handleCheckout}
-                disabled={processing || (paymentMethod !== 'transfer' && paymentMethod !== 'binance' && paymentMethod !== 'paypal' && paymentMethod !== 'mercadopago')}
+                disabled={processing || (paymentMethod !== 'transfer' && paymentMethod !== 'binance' && paymentMethod !== 'paypal' && paymentMethod !== 'payoneer' && paymentMethod !== 'wise' && paymentMethod !== 'mercadopago')}
                 className="btn-primary w-full disabled:opacity-50"
               >
                 {processing ? (
                   <span className="flex items-center justify-center gap-2">
                     <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
-                    Procesando...
+                    {t('co.processing', 'Procesando...')}
                   </span>
                 ) : (
-                  'Confirmar pedido'
+                  t('co.confirm', 'Confirmar pedido')
                 )}
               </button>
 
@@ -541,7 +592,7 @@ export default function CheckoutPage() {
               />
 
               <p className="text-xs text-gray-400 text-center mt-3">
-                Al confirmar, aceptás los términos de compra de Modeltex
+                {t('co.terms', 'Al confirmar, aceptás los términos de compra de Modeltex')}
               </p>
             </div>
           </div>

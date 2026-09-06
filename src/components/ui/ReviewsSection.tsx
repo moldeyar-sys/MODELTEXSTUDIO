@@ -4,6 +4,7 @@ import { Star, Trash2, Loader2, MessageSquare } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { fetchReviews, submitReview, deleteReview, reviewSummary, type ReviewTarget } from '../../lib/reviews';
 import type { Review } from '../../lib/types';
+import { useLocale } from '../../lib/locale';
 
 function Stars({ value, size = 16, onChange }: { value: number; size?: number; onChange?: (v: number) => void }) {
   return (
@@ -35,6 +36,7 @@ interface Props {
 
 export function ReviewsSection({ targetType, targetId, compact = false }: Props) {
   const { user, profile, isAdmin } = useAuth();
+  const { t } = useLocale();
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(5);
@@ -68,7 +70,7 @@ export function ReviewsSection({ targetType, targetId, compact = false }: Props)
     });
     setSaving(false);
     if (!res.ok) {
-      setError(res.error?.includes('reviews') ? 'Falta crear la tabla de reseñas en Supabase (SQL).' : 'No se pudo enviar tu opinión. Probá de nuevo.');
+      setError(res.error?.includes('reviews') ? t('reviews.missingTable', 'Falta crear la tabla de reseñas en Supabase (SQL).') : t('reviews.sendError', 'No se pudo enviar tu opinión. Probá de nuevo.'));
       return;
     }
     setComment('');
@@ -77,7 +79,7 @@ export function ReviewsSection({ targetType, targetId, compact = false }: Props)
   };
 
   const onDelete = async (id: string) => {
-    if (!confirm('¿Eliminar esta opinión?')) return;
+    if (!confirm(t('reviews.confirmDelete', '¿Eliminar esta opinión?'))) return;
     if (await deleteReview(id)) setReviews(prev => prev.filter(r => r.id !== id));
   };
 
@@ -85,7 +87,7 @@ export function ReviewsSection({ targetType, targetId, compact = false }: Props)
     <div className={compact ? '' : 'border-t border-gray-100 pt-8'}>
       <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
         <h3 className="font-semibold text-gray-900 text-lg flex items-center gap-2">
-          <MessageSquare className="w-5 h-5 text-primary-700" /> Opiniones
+          <MessageSquare className="w-5 h-5 text-primary-700" /> {t('reviews.title', 'Opiniones')}
         </h3>
         {count > 0 && (
           <div className="flex items-center gap-2 text-sm">
@@ -99,11 +101,11 @@ export function ReviewsSection({ targetType, targetId, compact = false }: Props)
       {/* Formulario */}
       {user ? (
         alreadyReviewed ? (
-          <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3 mb-5">Ya dejaste tu opinión. ¡Gracias! 🙌</p>
+          <p className="text-sm text-gray-500 bg-gray-50 rounded-lg p-3 mb-5">{t('reviews.alreadyReviewed', 'Ya dejaste tu opinión. ¡Gracias! 🙌')}</p>
         ) : (
           <form onSubmit={onSubmit} className="bg-gray-50 rounded-xl p-4 mb-6 space-y-3">
             <div className="flex items-center gap-3">
-              <span className="text-sm font-medium text-gray-700">Tu puntuación:</span>
+              <span className="text-sm font-medium text-gray-700">{t('reviews.yourRating', 'Tu puntuación:')}</span>
               <Stars value={rating} size={22} onChange={setRating} />
             </div>
             <textarea
@@ -111,27 +113,27 @@ export function ReviewsSection({ targetType, targetId, compact = false }: Props)
               onChange={e => setComment(e.target.value)}
               rows={3}
               required
-              placeholder="Contanos tu experiencia con este molde..."
+              placeholder={t('reviews.placeholder', 'Contanos tu experiencia con este molde...')}
               className="input-field resize-none"
             />
             {error && <p className="text-sm text-red-600">{error}</p>}
             <button type="submit" disabled={saving || !comment.trim()} className="btn-primary text-sm py-2 disabled:opacity-50">
               {saving ? <Loader2 className="w-4 h-4 animate-spin mr-1" /> : null}
-              {saving ? 'Enviando...' : 'Publicar opinión'}
+              {saving ? t('reviews.sending', 'Enviando...') : t('reviews.submit', 'Publicar opinión')}
             </button>
           </form>
         )
       ) : (
         <div className="bg-gray-50 rounded-xl p-4 mb-6 text-sm text-gray-600">
-          <Link to="/login" className="text-primary-700 font-semibold hover:underline">Iniciá sesión</Link> para dejar tu opinión.
+          <Link to="/login" className="text-primary-700 font-semibold hover:underline">{t('co.signIn', 'Iniciá sesión')}</Link> {t('reviews.toReview', 'para dejar tu opinión.')}
         </div>
       )}
 
       {/* Lista */}
       {loading ? (
-        <p className="text-sm text-gray-400">Cargando opiniones...</p>
+        <p className="text-sm text-gray-400">{t('reviews.loading', 'Cargando opiniones...')}</p>
       ) : reviews.length === 0 ? (
-        <p className="text-sm text-gray-400">Todavía no hay opiniones. ¡Sé el primero!</p>
+        <p className="text-sm text-gray-400">{t('reviews.empty', 'Todavía no hay opiniones. ¡Sé el primero!')}</p>
       ) : (
         <div className="space-y-4">
           {reviews.map(r => (
@@ -142,14 +144,14 @@ export function ReviewsSection({ targetType, targetId, compact = false }: Props)
                     {(r.author_name || 'C').charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-gray-900 leading-tight">{r.author_name || 'Cliente'}</p>
+                    <p className="text-sm font-semibold text-gray-900 leading-tight">{r.author_name || t('reviews.customer', 'Cliente')}</p>
                     <Stars value={r.rating} size={13} />
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-gray-400">{r.created_at && new Date(r.created_at).toLocaleDateString('es-AR')}</span>
                   {(isAdmin || (user && r.user_id === user.id)) && (
-                    <button onClick={() => onDelete(r.id)} className="p-1 text-gray-300 hover:text-red-500 rounded" title="Eliminar">
+                    <button onClick={() => onDelete(r.id)} className="p-1 text-gray-300 hover:text-red-500 rounded" title={t('reviews.delete', 'Eliminar')}>
                       <Trash2 className="w-3.5 h-3.5" />
                     </button>
                   )}

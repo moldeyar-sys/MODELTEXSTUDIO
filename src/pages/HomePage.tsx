@@ -76,50 +76,50 @@ const HomePage = () => {
   const benefits = [
     {
       icon: Zap,
-      title: 'Descargá instantáneamente',
-      description: 'Después de pagar, obtén tus archivos al instante',
+      title: t('home.benefit.1.title', 'Descargá instantáneamente'),
+      description: t('home.benefit.1.desc', 'Después de pagar, obtén tus archivos al instante'),
     },
     {
       icon: FileText,
-      title: 'Formatos profesionales',
-      description: 'PDF A4, Plotter, CDR, DXF y más',
+      title: t('home.benefit.2.title', 'Formatos profesionales'),
+      description: t('home.benefit.2.desc', 'PDF A4, Plotter, DXF/AAMA, PDS, MRK, ADS y más'),
     },
     {
       icon: Ruler,
-      title: 'Todos los talles incluidos',
-      description: 'Una compra, múltiples tamaños',
+      title: t('home.benefit.3.title', 'Todos los talles incluidos'),
+      description: t('home.benefit.3.desc', 'Una compra, múltiples tamaños'),
     },
     {
       icon: Globe,
-      title: 'Envío internacional',
-      description: 'Los archivos llegan a todo el mundo por descarga digital',
+      title: t('home.benefit.4.title', 'Envío internacional'),
+      description: t('home.benefit.4.desc', 'Los archivos llegan a todo el mundo por descarga digital'),
     },
   ];
 
   const howItWorks = [
     {
       number: 1,
-      title: 'Creá tu cuenta',
+      title: t('home.step.1', 'Creá tu cuenta'),
       icon: ShoppingCart,
     },
     {
       number: 2,
-      title: 'Elegí el molde o pack',
+      title: t('home.step.2', 'Elegí el molde o pack'),
       icon: Package,
     },
     {
       number: 3,
-      title: 'Agregá al carrito',
+      title: t('home.step.3', 'Agregá al carrito'),
       icon: ShoppingCart,
     },
     {
       number: 4,
-      title: 'Pagá',
+      title: t('home.step.4', 'Pagá'),
       icon: Zap,
     },
     {
       number: 5,
-      title: 'Descargá tus archivos',
+      title: t('home.step.5', 'Descargá tus archivos'),
       icon: Download,
     },
   ];
@@ -127,76 +127,68 @@ const HomePage = () => {
   const formats = [
     {
       name: 'PDF A4',
-      description: 'Listo para imprimir en casa',
+      description: t('home.fmt.a4', 'Listo para imprimir en casa'),
       icon: FileText,
     },
     {
       name: 'PDF Plotter',
-      description: 'Para impresoras de rollo',
+      description: t('home.fmt.plotter', 'Para impresoras de rollo'),
       icon: Ruler,
     },
     {
-      name: 'PLT',
-      description: 'Formato vectorial de ploteo',
+      name: 'DXF / AAMA',
+      description: t('home.fmt.dxf', 'Estándar CAD universal (Gerber, Lectra, Optitex, Audaces)'),
+      icon: Palette,
+    },
+    {
+      name: 'PDS (Optitex)',
+      description: t('home.fmt.pds', 'Archivo nativo de Optitex'),
+      icon: Palette,
+    },
+    {
+      name: 'MRK (Tizado)',
+      description: t('home.fmt.mrk', 'Tizado computarizado listo para el corte'),
       icon: Scissors,
     },
     {
-      name: 'DXF',
-      description: 'Compatible con CAD y maquinaria',
+      name: 'ADS (Audaces)',
+      description: t('home.fmt.ads', 'Archivo nativo de Audaces'),
       icon: Palette,
-    },
-    {
-      name: 'CDR',
-      description: 'Editable en CorelDraw',
-      icon: Palette,
-    },
-    {
-      name: 'Sublimación',
-      description: 'Para impresoras de sublimado',
-      icon: FileText,
     },
   ];
 
   const faqItems = [
     {
-      question: '¿Los moldes son digitales?',
-      answer:
-        'Sí, son archivos digitales que descargás después de comprar. No recibirás nada físico, solo archivos que podrás usar en tu computadora.',
+      question: t('home.faq.q1', '¿Los moldes son digitales?'),
+      answer: t('home.faq.a1', 'Sí, son archivos digitales que descargás después de comprar. No recibirás nada físico, solo archivos que podrás usar en tu computadora.'),
     },
     {
-      question: '¿Puedo imprimir en A4?',
-      answer:
-        'Sí, todos nuestros moldes incluyen una versión PDF A4 lista para imprimir en casa con cualquier impresora.',
+      question: t('home.faq.q2', '¿Puedo imprimir en A4?'),
+      answer: t('home.faq.a2', 'Sí, todos nuestros moldes incluyen una versión PDF A4 lista para imprimir en casa con cualquier impresora.'),
     },
     {
-      question: '¿Puedo imprimir en plotter?',
-      answer:
-        'Sí, muchos moldes incluyen versión para plotter (PDF y PLT). Verifica en la descripción del producto si incluye este formato.',
+      question: t('home.faq.q3', '¿Puedo imprimir en plotter?'),
+      answer: t('home.faq.a3', 'Sí, muchos moldes incluyen versión para plotter (PDF y PLT). Verifica en la descripción del producto si incluye este formato.'),
     },
     {
-      question: '¿Cuándo recibo el archivo?',
-      answer:
-        'Inmediatamente después de confirmarse el pago. Recibirás un email con los links de descarga y acceso a tu panel de cliente.',
+      question: t('home.faq.q4', '¿Cuándo recibo el archivo?'),
+      answer: t('home.faq.a4', 'Inmediatamente después de confirmarse el pago. Recibirás un email con los links de descarga y acceso a tu panel de cliente.'),
     },
     {
-      question: '¿Qué pasa si pago por transferencia?',
-      answer:
-        'Confirmamos el pago manualmente y, apenas queda acreditado, activamos tu descarga de forma automatica.',
+      question: t('home.faq.q5', '¿Qué pasa si pago por transferencia?'),
+      answer: t('home.faq.a5', 'Confirmamos el pago manualmente y, apenas queda acreditado, activamos tu descarga de forma automatica.'),
     },
     {
-      question: '¿Hacen moldes personalizados?',
-      answer:
-        'Sí, podés solicitar un diseño a pedido. Accedé a nuestra sección de "Diseño a pedido" para conocer más detalles y obtener un presupuesto personalizado.',
+      question: t('home.faq.q6', '¿Hacen moldes personalizados?'),
+      answer: t('home.faq.a6', 'Sí, podés solicitar un diseño a pedido. Accedé a nuestra sección de "Diseño a pedido" para conocer más detalles y obtener un presupuesto personalizado.'),
     },
     {
-      question: '¿Venden a otros países?',
-      answer:
-        'Sí, los archivos digitales llegan a todo el mundo por descarga. No tenemos limitaciones de envío geográfico.',
+      question: t('home.faq.q7', '¿Venden a otros países?'),
+      answer: t('home.faq.a7', 'Sí, los archivos digitales llegan a todo el mundo por descarga, incluyendo los formatos industriales para fábricas. No tenemos limitaciones de envío geográfico.'),
     },
     {
-      question: '¿Puedo pedir modificaciones?',
-      answer:
-        'Sí, contactanos por WhatsApp para consultar sobre modificaciones. Evaluaremos tu pedido y te pasaremos un presupuesto.',
+      question: t('home.faq.q8', '¿Puedo pedir modificaciones?'),
+      answer: t('home.faq.a8', 'Sí, contactanos por WhatsApp para consultar sobre modificaciones. Evaluaremos tu pedido y te pasaremos un presupuesto.'),
     },
   ];
 
@@ -275,13 +267,13 @@ const HomePage = () => {
               {/* Fila de confianza: responde las tres dudas antes de que las pregunten */}
               <div className="flex flex-wrap justify-center lg:justify-start gap-x-5 gap-y-2 mb-4 sm:mb-8 text-sm text-gray-600">
                 <span className="inline-flex items-center gap-1.5">
-                  <Zap className="w-4 h-4 text-primary-700" /> Descarga inmediata
+                  <Zap className="w-4 h-4 text-primary-700" /> {t('trust.instant.title', 'Descarga inmediata')}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <BadgeCheck className="w-4 h-4 text-primary-700" /> Escalado en todos los talles
+                  <BadgeCheck className="w-4 h-4 text-primary-700" /> {t('home.hero.fullGrading', 'Escalado en todos los talles')}
                 </span>
                 <span className="inline-flex items-center gap-1.5">
-                  <Headphones className="w-4 h-4 text-primary-700" /> Soporte por WhatsApp
+                  <Headphones className="w-4 h-4 text-primary-700" /> {t('home.hero.whatsappSupport', 'Soporte por WhatsApp')}
                 </span>
               </div>
 
@@ -291,14 +283,14 @@ const HomePage = () => {
                   to="/catalogo"
                   className="cta-attention-blue inline-flex items-center gap-2 px-9 py-4 rounded-xl bg-primary-800 text-white text-lg font-bold shadow-lg hover:bg-primary-700 active:scale-[0.98] transition-all"
                 >
-                  Ver catálogo
+                  {t('common.viewCatalog', 'Ver catálogo')}
                   <ArrowRight size={20} />
                 </Link>
                 <Link
                   to="/diseno-a-pedido"
                   className="inline-flex items-center justify-center px-7 py-4 rounded-xl bg-white text-primary-800 text-lg font-semibold border-2 border-primary-200 hover:border-primary-800 hover:bg-primary-50 active:scale-[0.98] transition-all"
                 >
-                  Diseño a pedido
+                  {t('nav.custom', 'Diseño a pedido')}
                 </Link>
               </div>
 
@@ -315,10 +307,10 @@ const HomePage = () => {
 
                 <div className="flex-1 min-w-0 text-left">
                   <p className="text-accent-600 text-xl font-extrabold leading-tight">
-                    Moldes Gratis
+                    {t('nav.freeMolds', 'Moldes Gratis')}
                   </p>
                   <p className="text-gray-500 text-sm leading-snug mt-0.5">
-                    Descargá moldes reales y probá la calidad antes de comprar
+                    {t('home.freeMolds.desc', 'Descargá moldes reales y probá la calidad antes de comprar')}
                   </p>
                 </div>
 
@@ -405,7 +397,7 @@ const HomePage = () => {
             </div>
           ) : (
             <div className="text-center py-12">
-              <p className="font-sans text-gray-500 text-lg">No hay productos destacados en este momento</p>
+              <p className="font-sans text-gray-500 text-lg">{t('home.featured.empty', 'No hay productos destacados en este momento')}</p>
             </div>
           )}
 
@@ -414,7 +406,7 @@ const HomePage = () => {
               to="/catalogo"
               className="btn-primary px-8 py-3 text-lg font-semibold inline-flex items-center gap-2 hover:scale-105 transition-transform"
             >
-              Ver catálogo completo
+              {t('home.featured.viewAll', 'Ver catálogo completo')}
               <ArrowRight size={20} />
             </Link>
           </div>
@@ -426,9 +418,9 @@ const HomePage = () => {
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-10 md:mb-16">
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">¿Cómo funciona?</h2>
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.howItWorks.title', '¿Cómo funciona?')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
-              5 pasos simples para conseguir tus moldes digitales
+              {t('home.howItWorks.subtitle', '5 pasos simples para conseguir tus moldes digitales')}
             </p>
           </div>
 
@@ -471,9 +463,9 @@ const HomePage = () => {
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-10 md:mb-16">
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">Formatos disponibles</h2>
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.formats.title', 'Formatos disponibles')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
-              Trabajamos con los mejores formatos para que uses nuestros moldes en tus herramientas preferidas
+              {t('home.formats.subtitle', 'Trabajamos con los mejores formatos para que uses nuestros moldes en tus herramientas preferidas')}
             </p>
           </div>
 
@@ -507,7 +499,7 @@ const HomePage = () => {
           <div className="text-center mb-10 md:mb-16">
             <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.testimonials.title', 'Lo que dicen nuestros clientes')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
-              {t('home.testimonials.subtitle', 'Emprendedores, talleres y diseñadores de toda Latinoamérica ya producen con Modeltex')}
+              {t('home.testimonials.subtitle', 'Emprendedores, talleres, diseñadores y fábricas de todo el mundo ya producen con Modeltex')}
             </p>
           </div>
 
@@ -536,9 +528,9 @@ const HomePage = () => {
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
           <div className="text-center mb-10 md:mb-16">
-            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">Preguntas frecuentes</h2>
+            <h2 className="font-display text-3xl md:text-5xl font-bold text-primary-900 mb-4">{t('home.faq.title', 'Preguntas frecuentes')}</h2>
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
-              Resolvemos tus dudas sobre nuestros moldes digitales
+              {t('home.faq.subtitle', 'Resolvemos tus dudas sobre nuestros moldes digitales')}
             </p>
           </div>
 
@@ -599,7 +591,7 @@ const HomePage = () => {
 
           <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-3 text-primary-100 text-sm">
             <span className="inline-flex items-center gap-2"><Globe className="w-4 h-4 text-accent-400" /> {t('trust.worldwide', 'Entrega digital a todo el mundo')}</span>
-            <span className="inline-flex items-center gap-2"><FileText className="w-4 h-4 text-accent-400" /> {t('trust.formats', 'PDF A4, Plotter, DXF, CDR y PLT')}</span>
+            <span className="inline-flex items-center gap-2"><FileText className="w-4 h-4 text-accent-400" /> {t('trust.formats', 'PDF A4, Plotter, DXF/AAMA, PDS (Optitex), MRK, ADS (Audaces), CDR y PLT')}</span>
             <span className="inline-flex items-center gap-2"><Download className="w-4 h-4 text-accent-400" /> {t('trust.access', 'Acceso permanente desde tu cuenta')}</span>
           </div>
         </div>

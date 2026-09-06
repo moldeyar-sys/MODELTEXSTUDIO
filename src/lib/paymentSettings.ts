@@ -11,9 +11,15 @@ export interface PaymentSettings {
   binance_wallet: string;
   binance_network: string;
   binance_qr_url: string;
-  // PayPal
+  // PayPal (debe ser una cuenta Business a nombre de "Modeltex", no personal)
   paypal_link: string;
   paypal_qr_url: string;
+  // Payoneer (cobro internacional en USD)
+  payoneer_email: string;
+  payoneer_link: string;
+  // Wise (cobro internacional en USD/EUR)
+  wise_email: string;
+  wise_link: string;
   // Mercado Pago
   mp_payment_link: string;
 }
@@ -27,8 +33,15 @@ export const PAYMENT_SETTINGS_DEFAULTS: PaymentSettings = {
   binance_wallet: '',
   binance_network: 'BSC (BEP20)',
   binance_qr_url: '/brand/binance-qr.jpeg',
-  paypal_link: 'https://paypal.me/JHONDESPINOZA?locale.x=es_XC&country.x=AR',
+  // Sin valor por defecto a propósito: el link personal paypal.me/JHONDESPINOZA
+  // generaba desconfianza (nombre distinto a "Modeltex"). Cargar acá el link
+  // de la cuenta PayPal Business "Modeltex" desde el panel admin.
+  paypal_link: '',
   paypal_qr_url: '/brand/paypal-qr.png',
+  payoneer_email: '',
+  payoneer_link: '',
+  wise_email: '',
+  wise_link: '',
   mp_payment_link: 'https://link.mercadopago.com.ar/modeltex',
 };
 
