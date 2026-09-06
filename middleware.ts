@@ -639,6 +639,7 @@ const STATIC_PAGES: Record<
 <ul>
 <li>WhatsApp: <a href="${WHATSAPP_LINK}">${WHATSAPP_DISPLAY}</a> (la vía más rápida)</li>
 <li>Telegram: <a href="https://t.me/+5491166531086">${WHATSAPP_DISPLAY}</a></li>
+<li>Facebook: <a href="https://www.facebook.com/modeltex.ar">facebook.com/modeltex.ar</a></li>
 <li>Formulario de contacto en <a href="${o}/contacto">${o}/contacto</a></li>
 <li>Horario de atención: lunes a sábado, 9 a 18 hs (Argentina)</li>
 <li>Ubicación: Argentina — envíos digitales a todo el mundo</li>
