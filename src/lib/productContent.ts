@@ -3,8 +3,8 @@
 // IA). Todo sale de campos reales del producto: nada se inventa. Sin
 // dependencias de React ni del DOM, porque middleware.ts corre en el edge.
 
-import { CATEGORIES } from './types';
-import { CATEGORY_TITLE_SUFFIX } from './categorySeo';
+import { CATEGORIES } from './types.js';
+import { CATEGORY_TITLE_SUFFIX } from './categorySeo.js';
 
 export interface ProductContentInput {
   name: string;

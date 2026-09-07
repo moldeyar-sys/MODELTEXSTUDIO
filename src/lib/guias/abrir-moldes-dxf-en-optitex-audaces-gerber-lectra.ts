@@ -1,4 +1,4 @@
-import type { Guia } from '../guiasTypes';
+import type { Guia } from '../guiasTypes.js';
 
 export const guia: Guia = {
   slug: 'abrir-moldes-dxf-en-optitex-audaces-gerber-lectra',

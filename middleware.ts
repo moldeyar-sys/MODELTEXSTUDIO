@@ -10,10 +10,10 @@
 // app reemplaza el schema en vez de duplicarlo. El bloque de texto para robots
 // lo saca src/main.tsx antes de montar la app.
 
-import { FAQ_ITEMS } from './src/lib/faqData';
-import { CATEGORY_SEO, CATEGORY_TITLE_SUFFIX } from './src/lib/categorySeo';
-import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, type Guia } from './src/lib/guiasData';
-import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent';
+import { FAQ_ITEMS } from './src/lib/faqData.js';
+import { CATEGORY_SEO, CATEGORY_TITLE_SUFFIX } from './src/lib/categorySeo.js';
+import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, type Guia } from './src/lib/guiasData.js';
+import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent.js';
 
 export const config = {
   matcher: [
