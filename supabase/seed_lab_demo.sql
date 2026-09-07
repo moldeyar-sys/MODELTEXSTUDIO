@@ -16,7 +16,7 @@
 INSERT INTO lab_courses (slug, track_slug, title, subtitle, description, objectives, requirements, estimated_duration, author, order_index, status)
 VALUES (
   'molderia-a-medida', 'molderia-a-medida',
-  'Moldería a Medida',
+  'Curso de Moldería a Medida',
   'Aprendé desde cero a desarrollar y adaptar moldes para medidas individuales.',
   'Recorrido gratuito para aprender moldería textil desde los fundamentos: qué es la moldería, cómo tomar medidas, moldes base y transformaciones, hasta poder desarrollar prendas a medida.',
   ARRAY['Entender qué es la moldería y en qué se diferencia de la moldería industrial', 'Tomar medidas corporales correctamente', 'Construir y adaptar moldes base a una persona real'],
@@ -84,7 +84,7 @@ ON CONFLICT (module_id, slug) DO NOTHING;
 INSERT INTO lab_courses (slug, track_slug, title, subtitle, description, objectives, requirements, estimated_duration, author, order_index, status)
 VALUES (
   'molderia-industrial', 'molderia-industrial',
-  'Moldería Industrial',
+  'Curso de Moldería Industrial',
   'Aprendé desarrollo profesional, progresión, CAD, tizado y preparación para producción.',
   'Recorrido gratuito orientado a fabricantes, marcas, talleres y emprendedores textiles: de la moldería a medida a la producción en serie, con escalado de talles, digitalización y tizado.',
   ARRAY['Entender la diferencia entre moldería industrial y a medida', 'Armar una tabla de talles industrial', 'Conocer el flujo completo de desarrollo de una prenda para producir'],
