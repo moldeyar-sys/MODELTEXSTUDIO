@@ -14,18 +14,38 @@ import { guia as coleccion } from './guias/armar-una-coleccion-con-moldes-digita
 import { guia as uniformes } from './guias/uniformes-escolares-y-de-trabajo.js';
 import { guia as glosario } from './guias/glosario-de-molderia.js';
 import { guia as sublimacion } from './guias/moldes-para-sublimacion.js';
+import { guia as pasoAPaso } from './guias/como-hacer-moldes-de-ropa-paso-a-paso.js';
+import { guia as medidas } from './guias/medidas-corporales-para-moldes-de-ropa.js';
+import { guia as tablaMedidas } from './guias/tabla-de-medidas-industriales.js';
+import { guia as moldePantalon } from './guias/como-hacer-el-molde-base-de-un-pantalon.js';
+import { guia as moldeFalda } from './guias/como-hacer-el-molde-base-de-una-falda.js';
+import { guia as escalarPatrones } from './guias/como-escalar-patrones-de-costura.js';
+import { guia as diferenciaMolderiaPatronaje } from './guias/diferencia-entre-molderia-y-patronaje.js';
+import { guia as programasGratis } from './guias/programas-gratis-de-molderia-digital.js';
+import { guia as patronajeIndustrial } from './guias/que-es-el-patronaje-industrial.js';
+import { guia as digitalizarPatrones } from './guias/como-digitalizar-patrones-de-papel.js';
 
 export type { Guia, GuiaSection, GuiaFaq, GuiaLink } from './guiasTypes.js';
 
 export const GUIAS: Guia[] = [
+  pasoAPaso,
   formatos,
   telas,
+  medidas,
   talles,
+  tablaMedidas,
+  moldePantalon,
+  moldeFalda,
   consumo,
   costeo,
+  escalarPatrones,
   tizada,
   plotter,
   dxf,
+  patronajeIndustrial,
+  diferenciaMolderiaPatronaje,
+  programasGratis,
+  digitalizarPatrones,
   coleccion,
   uniformes,
   sublimacion,
@@ -38,4 +58,4 @@ export function findGuia(slug: string): Guia | undefined {
 
 export const GUIAS_TITLE = 'Guías para producir ropa con moldes digitales';
 export const GUIAS_DESCRIPTION =
-  'Guías prácticas para fabricantes, talleres y marcas: formatos de moldería, telas, curva de talles, tizadas, consumo de tela, costeo, plotter, uniformes y sublimación.';
+  'Guías prácticas para fabricantes, talleres y marcas: cómo hacer moldes paso a paso, medidas, escalado de talles, formatos, telas, tizadas, costeo, uniformes y sublimación.';

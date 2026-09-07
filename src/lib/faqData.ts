@@ -129,4 +129,44 @@ export const FAQ_ITEMS: FaqItem[] = [
     q: '¿Cómo me contacto con Modeltex?',
     a: 'Por WhatsApp o Telegram al +54 9 11 6653 1086, por el formulario de contacto del sitio o por Facebook (facebook.com/modeltex.ar). Atendemos de lunes a sábado de 9 a 18 hs (hora Argentina) y respondemos consultas de cualquier país.',
   },
+  {
+    q: '¿Cómo hacer moldes de ropa paso a paso?',
+    a: 'El proceso profesional tiene seis etapas: tomar las medidas del cuerpo o de la prenda base, trazar el molde base con esas medidas, transformar ese molde base al modelo que se quiere (agregar escote, mangas, bolsillos), coser una muestra en tela económica para probar el calce, corregir el molde según esa prueba y, recién ahí, escalarlo a toda la curva de talles. Es un proceso que lleva tiempo hacerlo bien, por eso muchos fabricantes prefieren partir de un molde digital ya aprobado con muestra y con la curva escalada, y ajustarlo, en vez de empezar de cero.',
+  },
+  {
+    q: '¿Cuáles son las medidas básicas para un molde?',
+    a: 'Para un molde base de la parte superior del cuerpo hacen falta el contorno de busto o pecho, el contorno de cintura, el largo de talle delantero y espalda, el ancho de espalda, el contorno de cuello y el largo de manga. Para pantalón o falda se suman el contorno de cadera, el tiro (para pantalón) y el largo deseado. Estas medidas son el punto de partida: cada molde después se prueba con una muestra cosida y se ajusta, porque el cuerpo real siempre varía respecto de cualquier tabla orientativa.',
+  },
+  {
+    q: '¿Cómo hacer el molde de un pantalón?',
+    a: 'Se traza a partir del contorno de cintura, contorno de cadera, tiro y largo total, con dos piezas principales (delantero y espalda) y pinzas o pliegues en la cintura para absorber la diferencia entre cintura y cadera. Un jogging o pantalón deportivo simplifica esto con cintura elastizada y sin pinzas. Después de trazarlo se cose una muestra, se corrige el calce y recién ahí se escala a los demás talles.',
+  },
+  {
+    q: '¿Cómo hacer el molde de una falda?',
+    a: 'El molde base de falda (o pollera base) se arma con el contorno de cintura, el contorno de cadera y el largo deseado, en delantero y espalda, con pinzas en la cintura para absorber la diferencia con la cadera. Desde esa base se derivan la falda recta, la falda tubo, la evasé o campana (que se arma sobre un círculo o cuarto de círculo, sin pinzas) y la tableada o plisada, que suma paños. Igual que con cualquier molde, conviene probarlo con una muestra antes de escalarlo a toda la curva de talles.',
+  },
+  {
+    q: '¿Cómo escalar patrones de costura?',
+    a: 'Escalar (o graduar) un patrón es aplicar incrementos definidos en una tabla a cada punto del molde base para generar los demás talles, manteniendo la proporción y el aplomo de la pieza. Se puede hacer a mano con regla y escuadra sobre líneas guía horizontales y verticales, o en un programa CAD (Optitex, Audaces, Gerber) que genera automáticamente toda la curva a partir de esos incrementos. Todos los moldes digitales de Modeltex ya vienen con la curva de talles escalada y aprobada, sin necesidad de graduarla de nuevo.',
+  },
+  {
+    q: '¿Cuál es la diferencia entre moldería y patronaje?',
+    a: 'En la práctica son el mismo oficio: desarrollar los moldes o patrones de una prenda a partir de medidas. La diferencia es sobre todo regional: en Argentina y el Río de la Plata se usa más "moldería" y "moldista", mientras que en España y otros países hispanohablantes se usa más "patronaje" y "patronista". No hay una distinción técnica oficial entre ambos términos en el uso cotidiano de la industria.',
+  },
+  {
+    q: '¿Qué programas hay para hacer moldería digital gratis?',
+    a: 'Seamly2D (la continuación open source de Valentina) permite trazar moldes paramétricos por medidas de forma gratuita, y programas de dibujo vectorial como Inkscape sirven para digitalizar y ajustar piezas ya trazadas a mano. Son un buen punto de partida, pero no suelen tener el escalado industrial automático ni el manejo de archivos DXF/AAMA tan maduro como el software profesional pago (Optitex, Audaces, Gerber, Lectra) que se usa en producción de fábrica. Para quien no quiere pasar por la curva de aprendizaje de ningún programa, partir de un molde digital ya hecho es la alternativa más rápida para empezar a producir.',
+  },
+  {
+    q: '¿Qué es el patronaje industrial?',
+    a: 'Es el desarrollo de moldes pensado para producir muchas prendas iguales de forma repetible: incluye el trazado del molde base, su escalado a toda la curva de talles, la ficha técnica de la prenda, la tizada optimizada para minimizar el desperdicio de tela y la aprobación con muestra antes de pasar a producción en serie. Se diferencia de la moldería artesanal u hobby en que ahí el molde es único, para una persona o una prenda puntual, sin necesidad de escalar ni optimizar tela.',
+  },
+  {
+    q: 'Tabla de medidas industriales para imprimir',
+    a: 'En Argentina no existe una única tabla de medidas oficial obligatoria para indumentaria adulta: la Ley 27.521 crea el SUNITI para avanzar hacia talles unificados, pero en la práctica cada fábrica arma su propia tabla y progresión, calibrada con sus propios moldistas y pruebas de calce. Una tabla de medidas propia debería tener, como mínimo, columnas de talle, contorno de busto o pecho, contorno de cintura, contorno de cadera, largo de talle y ancho de espalda, con los números validados con una muestra cosida antes de tizar en serie. Los moldes de Modeltex ya vienen con su curva de talles y progresión hecha y aprobada con muestra, como alternativa a armar la tabla desde cero.',
+  },
+  {
+    q: '¿Cómo digitalizar patrones de papel?',
+    a: 'Los métodos más usados son la mesa digitalizadora (se recorre el contorno del molde de papel con un cursor y el software CAD genera el vector exacto, el método más preciso), el escaneo por partes seguido de vectorización en un programa CAD o vectorial, y la foto cenital con una referencia de escala conocida cuando no hay mesa digitalizadora. En cualquiera de los tres conviene verificar la escala real con una medida de control y revisar que las curvas queden suaves. Modeltex ofrece moldería a pedido a partir de una prenda, foto o molde de papel existente, incluyendo pasarlo a digital y escalarlo a toda la curva de talles.',
+  },
 ];
