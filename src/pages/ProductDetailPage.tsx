@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeft,
   BadgeCheck,
@@ -27,6 +27,7 @@ import { productCode, cartonPrice, pdfPrice, ploterPrice, productUrl } from '../
 import { fetchReviews, reviewSummary } from '../lib/reviews';
 import { useLocale } from '../lib/locale';
 import { PRODUCT_COLUMNS } from '../lib/productColumns';
+import { SLUG_REDIRECTS } from '../lib/slugRedirects';
 import {
   buildProductFaq,
   descriptionParagraphs,
@@ -51,6 +52,7 @@ const formatDescription = (format: string, t: (key: string, es: string) => strin
 
 export default function ProductDetailPage() {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
   const { user, isAdmin } = useAuth();
   const { t } = useLocale();
   const [product, setProduct] = useState<Product | null>(null);
@@ -64,6 +66,11 @@ export default function ProductDetailPage() {
 
   const fetchProduct = async () => {
     setLoading(true);
+    const newSlug = slug ? SLUG_REDIRECTS[slug] : undefined;
+    if (newSlug) {
+      navigate(`/producto/${newSlug}`, { replace: true });
+      return;
+    }
     let { data } = await supabase
       .from('products')
       .select(PRODUCT_COLUMNS)

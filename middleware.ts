@@ -14,6 +14,7 @@ import { FAQ_ITEMS } from './src/lib/faqData.js';
 import { CATEGORY_SEO, CATEGORY_TITLE_SUFFIX } from './src/lib/categorySeo.js';
 import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, type Guia } from './src/lib/guiasData.js';
 import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent.js';
+import { SLUG_REDIRECTS } from './src/lib/slugRedirects.js';
 
 export const config = {
   matcher: [
@@ -1194,6 +1195,9 @@ export default async function middleware(request: Request) {
     if (path.startsWith('/producto/')) {
       const slug = decodeURIComponent(path.replace(/^\/producto\//, ''));
       if (!slug) return next();
+
+      const newSlug = SLUG_REDIRECTS[slug];
+      if (newSlug) return Response.redirect(`${url.origin}/producto/${newSlug}`, 301);
 
       const [productRes, htmlRes] = await Promise.all([
         fetch(
