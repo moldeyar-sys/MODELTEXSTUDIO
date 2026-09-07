@@ -7,7 +7,24 @@
 // cada producto, su imagen principal (extension de sitemap de imagenes de
 // Google) para que el catalogo aparezca tambien en Google Imagenes.
 
-import { GUIAS } from '../src/lib/guiasData';
+// Slugs de las guias de src/lib/guias/ duplicados a proposito (no se importan
+// desde src/): las funciones serverless de Vercel de este proyecto fallan en
+// produccion (FUNCTION_INVOCATION_FAILED) al importar codigo fuera de api/,
+// aunque el build y el typecheck locales no muestren ningun error.
+const GUIA_SLUGS = [
+  'formatos-de-molderia-digital',
+  'telas-por-tipo-de-prenda',
+  'curva-de-talles-industrial',
+  'consumo-de-tela-por-prenda',
+  'costeo-de-una-prenda',
+  'tizada-computarizada-mrk',
+  'impresion-de-moldes-en-plotter',
+  'abrir-moldes-dxf-en-optitex-audaces-gerber-lectra',
+  'armar-una-coleccion-con-moldes-digitales',
+  'uniformes-escolares-y-de-trabajo',
+  'moldes-para-sublimacion',
+  'glosario-de-molderia',
+];
 
 const SITE_URL = 'https://modeltex.com.ar';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
@@ -30,7 +47,7 @@ const staticRoutes = [
   { path: '/diseno-a-pedido', changefreq: 'monthly', priority: '0.80' },
   { path: '/preguntas-frecuentes', changefreq: 'monthly', priority: '0.78' },
   { path: '/guias', changefreq: 'weekly', priority: '0.80' },
-  ...GUIAS.map((g) => ({ path: `/guias/${g.slug}`, changefreq: 'monthly', priority: '0.76', lastmod: g.updated })),
+  ...GUIA_SLUGS.map((slug) => ({ path: `/guias/${slug}`, changefreq: 'monthly', priority: '0.76' })),
   { path: '/como-funciona', changefreq: 'monthly', priority: '0.75' },
   { path: '/ayuda-impresion', changefreq: 'monthly', priority: '0.75' },
   { path: '/politica-descargas', changefreq: 'monthly', priority: '0.65' },
