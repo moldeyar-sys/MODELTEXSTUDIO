@@ -37,16 +37,16 @@ export const CATEGORY_SEO: Record<string, { title: string; description: string }
   bebes: {
     title: 'Moldes de ropa para bebés',
     description:
-      'Moldes de ropa para bebés: bodies y prendas de bebé con todos los talles incluidos, en PDF A4, plotter y formatos CAD. Descarga inmediata.',
+      'Moldes de ropa para bebés: bodies y prendas de bebé con curva de talles completa, en PDF A4, plotter y formatos CAD. Descarga inmediata.',
   },
   'adultos-unisex': {
     title: 'Moldes de ropa unisex para adultos',
     description:
-      'Moldes unisex para adultos: camperas deportivas, buzos y remeras que sirven para dama y hombre. Todos los talles incluidos, en PDF A4, plotter y CAD.',
+      'Moldes unisex para adultos: camperas deportivas, buzos y remeras que sirven para dama y hombre. Curva de talles completa, en PDF A4, plotter y CAD.',
   },
   'ninos-unisex': {
     title: 'Moldes de ropa unisex para niños',
     description:
-      'Moldes unisex infantiles: buzos, remeras, camperas, shorts escolares y blazers para niña y niño. Todos los talles incluidos, en PDF A4, plotter y CAD.',
+      'Moldes unisex infantiles: buzos, remeras, camperas, shorts escolares y blazers para niña y niño. Curva de talles completa, en PDF A4, plotter y CAD.',
   },
 };

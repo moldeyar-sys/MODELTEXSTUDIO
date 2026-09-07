@@ -21,6 +21,24 @@ import type { Product, ProductCategory } from '../lib/types';
 import { CATEGORIES, FORMATS } from '../lib/types';
 import { isPromoActive } from '../lib/promo';
 import { CATEGORY_SEO } from '../lib/categorySeo';
+import { PRODUCT_COLUMNS } from '../lib/productColumns';
+
+// El filtro de formato viene de FORMATS ("PDF A4", "PDF Plotter", "DXF"...),
+// pero en la base casi todos los productos tienen formats = ["PDF"] (y se
+// venden en A4 y plotter por igual): sin estos alias el filtro devolvía 0.
+const formatAliases = (format: string): string[] => {
+  const up = format.toUpperCase();
+  const out = [format];
+  if (up.startsWith('PDF')) out.push('PDF', 'pdf');
+  if (up.includes('DXF') || up.includes('AAMA')) out.push('DXF', 'DXF/AAMA', 'AAMA');
+  if (up.includes('PDS')) out.push('PDS');
+  if (up.includes('MRK')) out.push('MRK');
+  if (up.includes('ADS')) out.push('ADS');
+  if (up.includes('PLT')) out.push('PLT');
+  if (up.includes('CDR')) out.push('CDR');
+  if (up.includes('SUBLIM')) out.push('SUBLIMACION', 'Sublimacion', 'sublimacion');
+  return Array.from(new Set(out));
+};
 
 type SortOption = 'reciente' | 'precio_asc' | 'precio_desc' | 'nombre';
 type SmartIntent = {
@@ -270,29 +288,34 @@ export default function CatalogPage() {
 
   const fetchProducts = useCallback(async () => {
     setLoading(true);
-    const buildQuery = (useCategoriesArray: boolean) => {
-      let query = supabase.from('products').select('*').eq('is_active', true);
+    const buildQuery = (useCategoriesArray: boolean, columns: string) => {
+      let query = supabase.from('products').select(columns).eq('is_active', true);
       if (category) {
         query = useCategoriesArray
           ? query.or(`categories.cs.{${category}},category.eq.${category}`)
           : query.eq('category', category);
       }
       if (format) {
-        query = query.contains('formats', [format]);
+        query = query.overlaps('formats', formatAliases(format));
       }
       return query;
     };
 
     try {
-      let { data, error } = await buildQuery(true);
+      let { data, error } = await buildQuery(true, PRODUCT_COLUMNS);
       if (error && /categories/i.test(error.message || '')) {
-        ({ data, error } = await buildQuery(false));
+        ({ data, error } = await buildQuery(false, PRODUCT_COLUMNS));
+      }
+      // Si alguna columna pedida no existiera (base desactualizada), vale más
+      // el catálogo pesado que un catálogo vacío.
+      if (error) {
+        ({ data, error } = await buildQuery(true, '*'));
       }
       if (error) {
         console.error('Error fetching products:', error);
         setProducts([]);
       } else {
-        setProducts(((data as Product[]) || []).filter((product) => !isPromoActive(product)));
+        setProducts(((data as unknown as Product[]) || []).filter((product) => !isPromoActive(product)));
       }
     } catch (err) {
       console.error('Unexpected error fetching products:', err);
@@ -443,7 +466,7 @@ export default function CatalogPage() {
       ? categorySeo.description
       : category
         ? `Moldes de ${currentCategoryLabel.toLowerCase()}: molderia digital y en carton en PDF A4, plotter, DXF, CDR y PLT. Escalado completo y descarga inmediata.`
-        : 'Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Todos los talles incluidos, en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces). Descarga inmediata.',
+        : 'Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Curva de talles completa, en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces). Descarga inmediata.',
     path: category ? `/catalogo?categoria=${category}` : '/catalogo',
   });
 

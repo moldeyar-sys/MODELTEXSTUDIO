@@ -22,6 +22,7 @@ import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
+import { PRODUCT_COLUMNS } from '../lib/productColumns';
 
 type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats' | 'chats';
 
@@ -70,7 +71,7 @@ export default function AdminPage() {
   const fetchAll = async (showSpinner = true) => {
     if (showSpinner) setLoading(true);
     const [prodRes, orderRes, custRes, reqRes, freeRes, downloadStatsRes, contactRes, subsRes, heroRes, chatRes] = await Promise.all([
-      supabase.from('products').select('*').order('created_at', { ascending: false }),
+      supabase.from('products').select(PRODUCT_COLUMNS).order('created_at', { ascending: false }),
       supabase.from('orders').select('*, order_items(*, product:products(name, main_image_url)), buyer:profiles(email, whatsapp, full_name)').order('created_at', { ascending: false }),
       supabase.from('profiles').select('*').order('created_at', { ascending: false }),
       supabase.from('custom_requests').select('*').order('created_at', { ascending: false }),
@@ -81,7 +82,7 @@ export default function AdminPage() {
       fetchAllHeroImages(), // resiliente
       fetchChatSessions(), // resiliente igual
     ]);
-    setProducts((prodRes.data as Product[]) || []);
+    setProducts((prodRes.data as unknown as Product[]) || []);
     setOrders((orderRes.data as Order[]) || []);
     setCustomers((custRes.data as Profile[]) || []);
     setRequests((reqRes.data as CustomRequest[]) || []);

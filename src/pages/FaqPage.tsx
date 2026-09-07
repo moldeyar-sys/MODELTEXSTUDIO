@@ -71,7 +71,10 @@ export default function FaqPage() {
         <div className="max-w-3xl mt-10 card p-6 sm:p-7 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h2 className="font-display text-xl font-bold text-primary-900">¿No encontraste tu respuesta?</h2>
-            <p className="text-gray-600 text-sm mt-1">Consultanos directo o mirá el catálogo completo.</p>
+            <p className="text-gray-600 text-sm mt-1">
+              Consultanos directo, mirá el catálogo completo o leé las{' '}
+              <Link to="/guias" className="text-primary-700 underline">guías para producción</Link>.
+            </p>
           </div>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link to="/contacto" className="btn-secondary inline-flex items-center justify-center gap-2">

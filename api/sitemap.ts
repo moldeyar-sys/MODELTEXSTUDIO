@@ -7,6 +7,8 @@
 // cada producto, su imagen principal (extension de sitemap de imagenes de
 // Google) para que el catalogo aparezca tambien en Google Imagenes.
 
+import { GUIAS } from '../src/lib/guiasData';
+
 const SITE_URL = 'https://modeltex.com.ar';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
 const SUPABASE_ANON_KEY =
@@ -27,6 +29,8 @@ const staticRoutes = [
   { path: '/moldes-gratis', changefreq: 'weekly', priority: '0.85' },
   { path: '/diseno-a-pedido', changefreq: 'monthly', priority: '0.80' },
   { path: '/preguntas-frecuentes', changefreq: 'monthly', priority: '0.78' },
+  { path: '/guias', changefreq: 'weekly', priority: '0.80' },
+  ...GUIAS.map((g) => ({ path: `/guias/${g.slug}`, changefreq: 'monthly', priority: '0.76', lastmod: g.updated })),
   { path: '/como-funciona', changefreq: 'monthly', priority: '0.75' },
   { path: '/ayuda-impresion', changefreq: 'monthly', priority: '0.75' },
   { path: '/politica-descargas', changefreq: 'monthly', priority: '0.65' },

@@ -26,7 +26,14 @@ import { ReviewsSection } from '../components/ui/ReviewsSection';
 import { productCode, cartonPrice, pdfPrice, ploterPrice, productUrl } from '../lib/productFormats';
 import { fetchReviews, reviewSummary } from '../lib/reviews';
 import { useLocale } from '../lib/locale';
-import { CATEGORY_TITLE_SUFFIX } from '../lib/categorySeo';
+import { PRODUCT_COLUMNS } from '../lib/productColumns';
+import {
+  buildProductFaq,
+  descriptionParagraphs,
+  productImageAlt,
+  productTitle,
+  PRODUCT_GUIDE_LINKS,
+} from '../lib/productContent';
 
 const formatDescription = (format: string, t: (key: string, es: string) => string) => {
   const normalized = format.toLowerCase();
@@ -57,23 +64,28 @@ export default function ProductDetailPage() {
 
   const fetchProduct = async () => {
     setLoading(true);
-    const { data } = await supabase
+    let { data } = await supabase
       .from('products')
-      .select('*')
+      .select(PRODUCT_COLUMNS)
       .eq('slug', slug)
       .eq('is_active', true)
       .maybeSingle();
+    if (!data) {
+      // Si alguna columna pedida no existiera, se cae al select completo
+      // antes de dar el producto por inexistente.
+      ({ data } = await supabase.from('products').select('*').eq('slug', slug).eq('is_active', true).maybeSingle());
+    }
 
     if (data) {
-      setProduct(data as Product);
+      setProduct(data as unknown as Product);
       setActiveImage(0);
-      fetchRelated(data as Product);
+      fetchRelated(data as unknown as Product);
       // Cuenta para "productos mas vistos" del panel admin. El propio admin
       // navegando su catalogo no debe inflar el conteo. Best-effort: si
       // falla, no afecta la pagina.
       if (!isAdmin) {
         try {
-          await supabase.rpc('increment_product_view', { p_id: (data as Product).id, p_has_account: !!user });
+          await supabase.rpc('increment_product_view', { p_id: (data as unknown as Product).id, p_has_account: !!user });
         } catch {
           /* best-effort */
         }
@@ -85,12 +97,12 @@ export default function ProductDetailPage() {
   const fetchRelated = async (p: Product) => {
     const { data } = await supabase
       .from('products')
-      .select('*')
+      .select(PRODUCT_COLUMNS)
       .eq('is_active', true)
       .eq('category', p.category)
       .neq('id', p.id)
       .limit(4);
-    setRelated((data as Product[]) || []);
+    setRelated((data as unknown as Product[]) || []);
   };
 
   const allImages = product
@@ -107,11 +119,9 @@ export default function ProductDetailPage() {
   const deliveryDescription = t('pd.instantDesc', 'Apenas se confirma el pago, accedes desde tu cuenta.');
 
   useSeo({
-    // Muchos moldes comparten nombre ("TOP DAMA" x43): la categoria en el
-    // titulo los distingue un poco en los resultados de busqueda.
-    title: product
-      ? `${product.name} — molde digital ${CATEGORY_TITLE_SUFFIX[product.category] || ''}`.trim()
-      : loading ? 'Producto' : 'Producto no encontrado',
+    // Muchos moldes comparten nombre ("TOP DAMA" x43): la frase de la prenda
+    // (garment_type) y la categoria en el titulo los distinguen en Google.
+    title: product ? productTitle(product) : loading ? 'Producto' : 'Producto no encontrado',
     description: product
       ? (product.short_description || product.long_description || `Molde digital de ${product.garment_type || product.name}. Talles y formatos profesionales con descarga inmediata.`).slice(0, 160)
       : undefined,
@@ -193,10 +203,41 @@ export default function ProductDetailPage() {
       };
     }
 
+    const propiedades = [
+      { name: 'Talles incluidos', value: (product.sizes || []).join(', ') },
+      { name: 'Formatos', value: (product.formats || []).join(', ') },
+      { name: 'Telas recomendadas', value: (product.recommended_fabrics || []).join(', ') },
+    ].filter((pr) => pr.value);
+    if (propiedades.length) {
+      schema.additionalProperty = propiedades.map((pr) => ({ '@type': 'PropertyValue', ...pr }));
+    }
+
     return schema;
   }, [product, ratingSummary]);
 
   useStructuredData(productSchema, 'product-schema');
+
+  // Preguntas y respuestas armadas con los datos reales de la ficha (talles,
+  // formatos, precios, telas, entrega): lo mismo que sirve middleware.ts a
+  // los bots, para que la ficha responda igual con y sin JavaScript.
+  const productFaq = useMemo(() => (product ? buildProductFaq(product) : []), [product]);
+  const productFaqSchema = useMemo(
+    () =>
+      productFaq.length
+        ? {
+            '@context': 'https://schema.org',
+            '@type': 'FAQPage',
+            mainEntity: productFaq.map((f) => ({
+              '@type': 'Question',
+              name: f.q,
+              acceptedAnswer: { '@type': 'Answer', text: f.a },
+            })),
+          }
+        : null,
+    [productFaq],
+  );
+  useStructuredData(productFaqSchema, 'product-faq-schema');
+  const longParagraphs = product ? descriptionParagraphs(product) : [];
 
   if (loading) {
     return (
@@ -268,7 +309,7 @@ export default function ProductDetailPage() {
                 {allImages[activeImage] ? (
                   <img
                     src={allImages[activeImage]}
-                    alt={product.name}
+                    alt={productImageAlt(product)}
                     className="w-full h-full object-contain p-3 sm:p-5"
                   />
                 ) : (
@@ -322,7 +363,7 @@ export default function ProductDetailPage() {
               </h1>
 
               <p className="text-gray-600 leading-relaxed">
-                {product.long_description || product.short_description || t('pd.defaultDesc', 'Molde profesional preparado para producción textil.')}
+                {product.short_description || longParagraphs[0] || t('pd.defaultDesc', 'Molde profesional preparado para producción textil.')}
               </p>
             </div>
 
@@ -370,6 +411,17 @@ export default function ProductDetailPage() {
             </div>
           </div>
         </div>
+
+        {longParagraphs.length > 0 && (
+          <section className="mt-8 md:mt-10 bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+            <h2 className="font-display text-2xl font-bold text-primary-900 mb-4">{t('pd.about', 'Sobre este molde')}</h2>
+            <div className="space-y-3 text-gray-700 leading-relaxed max-w-3xl">
+              {longParagraphs.map((par, i) => (
+                <p key={i}>{par}</p>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Product details */}
         <section className="mt-8 md:mt-10 grid lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)] gap-6">
@@ -457,6 +509,44 @@ export default function ProductDetailPage() {
                   <p className="text-xs text-gray-500 mt-1 leading-relaxed">{formatDescription(format, t)}</p>
                 </div>
               ))}
+            </div>
+          </section>
+        )}
+
+        {productFaq.length > 0 && (
+          <section className="mt-6 grid lg:grid-cols-[minmax(0,1.2fr)_minmax(300px,0.8fr)] gap-6">
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+              <h2 className="font-display text-2xl font-bold text-primary-900 mb-4">
+                {t('pd.faqTitle', 'Preguntas frecuentes sobre')} {product.name}
+              </h2>
+              <div className="space-y-2">
+                {productFaq.map((f) => (
+                  <details key={f.q} className="group rounded-xl border border-gray-100 bg-gray-50 overflow-hidden">
+                    <summary className="cursor-pointer list-none px-4 py-3 flex items-start justify-between gap-3 text-sm font-medium text-primary-900">
+                      <span>{f.q}</span>
+                      <span className="text-primary-400 group-open:rotate-90 transition-transform mt-0.5 flex-shrink-0">›</span>
+                    </summary>
+                    <p className="px-4 pb-4 text-sm text-gray-600 leading-relaxed">{f.a}</p>
+                  </details>
+                ))}
+              </div>
+            </div>
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm">
+              <h2 className="font-display text-xl font-bold text-primary-900 mb-3">{t('pd.guides', 'Guías para producir con este molde')}</h2>
+              <ul className="space-y-2">
+                {PRODUCT_GUIDE_LINKS.map((g) => (
+                  <li key={g.to}>
+                    <Link to={g.to} className="text-sm text-primary-700 hover:text-primary-900 hover:underline">
+                      {g.label}
+                    </Link>
+                  </li>
+                ))}
+                <li>
+                  <Link to="/guias" className="text-sm font-medium text-primary-800 hover:underline">
+                    {t('pd.allGuides', 'Ver todas las guías')}
+                  </Link>
+                </li>
+              </ul>
             </div>
           </section>
         )}

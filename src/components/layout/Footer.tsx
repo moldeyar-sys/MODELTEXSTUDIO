@@ -61,6 +61,7 @@ export function Footer() {
             <ul className="space-y-2">
               <li><Link to="/como-funciona" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.howItWorks', 'Cómo funciona')}</Link></li>
               <li><Link to="/preguntas-frecuentes" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.faq', 'Preguntas frecuentes')}</Link></li>
+              <li><Link to="/guias" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.guides', 'Guías para producción')}</Link></li>
               <li><Link to="/ayuda-impresion" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.printHelp', 'Ayuda para imprimir')}</Link></li>
               <li><Link to="/politica-descargas" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.downloads', 'Descargas y reembolsos')}</Link></li>
               <li><Link to="/terminos" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.terms', 'Términos')}</Link></li>

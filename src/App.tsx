@@ -28,6 +28,8 @@ const ContactPage = lazy(() => import('./pages/ContactPage'));
 const TrustPage = lazy(() => import('./pages/TrustPage'));
 const RespaldoDrivePage = lazy(() => import('./pages/RespaldoDrivePage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
+const GuiasPage = lazy(() => import('./pages/GuiasPage'));
+const GuiaDetailPage = lazy(() => import('./pages/GuiaDetailPage'));
 const MoldesPdfPage = lazy(() => import('./pages/MoldesPdfPage'));
 const MoldesPdfA4Page = lazy(() => import('./pages/MoldesPdfA4Page'));
 const MoldesPlotterPage = lazy(() => import('./pages/MoldesPlotterPage'));
@@ -72,6 +74,8 @@ function AppLayout() {
             <Route path="/moldes-gratis" element={<FreeMoldsPage />} />
             <Route path="/contacto" element={<ContactPage />} />
             <Route path="/preguntas-frecuentes" element={<FaqPage />} />
+            <Route path="/guias" element={<GuiasPage />} />
+            <Route path="/guias/:slug" element={<GuiaDetailPage />} />
             <Route path="/como-funciona" element={<TrustPage variant="como-funciona" />} />
             <Route path="/ayuda-impresion" element={<TrustPage variant="ayuda-impresion" />} />
             <Route path="/politica-descargas" element={<TrustPage variant="politica-descargas" />} />

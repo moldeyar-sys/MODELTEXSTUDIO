@@ -12,6 +12,8 @@
 
 import { FAQ_ITEMS } from './src/lib/faqData';
 import { CATEGORY_SEO, CATEGORY_TITLE_SUFFIX } from './src/lib/categorySeo';
+import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, type Guia } from './src/lib/guiasData';
+import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent';
 
 export const config = {
   matcher: [
@@ -26,6 +28,8 @@ export const config = {
     '/como-funciona',
     '/ayuda-impresion',
     '/preguntas-frecuentes',
+    '/guias',
+    '/guias/:path*',
     '/diseno-a-pedido',
     '/contacto',
     '/ia-textil',
@@ -69,7 +73,7 @@ const CATEGORIA_INTRO: Record<string, { label: string; intro: string }> = {
   dama: {
     label: 'Dama',
     intro:
-      'La categoría más grande del catálogo: vestidos, blusas, tops, shorts, calzas, buzos, camperas, abrigos, blazers, bikinis, pantalones y palazzos de dama, con curva de talles industrial (XS a 4XL) incluida en cada compra.',
+      'La categoría más grande del catálogo: vestidos, blusas, tops, shorts, calzas, buzos, camperas, abrigos, blazers, bikinis, pantalones y palazzos de dama, con curva de talles industrial (XS a 4XL) disponible en cada molde.',
   },
   hombre: {
     label: 'Hombre',
@@ -90,7 +94,7 @@ const CATEGORIA_INTRO: Record<string, { label: string; intro: string }> = {
   },
   'adultos-unisex': {
     label: 'Adultos unisex',
-    intro: 'Camperas deportivas, buzos y remeras unisex para adultos, con todos los talles incluidos.',
+    intro: 'Camperas deportivas, buzos y remeras unisex para adultos, con curva de talles completa.',
   },
   'ninos-unisex': {
     label: 'Niños unisex',
@@ -286,9 +290,8 @@ function productFormats(p: ProductRow) {
 }
 
 function productSeo(p: ProductRow) {
-  const cat = CATEGORIAS[p.category || ''];
-  const title = `${p.name} — molde digital ${cat?.sufijo || ''}`.replace(/\s+$/, '') + ` | ${SITE_NAME}`;
-  const base = (p.short_description || p.long_description || '').toString().trim() || `Molde digital de ${p.garment_type || p.name}.`;
+  const title = `${productTitle(p)} | ${SITE_NAME}`;
+  const base = (p.short_description || p.long_description || '').toString().trim() || `Molde digital de ${garmentPhrase(p) || p.name}.`;
   const precios = productFormats(p).map((f) => f.ars).filter((v): v is number => v !== null);
   const desde = precios.length ? ` Desde ${fmtArs(Math.min(...precios))}.` : '';
   const formatos = (p.formats || []).length ? ` Formatos: ${(p.formats || []).join(', ')}.` : '';
@@ -312,7 +315,7 @@ function productBody(p: ProductRow, pageUrl: string, origin: string): { inner: s
     cat ? `<li>Categoría: <a href="${catUrl}">${escapeHtml(cat.label)}</a></li>` : '',
     p.garment_type && p.garment_type !== p.name ? `<li>Tipo de prenda: ${escapeHtml(p.garment_type)}</li>` : '',
     temporada ? `<li>Temporada: ${temporada}</li>` : '',
-    sizes.length ? `<li>Talles incluidos (${sizes.length}, todos en la misma compra): ${escapeHtml(sizes.join(', '))}</li>` : '',
+    sizes.length ? `<li>Talles disponibles (${sizes.length}, se eligen en la ficha; la curva completa se puede llevar en una sola compra): ${escapeHtml(sizes.join(', '))}</li>` : '',
     formats.length ? `<li>Formatos disponibles: ${escapeHtml(formats.join(', '))}</li>` : '',
     fabrics.length ? `<li>Telas recomendadas: ${escapeHtml(fabrics.join(', '))}</li>` : '',
     p.codigo ? `<li>Código: ${escapeHtml(p.codigo)}</li>` : '',
@@ -326,15 +329,29 @@ function productBody(p: ProductRow, pageUrl: string, origin: string): { inner: s
     { name: p.name, url: pageUrl },
   ];
 
+  const phrase = garmentPhrase(p);
+  const short = (p.short_description || '').toString().trim();
+  const largos = descriptionParagraphs(p);
+  const faq = buildProductFaq(p);
+
   const inner = [
     breadcrumbHtml(migas),
-    `<h1>${escapeHtml(p.name)}${p.codigo ? ` (cód. ${escapeHtml(p.codigo)})` : ''}</h1>`,
-    desc ? `<p>${escapeHtml(desc.slice(0, 600))}</p>` : '',
-    `<p>Molde ${cat ? escapeHtml(cat.sufijo) + ' ' : ''}profesional aprobado con muestra confeccionada, con curva de talles industrial completa. Se compra una vez y se descargan todos los talles.</p>`,
+    `<h1>${escapeHtml(p.name)}${phrase ? ` — ${escapeHtml(phrase)}` : ''}${p.codigo ? ` (cód. ${escapeHtml(p.codigo)})` : ''}</h1>`,
+    short ? `<p>${escapeHtml(short.slice(0, 600))}</p>` : '',
+    ...largos.map((par) => `<p>${escapeHtml(par)}</p>`),
+    !short && !largos.length && desc ? `<p>${escapeHtml(desc.slice(0, 600))}</p>` : '',
+    `<p>Molde ${cat ? escapeHtml(cat.sufijo) + ' ' : ''}profesional aprobado con muestra confeccionada, con curva de talles industrial completa disponible. En la ficha se eligen los talles (el precio base cubre la selección estándar y cada talle extra suma un adicional); los formatos CAD incluyen la curva completa.</p>`,
     `<h2>Ficha técnica</h2><ul>${ficha.join('')}</ul>`,
     lineas.length ? `<h2>Precios</h2><ul>${lineas.map((l) => `<li>${escapeHtml(l)}</li>`).join('')}</ul>` : '',
     `<p>Disponible también en otros formatos a pedido (${FORMATOS_TXT}). Pagos con Mercado Pago, transferencia, PayPal o cripto; se puede comprar con o sin cuenta.</p>`,
     `<h2>Cómo se usa</h2><p>PDF A4: se imprime en casa al 100% (tamaño real), se verifica el cuadrado de control con una regla y se pegan las hojas numeradas. PDF plotter: se imprime en ancho real en cualquier servicio de ploteo. DXF/AAMA, PDS, MRK y ADS: se abren directo en el sistema CAD (Optitex, Audaces, Gerber, Lectra) para cortar sin trazar.</p>`,
+    faq.length
+      ? `<h2>Preguntas frecuentes sobre ${escapeHtml(p.name)}</h2>` +
+        faq.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join('')
+      : '',
+    `<h2>Guías para producir con este molde</h2><ul>${PRODUCT_GUIDE_LINKS.map(
+      (g) => `<li><a href="${origin}${g.to}">${escapeHtml(g.label)}</a></li>`,
+    ).join('')}<li><a href="${origin}/guias">Todas las guías para producción</a></li></ul>`,
     `<p>Comprar online en <a href="${pageUrl}">${pageUrl}</a> — ${SITE_NAME}, moldería digital para producción textil, envíos digitales a todo el mundo.` +
       (cat ? ` Ver más <a href="${catUrl}">moldes ${escapeHtml(cat.sufijo)}</a>,` : ' Ver') +
       ` el <a href="${origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}) o las <a href="${origin}/preguntas-frecuentes">preguntas frecuentes</a>.</p>`,
@@ -356,6 +373,13 @@ function productBody(p: ProductRow, pageUrl: string, origin: string): { inner: s
     if (f.usd) offers.push({ ...base, name: `${f.nombre} (internacional)`, price: f.usd, priceCurrency: 'USD' });
   }
   const imagenes = [p.main_image_url, ...(p.gallery || [])].filter(Boolean);
+  const propiedades = [
+    { name: 'Talles incluidos', value: sizes.join(', ') },
+    { name: 'Formatos', value: formats.join(', ') },
+    { name: 'Telas recomendadas', value: fabrics.join(', ') },
+  ]
+    .filter((pr) => pr.value)
+    .map((pr) => ({ '@type': 'PropertyValue', ...pr }));
 
   const schemas: Schema[] = [
     {
@@ -371,9 +395,26 @@ function productBody(p: ProductRow, pageUrl: string, origin: string): { inner: s
         category: cat?.label || undefined,
         brand: { '@type': 'Brand', name: SITE_NAME },
         ...(offers.length ? { offers } : {}),
+        ...(propiedades.length ? { additionalProperty: propiedades } : {}),
       },
     },
     { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    ...(faq.length
+      ? [
+          {
+            id: 'product-faq-schema',
+            data: {
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: faq.map((f) => ({
+                '@type': 'Question',
+                name: f.q,
+                acceptedAnswer: { '@type': 'Answer', text: f.a },
+              })),
+            },
+          },
+        ]
+      : []),
   ];
   return { inner, schemas };
 }
@@ -477,7 +518,7 @@ async function catalogoPage(html: string, origin: string) {
   const inner = [
     breadcrumbHtml(migas),
     `<h1>Catálogo de moldes digitales Modeltex${total ? `: ${fmtCantidad(total)} moldes` : ''}</h1>`,
-    `<p>Moldes de ropa profesionales para producción, aprobados con muestra, con curva de talles completa incluida. Categorías: dama, hombre, niña, niño, bebés y unisex. Formatos: ${FORMATOS_TXT}. Descarga digital inmediata, precios en pesos argentinos y en dólares.</p>`,
+    `<p>Moldes de ropa profesionales para producción, aprobados con muestra, con curva de talles completa disponible. Categorías: dama, hombre, niña, niño, bebés y unisex. Formatos: ${FORMATOS_TXT}. Descarga digital inmediata, precios en pesos argentinos y en dólares.</p>`,
     secciones,
     `<p>Este listado es parcial: el catálogo completo tiene ${CATALOGO_TXT} con búsqueda por prenda, categoría, temporada y formato en <a href="${pageUrl}">${pageUrl}</a>. También hay <a href="${origin}/moldes-gratis">moldes gratis</a> para probar la calidad antes de comprar.</p>`,
   ]
@@ -505,7 +546,7 @@ async function catalogoPage(html: string, origin: string) {
   html = setHeadSeo(
     html,
     `Catálogo de moldes digitales: ${CATALOGO_TXT} | ${SITE_NAME}`,
-    `Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Todos los talles incluidos, en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces). Descarga inmediata.`,
+    `Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Curva de talles completa, en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces). Descarga inmediata.`,
     pageUrl,
   );
   return injectBody(html, inner, schemas);
@@ -523,7 +564,7 @@ const STATIC_PAGES: Record<
       'Moldería digital profesional para producción textil: más de 2.000 moldes de ropa con curva de talles completa, en PDF A4, plotter, DXF/AAMA, Optitex y Audaces. Descarga inmediata.',
     body: (o) => `
 <h1>Modeltex — Moldería digital profesional para producir ropa</h1>
-<p>Vendemos moldes de ropa digitales listos para producción: ${CATALOGO_TXT} aprobados con muestra real, con curva de talles industrial completa incluida en cada compra. Más de 18 años en la industria textil argentina. Entrega por descarga digital a todo el mundo.</p>
+<p>Vendemos moldes de ropa digitales listos para producción: ${CATALOGO_TXT} aprobados con muestra real, con curva de talles industrial completa disponible en cada molde (los talles se eligen en la ficha). Más de 18 años en la industria textil argentina. Entrega por descarga digital a todo el mundo.</p>
 <h2>Qué ofrecemos</h2>
 <ul>
 <li><a href="${o}/catalogo">Catálogo completo</a>: moldes de dama, hombre, niños y bebés en ${FORMATOS_TXT}.</li>
@@ -531,6 +572,7 @@ const STATIC_PAGES: Record<
 <li><a href="${o}/moldes-gratis">Moldes gratis</a> para probar la calidad antes de comprar.</li>
 <li><a href="${o}/diseno-a-pedido">Moldería a pedido</a>: desarrollamos tu molde a medida en el formato que uses.</li>
 <li>Tizadas computarizadas (MRK) optimizadas al ancho de tu tela.</li>
+<li><a href="${o}/guias">Guías para producción</a>: formatos de moldería, telas por prenda, curva de talles, tizadas, consumo de tela, costeo, plotter, uniformes y sublimación.</li>
 </ul>
 <p>Precios en pesos argentinos y en dólares para el exterior. Pagos con Mercado Pago, transferencia, PayPal y cripto. Se puede comprar con o sin cuenta. Más info en <a href="${o}/preguntas-frecuentes">preguntas frecuentes</a>, <a href="${o}/como-funciona">cómo funciona</a> y <a href="${o}/contacto">contacto</a> (WhatsApp ${WHATSAPP_DISPLAY}).</p>`,
   },
@@ -544,7 +586,7 @@ const STATIC_PAGES: Record<
   },
   '/moldes-pdf-a4': {
     title: 'Moldes PDF A4 para imprimir en casa | Modeltex',
-    description: 'Moldes de ropa en PDF A4: imprimí en tu impresora hogareña, pegá las hojas numeradas y cortá. Todos los talles incluidos.',
+    description: 'Moldes de ropa en PDF A4: imprimí en tu impresora hogareña, pegá las hojas numeradas y cortá. Curva de talles completa.',
     body: (o) => `
 <h1>Moldes PDF A4 — imprimí tus moldes en casa</h1>
 <p>El formato ideal para emprendedores: imprimís el molde en hojas A4 comunes al 100% de escala, pegás siguiendo la numeración y obtenés el molde en tamaño real con todos sus talles. Cada archivo incluye cuadrado de control de medida.</p>
@@ -691,6 +733,120 @@ const STATIC_PAGES: Record<
   },
 };
 
+// ---------- Guias para produccion ----------
+
+function guiasIndexPage(html: string, origin: string) {
+  const pageUrl = `${origin}/guias`;
+  const migas = [
+    { name: 'Inicio', url: `${origin}/` },
+    { name: 'Guías', url: pageUrl },
+  ];
+  const inner = [
+    breadcrumbHtml(migas),
+    `<h1>${escapeHtml(GUIAS_TITLE)}</h1>`,
+    `<p>${escapeHtml(GUIAS_DESCRIPTION)}</p>`,
+    `<ul>${GUIAS.map(
+      (g) => `<li><a href="${origin}/guias/${g.slug}">${escapeHtml(g.title)}</a>: ${escapeHtml(g.description)}</li>`,
+    ).join('')}</ul>`,
+    `<p>Los moldes de ${SITE_NAME} para aplicar estas guías están en el <a href="${origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}).</p>`,
+  ].join('\n');
+  const schemas: Schema[] = [
+    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    {
+      id: 'page-schema',
+      data: {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: GUIAS_TITLE,
+        description: GUIAS_DESCRIPTION,
+        url: pageUrl,
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: GUIAS.map((g, i) => ({
+            '@type': 'ListItem',
+            position: i + 1,
+            name: g.title,
+            url: `${origin}/guias/${g.slug}`,
+          })),
+        },
+      },
+    },
+  ];
+  html = setHeadSeo(html, `${GUIAS_TITLE} | ${SITE_NAME}`, GUIAS_DESCRIPTION, pageUrl);
+  return injectBody(html, inner, schemas);
+}
+
+function guiaPage(html: string, origin: string, g: Guia) {
+  const pageUrl = `${origin}/guias/${g.slug}`;
+  const migas = [
+    { name: 'Inicio', url: `${origin}/` },
+    { name: 'Guías', url: `${origin}/guias` },
+    { name: g.title, url: pageUrl },
+  ];
+  const secciones = g.sections
+    .map(
+      (s) =>
+        `<h2>${escapeHtml(s.h2)}</h2>` +
+        s.paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`).join('') +
+        (s.bullets?.length ? `<ul>${s.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join('')}</ul>` : ''),
+    )
+    .join('\n');
+  const otras = GUIAS.filter((x) => x.slug !== g.slug);
+  const inner = [
+    breadcrumbHtml(migas),
+    `<h1>${escapeHtml(g.title)}</h1>`,
+    `<p>${escapeHtml(g.intro)}</p>`,
+    `<p>Guía para producción de ${SITE_NAME}. Actualizada el ${escapeHtml(g.updated)}.</p>`,
+    secciones,
+    g.faqs.length ? `<h2>Preguntas frecuentes</h2>` + g.faqs.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join('') : '',
+    g.related.length
+      ? `<h2>Relacionado</h2><ul>${g.related.map((r) => `<li><a href="${origin}${r.to}">${escapeHtml(r.label)}</a></li>`).join('')}</ul>`
+      : '',
+    `<h2>Más guías</h2><ul>${otras.map((x) => `<li><a href="${origin}/guias/${x.slug}">${escapeHtml(x.title)}</a></li>`).join('')}</ul>`,
+    `<p>Moldes listos para producir, con curva de talles completa, en el <a href="${origin}/catalogo">catálogo de ${SITE_NAME}</a>.</p>`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  const schemas: Schema[] = [
+    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    {
+      id: 'page-schema',
+      data: {
+        '@context': 'https://schema.org',
+        '@type': 'Article',
+        headline: g.title,
+        description: g.description,
+        inLanguage: 'es-AR',
+        datePublished: g.updated,
+        dateModified: g.updated,
+        keywords: g.keywords.join(', '),
+        mainEntityOfPage: pageUrl,
+        author: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/` },
+        publisher: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/` },
+      },
+    },
+    ...(g.faqs.length
+      ? [
+          {
+            id: 'faq-schema',
+            data: {
+              '@context': 'https://schema.org',
+              '@type': 'FAQPage',
+              mainEntity: g.faqs.map((f) => ({
+                '@type': 'Question',
+                name: f.q,
+                acceptedAnswer: { '@type': 'Answer', text: f.a },
+              })),
+            },
+          },
+        ]
+      : []),
+  ];
+  html = setHeadSeo(html, `${g.seoTitle} | ${SITE_NAME}`, g.description, pageUrl);
+  html = html.replace(/(<meta property="og:type" content=")[^"]*(")/, `$1article$2`);
+  return injectBody(html, inner, schemas);
+}
+
 export default async function middleware(request: Request) {
   const ua = request.headers.get('user-agent') || '';
   if (!BOT_UA.test(ua)) return next();
@@ -745,6 +901,22 @@ export default async function middleware(request: Request) {
       html = replaceAttr(html, 'name="twitter:image" ', escapeHtml(product.main_image_url || DEFAULT_IMAGE));
       const { inner, schemas } = productBody(product, pageUrl, url.origin);
       return respond(injectBody(html, inner, schemas));
+    }
+
+    // ---------- Guias para produccion ----------
+    if (path === '/guias' || path.startsWith('/guias/')) {
+      const htmlRes = await fetch(`${url.origin}/index.html`);
+      let html = await htmlRes.text();
+      if (path === '/guias') return respond(guiasIndexPage(html, url.origin));
+      const slug = decodeURIComponent(path.replace(/^\/guias\//, ''));
+      const g = GUIAS.find((x) => x.slug === slug);
+      if (!g) {
+        html = setHeadSeo(html, `Guía no encontrada | ${SITE_NAME}`, GUIAS_DESCRIPTION, `${url.origin}/guias`);
+        html = setRobots(html, 'noindex, follow');
+        html = injectBody(html, `<h1>Guía no encontrada</h1>\n<p><a href="${url.origin}/guias">Ver todas las guías para producción</a>.</p>`);
+        return respond(html, 404);
+      }
+      return respond(guiaPage(html, url.origin, g));
     }
 
     // ---------- Home, catalogo, landings, guias y legales ----------
