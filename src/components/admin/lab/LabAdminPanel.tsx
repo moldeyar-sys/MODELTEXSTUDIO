@@ -99,9 +99,10 @@ export function LabAdminPanel() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      const res = await fetch('/api/embed-lab-content', {
+      const res = await fetch('/api/embed-catalog', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${session?.access_token || ''}` },
+        body: JSON.stringify({ target: 'lab' }),
       });
       const data = await res.json();
       setEmbedResult(data.error ? `Error: ${data.error}` : `Listo: ${data.processed} fragmentos indexados.`);
