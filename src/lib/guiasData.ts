@@ -24,6 +24,16 @@ import { guia as diferenciaMolderiaPatronaje } from './guias/diferencia-entre-mo
 import { guia as programasGratis } from './guias/programas-gratis-de-molderia-digital.js';
 import { guia as patronajeIndustrial } from './guias/que-es-el-patronaje-industrial.js';
 import { guia as digitalizarPatrones } from './guias/como-digitalizar-patrones-de-papel.js';
+import { guia as tablaSaXl } from './guias/tabla-de-medidas-s-a-xl-dama-hombre-nino.js';
+import { guia as fichaTecnica } from './guias/ficha-tecnica-de-diseno-para-taller-de-confeccion.js';
+import { guia as reglasSisaEscote } from './guias/reglas-de-escalado-de-sisa-y-escote.js';
+import { guia as consumoConRinde } from './guias/como-calcular-consumo-de-tela-con-el-rinde.js';
+import { guia as exportarDxf } from './guias/exportar-y-convertir-dxf-entre-optitex-y-audaces.js';
+import { guia as nombreMarca } from './guias/como-elegir-el-nombre-de-una-marca-de-moldes-o-ropa.js';
+import { guia as diccionarioIngles } from './guias/diccionario-ingles-espanol-de-molderia-y-costura.js';
+import { guia as copyInstagram } from './guias/copy-para-vender-moldes-digitales-en-instagram.js';
+import { guia as arrugasTiro } from './guias/arrugas-en-el-tiro-del-pantalon-causas-y-correccion.js';
+import { guia as conversionPulgadas } from './guias/conversion-de-pulgadas-a-centimetros-para-molderia.js';
 
 export type { Guia, GuiaSection, GuiaFaq, GuiaLink } from './guiasTypes.js';
 
@@ -34,19 +44,29 @@ export const GUIAS: Guia[] = [
   medidas,
   talles,
   tablaMedidas,
+  tablaSaXl,
   moldePantalon,
   moldeFalda,
   consumo,
+  consumoConRinde,
   costeo,
   escalarPatrones,
+  reglasSisaEscote,
   tizada,
   plotter,
   dxf,
+  exportarDxf,
   patronajeIndustrial,
   diferenciaMolderiaPatronaje,
   programasGratis,
   digitalizarPatrones,
+  fichaTecnica,
+  arrugasTiro,
+  conversionPulgadas,
+  diccionarioIngles,
   coleccion,
+  nombreMarca,
+  copyInstagram,
   uniformes,
   sublimacion,
   glosario,

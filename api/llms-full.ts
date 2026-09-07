@@ -97,6 +97,66 @@ const GUIAS_LITE = [
       'Digitalizar un patrón de papel es convertir el contorno de un molde físico en un archivo vectorial que se pueda escalar, imprimir o abrir en un CAD de indumentaria. Se hace con mesa digitalizadora, con escaneo plano y vectorización, o con foto cenital y referencia de escala, y solo sirve para producir si la escala quedó exacta y las curvas suaves, no poligonales.',
   },
   {
+    slug: 'tabla-de-medidas-s-a-xl-dama-hombre-nino',
+    title: 'Tabla de medidas en centímetros: dama, hombre y niños S a XL',
+    intro:
+      'Estas son tres tablas de ejemplo en centímetros, del talle S al XL, con contorno de busto o pecho, cintura y cadera para dama, hombre y niños, usando una progresión típica de la industria (4 cm por talle en dama, un poco más en hombre). Es un ejemplo orientativo para entender cómo crece cada medida entre talles, no una norma oficial: cada fabricante ajusta su propia tabla y la valida con una muestra cosida antes de producir en serie.',
+  },
+  {
+    slug: 'ficha-tecnica-de-diseno-para-taller-de-confeccion',
+    title: 'Cómo redactar una ficha técnica de diseño para un taller de confección',
+    intro:
+      'Una ficha técnica de diseño traduce un modelo de ropa en instrucciones exactas para que un taller de confección lo produzca sin llamados ni malentendidos: datos del modelo, dibujo técnico de frente y espalda, tabla de medidas por talle, materiales y avíos, secuencia de armado y cantidad del pedido. Se arma una vez por modelo y acompaña al molde, tanto para un lote chico como para producción en serie.',
+  },
+  {
+    slug: 'reglas-de-escalado-de-sisa-y-escote',
+    title: 'Reglas de escalado de la sisa y el escote',
+    intro:
+      'Las reglas de escalado de sisa y escote no son una norma única: cada escuela de moldería y cada sistema CAD arma su propia tabla, pero un criterio orientativo habitual profundiza la sisa entre 5 y 10 mm por talle y la ensancha entre 3 y 7 mm, mientras que el escote crece un poco en ancho y algo más en caída, repartido de forma distinta entre delantero y espalda. Lo que sí es no negociable es mantener el aplomo entre talles.',
+  },
+  {
+    slug: 'como-calcular-consumo-de-tela-con-el-rinde',
+    title: 'Cómo calcular el consumo de tela para varias prendas según el rinde',
+    intro:
+      'Para saber cuánta tela comprar para un lote de prendas se usa el rinde: metros de tela necesarios es igual a la cantidad de prendas dividida por el rinde (prendas por metro). El rinde es la inversa del consumo unitario. Al resultado siempre hay que sumarle una merma por fallas, empalmes y puntas de rollo.',
+  },
+  {
+    slug: 'exportar-y-convertir-dxf-entre-optitex-y-audaces',
+    title: 'Cómo exportar o convertir archivos DXF entre Optitex y Audaces',
+    intro:
+      'Para pasar un molde de Optitex a Audaces (o al revés) el puente es el formato DXF/AAMA: no hay una conversión directa entre los dos programas, sino una exportación a un estándar intermedio y una importación del otro lado. El resultado depende de elegir la unidad correcta al exportar, de que las capas de piquetes y sentido de hilo se mapeen bien al importar, y de verificar la escala con una medida real contra la ficha técnica.',
+  },
+  {
+    slug: 'como-elegir-el-nombre-de-una-marca-de-moldes-o-ropa',
+    title: 'Cómo elegir el nombre de una marca de patrones digitales o de ropa',
+    intro:
+      'El nombre de una marca de moldes o de ropa se elige combinando un estilo (nombre propio o apellido, palabra descriptiva del rubro, palabra inventada o combinación en otro idioma) con una validación práctica: que sea fácil de pronunciar y escribir, que no choque con una marca ya registrada, que tenga libres el dominio .com.ar y el usuario de Instagram, y que se lea bien en un logo chico.',
+  },
+  {
+    slug: 'diccionario-ingles-espanol-de-molderia-y-costura',
+    title: 'Diccionario inglés-español de moldería y costura',
+    intro:
+      'Dart es pinza, seam allowance es margen de costura, notch es piquete y grainline es línea de hilo o hilo recto: estos son algunos de los más de 35 términos de moldería y costura en inglés que reunimos acá, agrupados por tema, para leer un instructivo, una ficha técnica o un archivo DXF en inglés sin tener que buscar cada palabra suelta.',
+  },
+  {
+    slug: 'copy-para-vender-moldes-digitales-en-instagram',
+    title: 'Cómo escribir el copy para vender moldes digitales en Instagram',
+    intro:
+      'Un copy que vende un paquete de moldes digitales en Instagram sigue una estructura fija: un gancho que nombra el dolor o el beneficio concreto, la presentación clara del paquete (cuántos moldes, de qué categoría y qué incluye), una prueba de que el molde funciona, un llamado a la acción único y una posdata con una razón real para no dejarlo para después.',
+  },
+  {
+    slug: 'arrugas-en-el-tiro-del-pantalon-causas-y-correccion',
+    title: 'Por qué se hacen arrugas en el tiro del pantalón y cómo corregirlo',
+    intro:
+      'Las arrugas en el tiro de un pantalón casi siempre salen de una de cinco causas: tiro delantero o trasero mal calculado, curva de tiro demasiado cerrada o abierta, desbalance entre delantero y trasero, exceso o falta de holgura en la cadera, o costura interior de pierna corrida de lugar. Cada una deja una marca distinta en la prueba de calce.',
+  },
+  {
+    slug: 'conversion-de-pulgadas-a-centimetros-para-molderia',
+    title: 'Diferencia entre el sistema métrico y las pulgadas fraccionales en moldería',
+    intro:
+      'Una pulgada equivale exactamente a 2,54 centímetros: es una conversión matemática exacta, no una aproximación. A partir de ese número se derivan todas las fracciones de pulgada que aparecen en patrones y programas CAD de origen norteamericano (1/8", 1/4", 1/2", 5/8", entre otras), cada una con su equivalente exacto en centímetros.',
+  },
+  {
     slug: 'formatos-de-molderia-digital',
     title: 'Qué formato de molde conviene para tu taller o fábrica',
     intro:
@@ -330,6 +390,46 @@ const FAQ_ITEMS = [
   {
     q: '¿Cómo digitalizar patrones de papel?',
     a: 'Los métodos más usados son la mesa digitalizadora (se recorre el contorno del molde de papel con un cursor y el software CAD genera el vector exacto, el método más preciso), el escaneo por partes seguido de vectorización en un programa CAD o vectorial, y la foto cenital con una referencia de escala conocida cuando no hay mesa digitalizadora. En cualquiera de los tres conviene verificar la escala real con una medida de control y revisar que las curvas queden suaves. Modeltex ofrece moldería a pedido a partir de una prenda, foto o molde de papel existente, incluyendo pasarlo a digital y escalarlo a toda la curva de talles.',
+  },
+  {
+    q: '¿Cómo es una tabla de medidas industriales en centímetros para mujer, hombre y niños del talle S al XL?',
+    a: 'Es una tabla que agrupa, talle por talle, el contorno de busto o pecho, cintura y cadera en centímetros: en un ejemplo orientativo, 4 cm de crecimiento por talle en dama (S 88/68/94, M 92/72/98, L 96/76/102, XL 100/80/106), 5 cm en hombre (S 92/78/96, M 97/83/101, L 102/88/106, XL 107/93/111) y 4 cm en pecho y cadera con 3 cm en cintura en niños. Es un ejemplo orientativo de la industria, no una norma oficial, y hay que validarlo con una muestra cosida antes de producir en serie.',
+  },
+  {
+    q: '¿Cómo redactar una ficha técnica de diseño para enviar a un taller de confección?',
+    a: 'Con siete secciones fijas en una o dos páginas: datos generales, foto o dibujo técnico de frente y espalda, tabla de medidas por talle, materiales y avíos, secuencia de armado, tolerancias de medida y datos de contacto con la cantidad del pedido. Se completa una vez por modelo y se envía en PDF junto con el molde.',
+  },
+  {
+    q: '¿Cuáles son las reglas de escalado de la sisa y el escote?',
+    a: 'No hay una regla única: cada escuela y cada sistema CAD arma su propia tabla, pero un criterio orientativo habitual profundiza la sisa entre 5 y 10 mm por talle y la ensancha entre 3 y 7 mm, mientras que el escote crece entre 3 y 5 mm de ancho y entre 1 y 6 mm de caída, más en el delantero que en la espalda. Esos números se ajustan a la tabla de medidas real de cada fabricante y se validan con una muestra cosida.',
+  },
+  {
+    q: '¿Cómo calcular el consumo de tela para varias prendas según el rinde?',
+    a: 'Se divide la cantidad de prendas del pedido por el rinde de la tela, en prendas por metro: metros de tela necesarios es igual a cantidad de prendas dividida por el rinde. Con un rinde de 8 prendas por metro (número de ejemplo), un pedido de 120 prendas necesita 120 dividido 8: 15 metros, antes de sumar la merma.',
+  },
+  {
+    q: '¿Cómo exportar o convertir archivos DXF entre Optitex y Audaces?',
+    a: 'Desde Optitex se exporta con Archivo > Exportar > DXF/AAMA, eligiendo la unidad correcta y marcando la exportación de todos los talles. Desde Audaces Moldes se exporta con la función de exportación a DXF o AAMA del menú Archivo, tildando las capas de piquetes, sentido de hilo y textos. Del lado que recibe hay que confirmar la unidad al importar, revisar el mapeo de capas y medir una pieza contra la ficha técnica antes de cortar.',
+  },
+  {
+    q: '¿Cómo elegir el nombre de una marca de patrones digitales o de ropa?',
+    a: 'Combinando un estilo (apellido, palabra descriptiva del rubro, palabra inventada o combinación en otro idioma) con una validación práctica: fácil de pronunciar y escribir, sin choque con una marca ya registrada, con dominio .com.ar y usuario de Instagram libres, y que se lea bien en un logo chico. Antes de decidirlo conviene buscarlo en Google, revisar antecedentes en el INPI si se va a registrar, y chequear el usuario en las redes donde se va a vender.',
+  },
+  {
+    q: '¿Cómo se dicen en inglés los términos de moldería y costura más usados?',
+    a: 'Los más frecuentes son dart (pinza), seam allowance (margen de costura), notch (piquete), grainline (línea de hilo o hilo recto), hem (dobladillo), waist (cintura), bust (busto) y pattern grading (escalado de patrones). Modeltex reúne un diccionario de más de 35 términos agrupados por tema: medidas del cuerpo, piezas del molde, costura y producción.',
+  },
+  {
+    q: '¿Cómo escribir el copy para vender un paquete de moldes digitales en Instagram?',
+    a: 'En cinco bloques: gancho con el dolor o el beneficio en la primera línea, presentación del paquete (cantidad, categoría, talles), prueba de que funciona (muestra confeccionada, foto real), un llamado a la acción único hacia WhatsApp o el link en bio, y una posdata con una razón real para actuar ahora. El precio no hace falta escribirlo en el copy.',
+  },
+  {
+    q: '¿Por qué se hacen arrugas en el tiro del pantalón y cómo corregirlo en el molde?',
+    a: 'Las causas más frecuentes son el tiro mal calculado, la curva de tiro demasiado cerrada o abierta, un desbalance entre delantero y trasero, exceso o falta de holgura en la cadera, y la costura interior de pierna corrida. La corrección depende de cuál sea: profundizar o subir el tiro, abrir o cerrar la curva, redistribuir centímetros entre piezas, ajustar la cadera o correr la costura, validando siempre con una muestra cosida.',
+  },
+  {
+    q: '¿Cuál es la diferencia entre el sistema métrico y las pulgadas fraccionales en moldería?',
+    a: 'El sistema métrico mide en centímetros y milímetros con divisiones decimales, y es el que se usa en Argentina y buena parte de Latinoamérica. El sistema de pulgadas fraccionales, de uso mayoritario en Estados Unidos, divide la pulgada en mitades sucesivas (1/2, 1/4, 1/8, 1/16) en vez de decimales, y aparece en patrones, revistas y programas CAD de origen norteamericano. Los dos se convierten entre sí con la misma constante exacta, 2,54 cm por pulgada, pero conviene no mezclarlos dentro de un mismo molde sin pasar todo a una sola unidad.',
   },
 ];
 
