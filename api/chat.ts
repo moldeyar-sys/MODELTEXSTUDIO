@@ -20,6 +20,11 @@ const WHATSAPP = '5491166531086';
 const ANON_MESSAGE_LIMIT = 10;
 
 type ChatMessage = { role: 'user' | 'assistant' | 'system'; content: string };
+// Contexto opcional de MODELTEX LAB: cuando el alumno pregunta desde adentro
+// de una clase, el frontend manda estos slugs para que el tutor priorice esa
+// clase en vez de responder de forma genérica.
+type LabContext = { courseSlug?: string; moduleSlug?: string; lessonSlug?: string };
+type LabSource = { title: string; url: string };
 type ProductRow = {
   name: string;
   codigo?: string;
@@ -76,7 +81,13 @@ async function countSessionMessages(sessionId: string): Promise<number> {
 // Guarda un mensaje en el historial (best-effort: si falla, no interrumpe el chat).
 // Usa la service role: chat_messages ya no acepta INSERT público (migración 033),
 // asi que solo este endpoint (server-side) puede escribir el historial real.
-async function logMessage(sessionId: string, userId: string | null, role: 'user' | 'assistant', content: string): Promise<void> {
+async function logMessage(
+  sessionId: string,
+  userId: string | null,
+  role: 'user' | 'assistant',
+  content: string,
+  labContext?: string,
+): Promise<void> {
   if (!SUPABASE_SERVICE_ROLE_KEY) return;
   try {
     await fetch(`${SUPABASE_URL}/rest/v1/chat_messages`, {
@@ -87,7 +98,13 @@ async function logMessage(sessionId: string, userId: string | null, role: 'user'
         'Content-Type': 'application/json',
         Prefer: 'return=minimal',
       },
-      body: JSON.stringify({ session_id: sessionId, user_id: userId, role, content: content.slice(0, 4000) }),
+      body: JSON.stringify({
+        session_id: sessionId,
+        user_id: userId,
+        role,
+        content: content.slice(0, 4000),
+        lab_context: labContext || null,
+      }),
     });
   } catch {
     /* best-effort */
@@ -135,13 +152,9 @@ async function getCatalogSummary(): Promise<string> {
   }
 }
 
-// Busqueda por significado: convierte la ultima pregunta del cliente en un
-// vector y trae los productos mas parecidos (no coincidencia de texto, sino
-// de significado — "algo abrigado" encuentra "campera de frisa"). Requiere
-// que el admin haya generado los embeddings del catalogo (panel admin,
-// pestaña Productos). Si todavia no hay embeddings, devuelve null y el
-// caller cae al catalogo completo de siempre.
-async function getSemanticMatches(query: string, count = 10): Promise<string | null> {
+// Convierte texto en un vector de embedding via OpenRouter. Compartido entre
+// la busqueda semantica del catalogo y la del contenido de MODELTEX LAB.
+async function embedQuery(query: string): Promise<number[] | null> {
   try {
     const embedRes = await fetch('https://openrouter.ai/api/v1/embeddings', {
       method: 'POST',
@@ -154,13 +167,28 @@ async function getSemanticMatches(query: string, count = 10): Promise<string | n
       body: JSON.stringify({ model: OPENROUTER_EMBED_MODEL, input: query.slice(0, 2000) }),
     });
     if (!embedRes.ok) {
-      console.warn('semantic search: embeddings API', embedRes.status, '- fallback a catalogo completo');
+      console.warn('embedQuery: embeddings API', embedRes.status);
       return null;
     }
     const embedData = (await embedRes.json()) as { data?: { embedding: number[] }[] };
-    const queryEmbedding = embedData.data?.[0]?.embedding;
+    return embedData.data?.[0]?.embedding || null;
+  } catch (err) {
+    console.warn('embedQuery: error inesperado', err);
+    return null;
+  }
+}
+
+// Busqueda por significado: convierte la ultima pregunta del cliente en un
+// vector y trae los productos mas parecidos (no coincidencia de texto, sino
+// de significado — "algo abrigado" encuentra "campera de frisa"). Requiere
+// que el admin haya generado los embeddings del catalogo (panel admin,
+// pestaña Productos). Si todavia no hay embeddings, devuelve null y el
+// caller cae al catalogo completo de siempre.
+async function getSemanticMatches(query: string, count = 10): Promise<string | null> {
+  try {
+    const queryEmbedding = await embedQuery(query);
     if (!queryEmbedding) {
-      console.warn('semantic search: respuesta sin embedding - fallback a catalogo completo');
+      console.warn('semantic search: sin embedding - fallback a catalogo completo');
       return null;
     }
 
@@ -186,6 +214,140 @@ async function getSemanticMatches(query: string, count = 10): Promise<string | n
     console.warn('semantic search: error inesperado - fallback a catalogo completo', err);
     return null;
   }
+}
+
+// ==================== MODELTEX LAB: tutor IA del curso ====================
+
+type LabLessonRow = {
+  title: string;
+  objective: string;
+  concept: string;
+  development: { h3?: string; paragraphs?: string[]; bullets?: string[] }[] | null;
+  example: string;
+  modeltex_tip: string;
+  summary: string;
+};
+
+// Trae SIEMPRE el contenido completo de la clase actual (si el alumno esta
+// adentro de una) para que el tutor la priorice, aunque todavia no se hayan
+// generado embeddings de MODELTEX LAB (a diferencia del catalogo, acá no
+// dependemos solo de la busqueda semantica para el contexto inmediato).
+async function getCurrentLessonContent(lab: LabContext): Promise<string | null> {
+  if (!lab.courseSlug || !lab.moduleSlug || !lab.lessonSlug) return null;
+  try {
+    const courseRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/lab_courses?select=id&slug=eq.${encodeURIComponent(lab.courseSlug)}&status=eq.published`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
+    );
+    const courses = (await courseRes.json()) as { id: string }[];
+    const courseId = courses?.[0]?.id;
+    if (!courseId) return null;
+
+    const moduleRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/lab_modules?select=id&course_id=eq.${courseId}&slug=eq.${encodeURIComponent(lab.moduleSlug)}&status=eq.published`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
+    );
+    const modules = (await moduleRes.json()) as { id: string }[];
+    const moduleId = modules?.[0]?.id;
+    if (!moduleId) return null;
+
+    const lessonRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/lab_lessons?select=title,objective,concept,development,example,modeltex_tip,summary&module_id=eq.${moduleId}&slug=eq.${encodeURIComponent(lab.lessonSlug)}&status=eq.published`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
+    );
+    const lessons = (await lessonRes.json()) as LabLessonRow[];
+    const lesson = lessons?.[0];
+    if (!lesson) return null;
+
+    const devText = (lesson.development || [])
+      .map((b) => [b.h3, ...(b.paragraphs || []), ...(b.bullets || []).map((x) => `- ${x}`)].filter(Boolean).join('\n'))
+      .join('\n');
+
+    return [
+      `Título: ${lesson.title}`,
+      lesson.objective && `Qué se aprende: ${lesson.objective}`,
+      lesson.concept && `Concepto: ${lesson.concept}`,
+      devText && `Desarrollo:\n${devText}`,
+      lesson.example && `Ejemplo práctico: ${lesson.example}`,
+      lesson.modeltex_tip && `Consejo Modeltex: ${lesson.modeltex_tip}`,
+      lesson.summary && `Resumen: ${lesson.summary}`,
+    ]
+      .filter(Boolean)
+      .join('\n');
+  } catch (err) {
+    console.warn('getCurrentLessonContent: error', err);
+    return null;
+  }
+}
+
+// Busqueda semantica sobre el contenido publicado de MODELTEX LAB (clases,
+// modulos, cursos, glosario), para profundizar o cruzar con otras clases
+// ademas de la actual. Devuelve tambien las fuentes reales usadas (nunca
+// inventadas) para que el frontend muestre "Basado en: ...".
+async function getLabSemanticMatches(
+  query: string,
+  courseSlug: string | undefined,
+  count = 6,
+): Promise<{ text: string; sources: LabSource[] } | null> {
+  try {
+    const queryEmbedding = await embedQuery(query);
+    if (!queryEmbedding) return null;
+
+    const matchRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/match_lab_chunks`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query_embedding: queryEmbedding, match_count: count, p_course_slug: courseSlug || null }),
+    });
+    if (!matchRes.ok) return null;
+    const rows = (await matchRes.json()) as {
+      title: string;
+      content: string;
+      course_slug: string;
+      module_slug: string;
+      lesson_slug: string;
+      source_type: string;
+    }[];
+    if (!Array.isArray(rows) || rows.length === 0) return null;
+
+    const sources: LabSource[] = rows.map((r) => ({
+      title: r.title,
+      url:
+        r.source_type === 'lesson' && r.course_slug && r.module_slug && r.lesson_slug
+          ? `/lab/${r.course_slug}/${r.module_slug}/${r.lesson_slug}`
+          : r.source_type === 'glossary'
+            ? `/lab/glosario/${r.lesson_slug || ''}`
+            : r.course_slug
+              ? `/lab/${r.course_slug}`
+              : '/lab',
+    }));
+    const text = rows.map((r) => `[${r.title}]\n${r.content}`).join('\n\n');
+    return { text, sources };
+  } catch (err) {
+    console.warn('getLabSemanticMatches: error', err);
+    return null;
+  }
+}
+
+function buildLabSystemPrompt(currentLesson: string | null, related: string | null, lab: LabContext): string {
+  return [
+    'Sos el profesor/asistente virtual de MODELTEX LAB, el curso gratuito de moldería textil de Modeltex (moldería a medida y moldería industrial).',
+    'Tu rol es pedagógico: explicás conceptos de moldería y producción textil con claridad, como un profesor paciente, no como un vendedor.',
+    '',
+    'TU ESTILO:',
+    '- Español rioplatense, claro y didáctico. Podés extenderte más que un chat de ventas (hasta 6-8 frases) si la explicación lo pide.',
+    '- Si el alumno está dentro de una clase, priorizá SIEMPRE el contenido de esa clase (más abajo) antes que conocimiento general.',
+    '- Podés reformular con otras palabras, dar ejemplos adicionales o aclarar dudas puntuales, pero sin contradecir el contenido oficial de la clase.',
+    '- Si la pregunta tiene intención de negocio real (fabricar en cantidad, lanzar una marca, necesitar moldería industrial/digitalización), podés mencionar el servicio de Modeltex relevante UNA sola vez, de forma breve — nunca conviertas la respuesta en publicidad.',
+    '- Nunca inventes datos, técnicas o cifras que no estén en el contenido provisto.',
+    '',
+    currentLesson
+      ? `CLASE ACTUAL (${lab.courseSlug}/${lab.moduleSlug}/${lab.lessonSlug}) — priorizar esta información:\n${currentLesson}`
+      : 'El alumno no está dentro de una clase puntual: respondé de forma general sobre moldería y producción textil.',
+    '',
+    related ? `CONTENIDO RELACIONADO de otras clases/glosario de MODELTEX LAB:\n${related}` : '',
+  ]
+    .filter((line) => line !== '')
+    .join('\n');
 }
 
 function buildSystemPrompt(catalog: string, knowledge: string, catalogIsPartial: boolean): string {
@@ -244,6 +406,17 @@ export default async function handler(req: any, res: any) {
     const sessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId.slice(0, 100) : null;
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || null;
     const userId = await getUserId(token);
+    // MODELTEX LAB: si el frontend manda `lab`, este mensaje viene del tutor
+    // del curso (clase puntual o /lab/ia general), no del asesor comercial.
+    const rawLab = body.lab;
+    const lab: LabContext | null =
+      rawLab && typeof rawLab === 'object'
+        ? {
+            courseSlug: typeof rawLab.courseSlug === 'string' ? rawLab.courseSlug.slice(0, 100) : undefined,
+            moduleSlug: typeof rawLab.moduleSlug === 'string' ? rawLab.moduleSlug.slice(0, 100) : undefined,
+            lessonSlug: typeof rawLab.lessonSlug === 'string' ? rawLab.lessonSlug.slice(0, 100) : undefined,
+          }
+        : null;
 
     // Sanitiza: solo user/assistant, recorta largo y cantidad.
     const history = incoming
@@ -267,22 +440,43 @@ export default async function handler(req: any, res: any) {
       }
     }
 
+    const labContextLabel = lab
+      ? [lab.courseSlug, lab.moduleSlug, lab.lessonSlug].filter(Boolean).join('/')
+      : undefined;
+
     if (sessionId && lastUserMessage) {
-      await logMessage(sessionId, userId, 'user', lastUserMessage);
+      await logMessage(sessionId, userId, 'user', lastUserMessage, labContextLabel);
     }
 
-    const [semanticMatches, knowledge] = await Promise.all([
-      lastUserMessage ? getSemanticMatches(lastUserMessage) : Promise.resolve(null),
-      getAdminKnowledge(),
-    ]);
-    // Si hubo resultados de busqueda inteligente los usa (mas relevantes y mas
-    // baratos); si no (todavia no se generaron embeddings, o es el primer
-    // saludo sin pregunta), cae al volcado completo del catalogo de siempre.
-    const catalog = semanticMatches ?? (await getCatalogSummary());
-    const messages: ChatMessage[] = [
-      { role: 'system', content: buildSystemPrompt(catalog, knowledge, semanticMatches !== null) },
-      ...history,
-    ];
+    let messages: ChatMessage[];
+    let sources: LabSource[] = [];
+
+    if (lab) {
+      // Tutor de MODELTEX LAB: prioriza la clase actual (si hay) + contenido
+      // relacionado via busqueda semantica sobre lab_chunks.
+      const [currentLesson, related] = await Promise.all([
+        getCurrentLessonContent(lab),
+        lastUserMessage ? getLabSemanticMatches(lastUserMessage, lab.courseSlug, 6) : Promise.resolve(null),
+      ]);
+      sources = related?.sources || [];
+      messages = [
+        { role: 'system', content: buildLabSystemPrompt(currentLesson, related?.text || null, lab) },
+        ...history,
+      ];
+    } else {
+      const [semanticMatches, knowledge] = await Promise.all([
+        lastUserMessage ? getSemanticMatches(lastUserMessage) : Promise.resolve(null),
+        getAdminKnowledge(),
+      ]);
+      // Si hubo resultados de busqueda inteligente los usa (mas relevantes y mas
+      // baratos); si no (todavia no se generaron embeddings, o es el primer
+      // saludo sin pregunta), cae al volcado completo del catalogo de siempre.
+      const catalog = semanticMatches ?? (await getCatalogSummary());
+      messages = [
+        { role: 'system', content: buildSystemPrompt(catalog, knowledge, semanticMatches !== null) },
+        ...history,
+      ];
+    }
 
     const orRes = await fetch('https://openrouter.ai/api/v1/chat/completions', {
       method: 'POST',
@@ -290,9 +484,9 @@ export default async function handler(req: any, res: any) {
         Authorization: `Bearer ${OPENROUTER_API_KEY}`,
         'Content-Type': 'application/json',
         'HTTP-Referer': 'https://modeltex.com.ar',
-        'X-Title': 'Modeltex Asistente',
+        'X-Title': lab ? 'Modeltex Lab' : 'Modeltex Asistente',
       },
-      body: JSON.stringify({ model: OPENROUTER_MODEL, messages, temperature: 0.4, max_tokens: 600 }),
+      body: JSON.stringify({ model: OPENROUTER_MODEL, messages, temperature: 0.4, max_tokens: lab ? 800 : 600 }),
     });
 
     if (!orRes.ok) {
@@ -308,8 +502,8 @@ export default async function handler(req: any, res: any) {
 
     const data = (await orRes.json()) as any;
     const reply = data?.choices?.[0]?.message?.content?.trim() || 'No pude generar una respuesta. Probá de nuevo.';
-    if (sessionId) await logMessage(sessionId, userId, 'assistant', reply);
-    res.status(200).json({ reply });
+    if (sessionId) await logMessage(sessionId, userId, 'assistant', reply, labContextLabel);
+    res.status(200).json(lab ? { reply, sources } : { reply });
   } catch (err) {
     console.error('chat handler error', err);
     res.status(200).json({

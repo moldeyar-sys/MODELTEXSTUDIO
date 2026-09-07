@@ -26,6 +26,7 @@ Se elige el molde, el formato y los talles en el catálogo, se paga con Mercado 
 - [Moldes PDF](https://modeltex.com.ar/moldes-pdf): moldes para imprimir en A4 o plotter.
 - [Moldes gratis](https://modeltex.com.ar/moldes-gratis): moldes reales de descarga gratuita para probar la calidad antes de comprar.
 - [Preguntas frecuentes](https://modeltex.com.ar/preguntas-frecuentes): formatos, talles, impresión, pagos, entrega, licencia y reembolsos.
+- [MODELTEX LAB](https://modeltex.com.ar/lab): curso gratis de moldería textil, estructurado como curso real (curso → módulos → clases), desde fundamentos hasta producción industrial, con moldes gratis para practicar y una [IA tutora](https://modeltex.com.ar/lab/ia).
 - [Guías para producción](https://modeltex.com.ar/guias): índice de guías (abajo).
 - [Cómo funciona](https://modeltex.com.ar/como-funciona): paso a paso de la compra.
 - [Ayuda de impresión](https://modeltex.com.ar/ayuda-impresion): cómo imprimir un molde PDF sin perder la escala.

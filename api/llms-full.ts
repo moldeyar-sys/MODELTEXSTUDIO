@@ -277,6 +277,46 @@ function oneLine(s: string | null | undefined): string {
   return (s || '').replace(/\s+/g, ' ').trim();
 }
 
+// MODELTEX LAB: a diferencia de las guías (estáticas, arriba), el curso vive
+// en Supabase (tablas lab_*) porque el admin lo carga/edita sin tocar código.
+// Se trae por REST directo, mismo criterio que el catálogo de este archivo.
+interface LabCourseLite { id: string; slug: string; title: string; subtitle?: string | null }
+interface LabModuleLite { id: string; course_id: string; slug: string; title: string }
+interface LabLessonLite { module_id: string; slug: string; title: string; objective?: string | null }
+interface LabGlossaryLite { slug: string; term: string; short_definition?: string | null }
+
+async function fetchLabContent() {
+  try {
+    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
+    const [coursesRes, glossaryRes] = await Promise.all([
+      fetch(`${SUPABASE_URL}/rest/v1/lab_courses?select=id,slug,title,subtitle&status=eq.published&order=order_index.asc`, { headers }),
+      fetch(`${SUPABASE_URL}/rest/v1/lab_glossary_terms?select=slug,term,short_definition&status=eq.published&order=order_index.asc`, { headers }),
+    ]);
+    const courses = coursesRes.ok ? ((await coursesRes.json()) as LabCourseLite[]) : [];
+    const glossary = glossaryRes.ok ? ((await glossaryRes.json()) as LabGlossaryLite[]) : [];
+    if (courses.length === 0) return { courses: [], modules: [] as LabModuleLite[], lessons: [] as LabLessonLite[], glossary };
+
+    const modulesRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/lab_modules?select=id,course_id,slug,title&course_id=in.(${courses.map((c) => c.id).join(',')})&status=eq.published&order=level_order.asc,order_index.asc`,
+      { headers },
+    );
+    const modules = modulesRes.ok ? ((await modulesRes.json()) as LabModuleLite[]) : [];
+
+    let lessons: LabLessonLite[] = [];
+    if (modules.length > 0) {
+      const lessonsRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/lab_lessons?select=module_id,slug,title,objective&module_id=in.(${modules.map((m) => m.id).join(',')})&status=eq.published&order=order_index.asc`,
+        { headers },
+      );
+      lessons = lessonsRes.ok ? ((await lessonsRes.json()) as LabLessonLite[]) : [];
+    }
+
+    return { courses, modules, lessons, glossary };
+  } catch {
+    return { courses: [] as LabCourseLite[], modules: [] as LabModuleLite[], lessons: [] as LabLessonLite[], glossary: [] as LabGlossaryLite[] };
+  }
+}
+
 export default async function handler(_req: unknown, res: any) {
   let products: Row[] = [];
   const lines: string[] = [];
@@ -299,9 +339,45 @@ export default async function handler(_req: unknown, res: any) {
     for (const [k, v] of Object.entries(CATEGORY_LABEL)) lines.push(`- Moldes ${CATEGORY_TITLE_SUFFIX[k] || v}: ${SITE_URL}/catalogo?categoria=${k}`);
     lines.push(`- Moldes gratis para probar la calidad: ${SITE_URL}/moldes-gratis`);
     lines.push(`- Moldería a pedido (moldes a medida): ${SITE_URL}/diseno-a-pedido`);
+    lines.push(`- MODELTEX LAB — Curso Gratis de Moldería Textil: ${SITE_URL}/lab`);
     lines.push(`- Preguntas frecuentes: ${SITE_URL}/preguntas-frecuentes`);
     lines.push(`- Guías para producción: ${SITE_URL}/guias`);
     lines.push(`- Contacto: ${SITE_URL}/contacto`);
+    lines.push('');
+
+    const lab = await fetchLabContent();
+    lines.push('## MODELTEX LAB — Curso Gratis de Moldería Textil');
+    lines.push(
+      `> Modeltex tiene un curso gratuito de moldería textil (${SITE_URL}/lab), estructurado como curso real ` +
+        '(curso → módulos → clases), desde fundamentos hasta producción industrial, con moldes gratis para practicar ' +
+        `y una IA tutora (${SITE_URL}/lab/ia) que responde dudas con el contenido del curso.`,
+    );
+    if (lab.courses.length === 0) {
+      lines.push('(Curso en preparación: todavía no hay módulos publicados.)');
+    } else {
+      const modulesByCourse = new Map<string, LabModuleLite[]>();
+      for (const m of lab.modules) modulesByCourse.set(m.course_id, [...(modulesByCourse.get(m.course_id) || []), m]);
+      const lessonsByModule = new Map<string, LabLessonLite[]>();
+      for (const l of lab.lessons) lessonsByModule.set(l.module_id, [...(lessonsByModule.get(l.module_id) || []), l]);
+
+      for (const c of lab.courses) {
+        lines.push('');
+        lines.push(`### ${c.title}${c.subtitle ? ` — ${oneLine(c.subtitle)}` : ''}`);
+        lines.push(`URL: ${SITE_URL}/lab/${c.slug}`);
+        for (const m of modulesByCourse.get(c.id) || []) {
+          for (const l of lessonsByModule.get(m.id) || []) {
+            lines.push(
+              `- ${oneLine(l.title)} (${m.title})${l.objective ? ` — ${oneLine(l.objective)}` : ''} — ${SITE_URL}/lab/${c.slug}/${m.slug}/${l.slug}`,
+            );
+          }
+        }
+      }
+      if (lab.glossary.length > 0) {
+        lines.push('');
+        lines.push(`#### Glosario (${SITE_URL}/lab/glosario)`);
+        for (const g of lab.glossary) lines.push(`- ${g.term}${g.short_definition ? `: ${oneLine(g.short_definition)}` : ''}`);
+      }
+    }
     lines.push('');
 
     lines.push('## Guías para producir ropa con moldes digitales');

@@ -220,6 +220,9 @@ export interface FreeMold {
   sort_order: number;
   download_count: number;
   created_at: string;
+  /** Vínculo opcional con MODELTEX LAB (curso/clase donde se usa este molde). */
+  lab_course_id?: string | null;
+  lab_lesson_id?: string | null;
 }
 
 export const FREE_MOLD_TAGS = [

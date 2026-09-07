@@ -19,6 +19,7 @@ export function Navbar() {
   const navLinks = [
     { to: '/', label: t('nav.home', 'Inicio') },
     { to: '/catalogo', label: t('nav.catalog', 'Catálogo') },
+    { to: '/lab', label: t('nav.lab', 'Modeltex Lab') },
     { to: '/diseno-a-pedido', label: t('nav.custom', 'Diseño a pedido') },
     { to: '/ia-textil', label: t('nav.iaTextil', 'IA Textil') },
     { to: '/moldes-gratis', label: t('nav.freeMolds', 'Moldes Gratis') },

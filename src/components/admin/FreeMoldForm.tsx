@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
 import { Upload, ImagePlus, Loader2, Trash2, FileDown } from 'lucide-react';
 import { uploadProductImage, uploadFreeMoldFile } from '../../lib/storage';
 import { CATEGORIES, FREE_MOLD_TAGS } from '../../lib/types';
 import type { FreeMold, FreeMoldFile } from '../../lib/types';
+import type { LabCourse, LabLesson } from '../../lib/labTypes';
 
 const SEASONS = ['Todo el año', 'Verano', 'Invierno', 'Primavera', 'Otoño'];
 
@@ -39,6 +40,8 @@ export function FreeMoldForm({
     description: mold?.description || '',
     is_active: mold?.is_active ?? true,
     sort_order: mold?.sort_order?.toString() || '0',
+    lab_course_id: mold?.lab_course_id || '',
+    lab_lesson_id: mold?.lab_lesson_id || '',
   });
   const [tags, setTags] = useState<string[]>(mold?.tags || []);
   const [files, setFiles] = useState<FreeMoldFile[]>(mold?.files || []);
@@ -46,6 +49,28 @@ export function FreeMoldForm({
   const [uploadingImage, setUploadingImage] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [error, setError] = useState('');
+  const [labCourses, setLabCourses] = useState<LabCourse[]>([]);
+  const [labLessons, setLabLessons] = useState<LabLesson[]>([]);
+
+  // Vínculo opcional con MODELTEX LAB: cursos publicados + clases del curso elegido.
+  useEffect(() => {
+    supabase.from('lab_courses').select('*').order('order_index', { ascending: true }).then(({ data }) => {
+      setLabCourses((data as LabCourse[]) || []);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!form.lab_course_id) {
+      setLabLessons([]);
+      return;
+    }
+    supabase
+      .from('lab_lessons')
+      .select('*, lab_modules!inner(course_id)')
+      .eq('lab_modules.course_id', form.lab_course_id)
+      .order('order_index', { ascending: true })
+      .then(({ data }) => setLabLessons((data as LabLesson[]) || []));
+  }, [form.lab_course_id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target;
@@ -119,6 +144,8 @@ export function FreeMoldForm({
       description: form.description,
       is_active: form.is_active,
       sort_order: parseInt(form.sort_order, 10) || 0,
+      lab_course_id: form.lab_course_id || null,
+      lab_lesson_id: form.lab_lesson_id || null,
     };
 
     try {
@@ -269,6 +296,35 @@ export function FreeMoldForm({
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1.5">Descripción corta</label>
           <textarea name="description" value={form.description} onChange={handleChange} rows={2} className="input-field resize-none" />
+        </div>
+
+        {/* Vínculo opcional con MODELTEX LAB */}
+        <div className="grid sm:grid-cols-2 gap-4 p-3 rounded-xl bg-primary-50/50 border border-primary-100">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Curso de Modeltex Lab (opcional)</label>
+            <select
+              name="lab_course_id"
+              value={form.lab_course_id}
+              onChange={(e) => setForm(prev => ({ ...prev, lab_course_id: e.target.value, lab_lesson_id: '' }))}
+              className="input-field"
+            >
+              <option value="">Sin vincular</option>
+              {labCourses.map(c => <option key={c.id} value={c.id}>{c.title}</option>)}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1.5">Clase (opcional)</label>
+            <select
+              name="lab_lesson_id"
+              value={form.lab_lesson_id}
+              onChange={handleChange}
+              disabled={!form.lab_course_id}
+              className="input-field disabled:opacity-50"
+            >
+              <option value="">Sin vincular a una clase puntual</option>
+              {labLessons.map(l => <option key={l.id} value={l.id}>{l.title}</option>)}
+            </select>
+          </div>
         </div>
 
         <div className="flex items-center gap-6">

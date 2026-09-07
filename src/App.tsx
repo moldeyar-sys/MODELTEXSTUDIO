@@ -24,6 +24,12 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const CustomDesignPage = lazy(() => import('./pages/CustomDesignPage'));
 const IaTextilPage = lazy(() => import('./pages/IaTextilPage'));
 const FreeMoldsPage = lazy(() => import('./pages/FreeMoldsPage'));
+const LabHomePage = lazy(() => import('./pages/LabHomePage'));
+const LabCoursePage = lazy(() => import('./pages/LabCoursePage'));
+const LabLessonPage = lazy(() => import('./pages/LabLessonPage'));
+const LabAiPage = lazy(() => import('./pages/LabAiPage'));
+const LabGlossaryPage = lazy(() => import('./pages/LabGlossaryPage'));
+const LabGlossaryTermPage = lazy(() => import('./pages/LabGlossaryTermPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
 const TrustPage = lazy(() => import('./pages/TrustPage'));
 const RespaldoDrivePage = lazy(() => import('./pages/RespaldoDrivePage'));
@@ -72,6 +78,12 @@ function AppLayout() {
             <Route path="/diseno-a-pedido" element={<CustomDesignPage />} />
             <Route path="/ia-textil" element={<IaTextilPage />} />
             <Route path="/moldes-gratis" element={<FreeMoldsPage />} />
+            <Route path="/lab" element={<LabHomePage />} />
+            <Route path="/lab/ia" element={<LabAiPage />} />
+            <Route path="/lab/glosario" element={<LabGlossaryPage />} />
+            <Route path="/lab/glosario/:slug" element={<LabGlossaryTermPage />} />
+            <Route path="/lab/:cursoSlug" element={<LabCoursePage />} />
+            <Route path="/lab/:cursoSlug/:moduloSlug/:claseSlug" element={<LabLessonPage />} />
             <Route path="/contacto" element={<ContactPage />} />
             <Route path="/preguntas-frecuentes" element={<FaqPage />} />
             <Route path="/guias" element={<GuiasPage />} />

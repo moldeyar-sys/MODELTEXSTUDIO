@@ -6,7 +6,7 @@ import {
   CheckCircle, XCircle, Search,
   LayoutDashboard, Box, ShoppingCart, UserCheck, ClipboardList,
   Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save, Bot, Users, Copy, Check,
-  Sparkles, RefreshCw, PenLine, BarChart3, Eye, MessageSquare, ChevronDown, ChevronUp
+  Sparkles, RefreshCw, PenLine, BarChart3, Eye, MessageSquare, ChevronDown, ChevronUp, GraduationCap
 } from 'lucide-react';
 import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage, NewsletterSubscriber } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
@@ -19,12 +19,13 @@ import { fetchAllHeroImages } from '../lib/heroImages';
 import { fetchChatSessions } from '../lib/chatHistory';
 import type { ChatSession } from '../lib/chatHistory';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
+import { LabAdminPanel } from '../components/admin/lab/LabAdminPanel';
 import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
 import { PRODUCT_COLUMNS } from '../lib/productColumns';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats' | 'chats';
+type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'lab' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats' | 'chats';
 
 export default function AdminPage() {
   useAuth();
@@ -107,6 +108,7 @@ export default function AdminPage() {
     { id: 'customers', label: 'Clientes', icon: <UserCheck className="w-4 h-4" /> },
     { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
     { id: 'free', label: 'Moldes Gratis', icon: <Gift className="w-4 h-4" /> },
+    { id: 'lab', label: 'Modeltex Lab', icon: <GraduationCap className="w-4 h-4" /> },
     { id: 'contacts', label: 'Contactos', icon: <Mail className="w-4 h-4" /> },
     { id: 'newsletter', label: `Novedades (${subscribers.length})`, icon: <Users className="w-4 h-4" /> },
     { id: 'hero', label: 'Hero', icon: <ImageIcon className="w-4 h-4" /> },
@@ -1008,6 +1010,17 @@ export default function AdminPage() {
                 </p>
               )}
             </div>
+          </div>
+        )}
+
+        {/* Modeltex Lab */}
+        {activeTab === 'lab' && (
+          <div>
+            <div className="mb-6">
+              <h2 className="font-semibold text-gray-900 text-lg">Modeltex Lab</h2>
+              <p className="text-sm text-gray-500">Curso gratis de moldería textil, publicado en <span className="font-mono">/lab</span></p>
+            </div>
+            <LabAdminPanel />
           </div>
         )}
 

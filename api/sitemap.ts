@@ -44,6 +44,9 @@ const staticRoutes = [
   { path: '/moldes-para-plotter', changefreq: 'weekly', priority: '0.88' },
   { path: '/moldes-para-emprendedores', changefreq: 'weekly', priority: '0.84' },
   { path: '/moldes-gratis', changefreq: 'weekly', priority: '0.85' },
+  { path: '/lab', changefreq: 'weekly', priority: '0.92' },
+  { path: '/lab/ia', changefreq: 'monthly', priority: '0.55' },
+  { path: '/lab/glosario', changefreq: 'weekly', priority: '0.70' },
   { path: '/diseno-a-pedido', changefreq: 'monthly', priority: '0.80' },
   { path: '/preguntas-frecuentes', changefreq: 'monthly', priority: '0.78' },
   { path: '/guias', changefreq: 'weekly', priority: '0.80' },
@@ -124,13 +127,70 @@ async function fetchProducts(): Promise<RouteEntry[]> {
   return out;
 }
 
+async function fetchLabRoutes(): Promise<RouteEntry[]> {
+  const out: RouteEntry[] = [];
+  try {
+    const coursesRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/lab_courses?select=id,slug,updated_at&status=eq.published`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
+    );
+    if (!coursesRes.ok) return out;
+    const courses = (await coursesRes.json()) as { id: string; slug: string; updated_at?: string }[];
+
+    for (const course of courses) {
+      out.push({ path: `/lab/${course.slug}`, changefreq: 'weekly', priority: '0.85', lastmod: course.updated_at });
+
+      const modulesRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/lab_modules?select=id,slug&course_id=eq.${course.id}&status=eq.published`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
+      );
+      if (!modulesRes.ok) continue;
+      const modules = (await modulesRes.json()) as { id: string; slug: string }[];
+      if (modules.length === 0) continue;
+
+      const lessonsRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/lab_lessons?select=module_id,slug,updated_at&module_id=in.(${modules.map((m) => m.id).join(',')})&status=eq.published`,
+        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
+      );
+      if (!lessonsRes.ok) continue;
+      const lessons = (await lessonsRes.json()) as { module_id: string; slug: string; updated_at?: string }[];
+      const moduleSlugById = new Map(modules.map((m) => [m.id, m.slug]));
+      for (const lesson of lessons) {
+        const moduleSlug = moduleSlugById.get(lesson.module_id);
+        if (!moduleSlug) continue;
+        out.push({
+          path: `/lab/${course.slug}/${moduleSlug}/${lesson.slug}`,
+          changefreq: 'monthly',
+          priority: '0.78',
+          lastmod: lesson.updated_at,
+        });
+      }
+    }
+
+    const glossaryRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/lab_glossary_terms?select=slug,updated_at&status=eq.published`,
+      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
+    );
+    if (glossaryRes.ok) {
+      const terms = (await glossaryRes.json()) as { slug: string; updated_at?: string }[];
+      for (const t of terms) {
+        out.push({ path: `/lab/glosario/${t.slug}`, changefreq: 'monthly', priority: '0.65', lastmod: t.updated_at });
+      }
+    }
+  } catch {
+    /* se devuelve lo que se alcanzo a juntar */
+  }
+  return out;
+}
+
 export default async function handler(_req: unknown, res: any) {
-  const productRoutes = await fetchProducts();
+  const [productRoutes, labRoutes] = await Promise.all([fetchProducts(), fetchLabRoutes()]);
   const xml = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
     ...staticRoutes.map(toUrlNode),
     ...productRoutes.map(toUrlNode),
+    ...labRoutes.map(toUrlNode),
     '</urlset>',
     '',
   ].join('\n');

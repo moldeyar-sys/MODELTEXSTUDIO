@@ -5,6 +5,8 @@ export const IMAGES_BUCKET = 'product-images';
 export const FILES_BUCKET = 'product-files';
 // Bucket PUBLICO solo para archivos gratuitos (separado del privado de pagos).
 export const FREE_FILES_BUCKET = 'free-files';
+// Bucket PUBLICO para recursos/adjuntos de MODELTEX LAB (PDFs, imágenes, tablas).
+export const LAB_FILES_BUCKET = 'lab-files';
 
 function safeName(name: string): string {
   const dot = name.lastIndexOf('.');
@@ -102,6 +104,20 @@ export async function createSignedDownloadUrl(path: string, expiresIn = 120): Pr
     .createSignedUrl(path, expiresIn, { download: true });
   if (error || !data) return null;
   return data.signedUrl;
+}
+
+/**
+ * Sube un recurso de MODELTEX LAB (PDF, imagen, tabla, etc.) al bucket
+ * PUBLICO 'lab-files' y devuelve su URL pública. Comprime si es imagen.
+ */
+export async function uploadLabFile(file: File): Promise<string> {
+  const optimized = await compressImage(file);
+  const path = `${Date.now()}-${safeName(optimized.name)}`;
+  const { error } = await supabase.storage
+    .from(LAB_FILES_BUCKET)
+    .upload(path, optimized, { upsert: false, contentType: optimized.type || undefined });
+  if (error) throw error;
+  return supabase.storage.from(LAB_FILES_BUCKET).getPublicUrl(path).data.publicUrl;
 }
 
 /** True si el valor es una ruta interna de Storage (no una URL http). */
