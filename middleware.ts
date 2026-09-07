@@ -17,6 +17,7 @@ import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PR
 import { SLUG_REDIRECTS } from './src/lib/slugRedirects.js';
 
 export const config = {
+  runtime: 'nodejs',
   matcher: [
     '/producto/:path*',
     '/',
