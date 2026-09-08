@@ -5,11 +5,13 @@
 
 export type LabStatus = 'draft' | 'published';
 
-/** Mismo shape que GuiaSection (src/lib/guiasTypes.ts): reuso de convención. */
+/** Mismo shape que GuiaSection (src/lib/guiasTypes.ts) + un check opcional de comprensión. */
 export interface LabDevelopmentBlock {
   h3?: string;
   paragraphs: string[];
   bullets?: string[];
+  /** Pregunta de autoevaluación antes de pasar al siguiente bloque (se muestra colapsada, con la respuesta oculta hasta que el alumno la abre). */
+  check?: { question: string; answer: string };
 }
 
 export interface LabMistake {

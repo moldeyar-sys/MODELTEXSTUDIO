@@ -15,7 +15,13 @@ const RESOURCE_TYPES: { value: LabResourceType; label: string }[] = [
 ];
 
 function blockToText(b: LabDevelopmentBlock) {
-  return { h3: b.h3 || '', paragraphs: (b.paragraphs || []).join('\n'), bullets: (b.bullets || []).join('\n') };
+  return {
+    h3: b.h3 || '',
+    paragraphs: (b.paragraphs || []).join('\n'),
+    bullets: (b.bullets || []).join('\n'),
+    checkQuestion: b.check?.question || '',
+    checkAnswer: b.check?.answer || '',
+  };
 }
 
 export function LabLessonForm({
@@ -42,7 +48,9 @@ export function LabLessonForm({
     status: lesson?.status || 'draft',
   });
   const [development, setDevelopment] = useState(
-    lesson?.development?.length ? lesson.development.map(blockToText) : [{ h3: '', paragraphs: '', bullets: '' }],
+    lesson?.development?.length
+      ? lesson.development.map(blockToText)
+      : [{ h3: '', paragraphs: '', bullets: '', checkQuestion: '', checkAnswer: '' }],
   );
   const [mistakes, setMistakes] = useState<LabMistake[]>(lesson?.common_mistakes?.length ? lesson.common_mistakes : []);
   const [faqs, setFaqs] = useState<LabFaq[]>(lesson?.faqs?.length ? lesson.faqs : []);
@@ -88,6 +96,7 @@ export function LabLessonForm({
           h3: b.h3.trim() || undefined,
           paragraphs: b.paragraphs.split('\n').map((s) => s.trim()).filter(Boolean),
           bullets: b.bullets.split('\n').map((s) => s.trim()).filter(Boolean),
+          check: b.checkQuestion.trim() && b.checkAnswer.trim() ? { question: b.checkQuestion.trim(), answer: b.checkAnswer.trim() } : undefined,
         }))
         .filter((b) => b.h3 || b.paragraphs.length > 0 || (b.bullets && b.bullets.length > 0)),
       steps: form.steps.split('\n').map((s) => s.trim()).filter(Boolean),
@@ -203,12 +212,26 @@ export function LabLessonForm({
                   rows={2}
                   className="input-field resize-none text-sm"
                 />
+                <div className="grid sm:grid-cols-2 gap-2 pt-1 border-t border-gray-100">
+                  <input
+                    value={b.checkQuestion}
+                    onChange={(e) => setDevelopment((prev) => prev.map((x, xi) => (xi === i ? { ...x, checkQuestion: e.target.value } : x)))}
+                    placeholder="Pregunta de repaso (opcional, antes de seguir)"
+                    className="input-field text-sm"
+                  />
+                  <input
+                    value={b.checkAnswer}
+                    onChange={(e) => setDevelopment((prev) => prev.map((x, xi) => (xi === i ? { ...x, checkAnswer: e.target.value } : x)))}
+                    placeholder="Respuesta"
+                    className="input-field text-sm"
+                  />
+                </div>
               </div>
             ))}
           </div>
           <button
             type="button"
-            onClick={() => setDevelopment((prev) => [...prev, { h3: '', paragraphs: '', bullets: '' }])}
+            onClick={() => setDevelopment((prev) => [...prev, { h3: '', paragraphs: '', bullets: '', checkQuestion: '', checkAnswer: '' }])}
             className="mt-2 inline-flex items-center gap-1.5 text-sm text-primary-700 hover:text-primary-900"
           >
             <Plus className="w-4 h-4" /> Agregar bloque

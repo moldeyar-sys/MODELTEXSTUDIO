@@ -243,6 +243,15 @@ export default function LabLessonPage() {
                           ))}
                         </ul>
                       )}
+                      {b.check && (
+                        <details className="group mt-3 rounded-xl border border-accent-200 bg-accent-50/60 overflow-hidden">
+                          <summary className="cursor-pointer list-none px-4 py-3 flex items-start justify-between gap-3 text-sm font-semibold text-accent-800">
+                            <span className="flex items-center gap-2"><HelpCircle className="w-4 h-4 flex-shrink-0" /> Antes de seguir: {b.check.question}</span>
+                            <ChevronRight className="w-4 h-4 text-accent-500 group-open:rotate-90 transition-transform mt-0.5 flex-shrink-0" />
+                          </summary>
+                          <p className="px-4 pb-3.5 text-sm text-gray-700 leading-relaxed">{b.check.answer}</p>
+                        </details>
+                      )}
                     </div>
                   ))}
                 </div>
