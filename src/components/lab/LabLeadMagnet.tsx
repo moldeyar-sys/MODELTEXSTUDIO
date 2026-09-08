@@ -1,27 +1,39 @@
 import { useState } from 'react';
-import { Gift, Mail, CheckCircle2 } from 'lucide-react';
+import { Gift, Mail, CheckCircle2, Loader2 } from 'lucide-react';
+import { trackLeadGenerated } from '../../lib/analytics';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 /**
- * Captación de email ("desbloqueá el mini-curso gratis"). Por ahora es solo
- * maqueta: valida el formato y muestra una confirmación local, pero no manda
- * el email a ningún lado todavía — falta decidir a qué servicio conectarlo
- * (Supabase, un ESP externo, etc.) antes de sumarle backend real.
+ * Simula la petición al proveedor de email marketing (1.5s de "red"). Cuando
+ * se elija un proveedor real (Resend, Mailchimp, un Edge Function propio,
+ * etc.), reemplazar el cuerpo de esta función por el fetch correspondiente
+ * — el resto del componente (loading, error, éxito) ya queda listo tal cual.
  */
+function submitLeadEmail(email: string): Promise<void> {
+  void email; // se usa cuando esto sea un fetch real; por ahora solo simula la latencia de red.
+  return new Promise((resolve) => {
+    setTimeout(() => resolve(), 1500);
+  });
+}
+
+/** Captación de email ("desbloqueá el mini-curso gratis"), con estado de carga real mientras "se envía". */
 export function LabLeadMagnet() {
   const [email, setEmail] = useState('');
+  const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [touched, setTouched] = useState(false);
   const valid = EMAIL_RE.test(email.trim());
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
-    if (!valid) return;
-    // TODO: conectar a un servicio real de captación (Supabase table + Resend,
-    // Mailchimp, etc.) cuando se defina. Por ahora solo confirma en pantalla.
+    if (!valid || sending) return;
+    setSending(true);
+    await submitLeadEmail(email.trim());
+    setSending(false);
     setSent(true);
+    trackLeadGenerated(email.trim());
   };
 
   return (
@@ -52,16 +64,24 @@ export function LabLeadMagnet() {
                     value={email}
                     onChange={(e) => setEmail(e.target.value)}
                     onBlur={() => setTouched(true)}
+                    disabled={sending}
                     placeholder="tu@email.com"
-                    className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-white/95 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-white/60"
+                    className="w-full pl-10 pr-3 py-2.5 rounded-xl bg-white/95 text-gray-900 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-white/60 disabled:opacity-70"
                   />
                   {touched && !valid && <p className="text-xs text-accent-200 mt-1">Ingresá un email válido.</p>}
                 </div>
                 <button
                   type="submit"
-                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-primary-900 text-sm font-semibold rounded-xl hover:bg-white/90 transition-colors active:scale-[0.98] flex-shrink-0"
+                  disabled={sending}
+                  className="inline-flex items-center justify-center gap-2 px-5 py-2.5 bg-white text-primary-900 text-sm font-semibold rounded-xl hover:bg-white/90 transition-colors active:scale-[0.98] flex-shrink-0 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                  Desbloquear
+                  {sending ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" /> Cargando...
+                    </>
+                  ) : (
+                    'Desbloquear'
+                  )}
                 </button>
               </form>
             )}

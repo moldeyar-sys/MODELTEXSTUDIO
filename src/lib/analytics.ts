@@ -92,3 +92,26 @@ export function trackLabStart(courseSlug: string): void {
 export function trackLabLessonComplete(courseSlug: string, lessonSlug: string): void {
   trackEvent('lab_lesson_complete', { course_slug: courseSlug, lesson_slug: lessonSlug });
 }
+
+// ── Embudo de Modeltex Lab (lead magnet, microlearning, upsell) ────────────
+// El console.log queda a propósito además del trackEvent: sirve para
+// verificar el evento en el momento (sin depender de que GA4 esté
+// configurado) y deja claro dónde engancha Facebook Pixel u otra
+// herramienta el día que se sume. El email del lead SOLO va al console.log
+// (visible nada más que en la consola del propio navegador) — nunca se
+// manda a GA4 ni a ningún tercero, para no filtrar datos personales.
+
+export function trackLeadGenerated(email: string): void {
+  console.log('Analytics: Evento lead_generado', email);
+  trackEvent('lead_generado');
+}
+
+export function trackMicrolearningVideoStart(lessonId: string): void {
+  console.log('Analytics: Evento video_iniciado', lessonId);
+  trackEvent('video_iniciado', { lesson_id: lessonId });
+}
+
+export function trackUpsellCatalogClick(): void {
+  console.log('Analytics: Evento clic_upsell_catalogo');
+  trackEvent('clic_upsell_catalogo');
+}

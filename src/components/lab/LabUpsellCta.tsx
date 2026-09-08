@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { PackageCheck, ArrowRight } from 'lucide-react';
+import { trackUpsellCatalogClick } from '../../lib/analytics';
 
 /** Puente de venta al catálogo, para el final de una página de Modeltex Lab. */
 export function LabUpsellCta() {
@@ -16,6 +17,7 @@ export function LabUpsellCta() {
       </div>
       <Link
         to="/catalogo"
+        onClick={trackUpsellCatalogClick}
         className="flex-shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-primary-900 font-semibold rounded-xl hover:bg-white/90 transition-all active:scale-[0.98]"
       >
         Ver catálogo <ArrowRight className="w-4 h-4" />
