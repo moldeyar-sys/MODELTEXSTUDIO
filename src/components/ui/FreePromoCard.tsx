@@ -5,6 +5,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { createSignedDownloadUrl, isStoragePath } from '../../lib/storage';
 import { ReviewsSection } from './ReviewsSection';
 import type { PromoProduct } from '../../lib/promo';
+import { productImageAlt } from '../../lib/productContent';
 
 const categoryLabel = (c: string) => {
   switch (c) {
@@ -58,7 +59,7 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
       <Link to={`/producto/${product.slug}`} className="relative block">
         <div className="aspect-[4/3] bg-gray-50 overflow-hidden">
           {product.main_image_url ? (
-            <img src={product.main_image_url} alt={product.name} loading="lazy" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
+            <img src={product.main_image_url} alt={productImageAlt(product)} loading="lazy" className="w-full h-full object-contain group-hover:scale-105 transition-transform duration-500" />
           ) : (
             <div className="w-full h-full flex items-center justify-center text-gray-300"><FileDown className="w-14 h-14" /></div>
           )}

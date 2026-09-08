@@ -15,13 +15,17 @@ import {
 import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { supabase } from '../lib/supabase';
 import { ProductCard } from '../components/ui/ProductCard';
-import { useSeo } from '../lib/seo';
+import { useSeo, useStructuredData } from '../lib/seo';
 import { useLocale } from '../lib/locale';
 import type { Product, ProductCategory } from '../lib/types';
 import { CATEGORIES, FORMATS } from '../lib/types';
 import { isPromoActive } from '../lib/promo';
 import { CATEGORY_SEO } from '../lib/categorySeo';
 import { PRODUCT_COLUMNS } from '../lib/productColumns';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
+
+const SITE_URL = 'https://modeltex.com.ar';
 
 // El filtro de formato viene de FORMATS ("PDF A4", "PDF Plotter", "DXF"...),
 // pero en la base casi todos los productos tienen formats = ["PDF"] (y se
@@ -470,6 +474,38 @@ export default function CatalogPage() {
     path: category ? `/catalogo?categoria=${category}` : '/catalogo',
   });
 
+  const itemListSchema = useMemo(() => {
+    if (!visibleProducts.length) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'ItemList',
+      itemListElement: visibleProducts.slice(0, 50).map((p, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: p.name,
+        url: `${SITE_URL}/producto/${p.slug}`,
+      })),
+    };
+  }, [visibleProducts]);
+  useStructuredData(itemListSchema, SCHEMA_IDS.itemList);
+
+  const breadcrumbItems = category
+    ? [{ label: 'Inicio', to: '/' }, { label: 'Catálogo', to: '/catalogo' }, { label: currentCategoryLabel }]
+    : [{ label: 'Inicio', to: '/' }, { label: 'Catálogo' }];
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: breadcrumbItems.map((it, i) => ({
+        '@type': 'ListItem',
+        position: i + 1,
+        name: it.label,
+        item: it.to ? `${SITE_URL}${it.to}` : `${SITE_URL}/catalogo?categoria=${category}`,
+      })),
+    },
+    SCHEMA_IDS.breadcrumb,
+  );
+
   return (
     <div className="min-h-screen bg-petroleum-50">
       <div className="relative overflow-hidden bg-white border-b border-gray-100">
@@ -477,6 +513,7 @@ export default function CatalogPage() {
         <div className="container-custom py-3 sm:py-8">
           <div className="flex items-start justify-between flex-wrap gap-4">
             <div className="max-w-3xl">
+              <Breadcrumbs items={breadcrumbItems} className="mb-2" />
               <h1 className="font-sans text-xl sm:text-3xl md:text-4xl font-extrabold text-primary-900 tracking-tight text-balance">
                 {t('catalog.title', 'Moldes aprobados con muestra')}
               </h1>
@@ -783,7 +820,7 @@ export default function CatalogPage() {
           <div className="card p-4 sm:p-6 mb-8">
             <div className="flex items-center justify-between mb-4 gap-3">
               <div>
-                <h3 className="font-semibold text-gray-900">{t('catalog.filterBy', 'Filtrar por')}</h3>
+                <h2 className="font-semibold text-gray-900">{t('catalog.filterBy', 'Filtrar por')}</h2>
                 <p className="text-sm text-gray-500 mt-1">{t('catalog.filterHint', 'Deja listo el catalogo segun categoria, formato o prioridad.')}</p>
               </div>
               {hasActiveFilters && (
@@ -867,9 +904,9 @@ export default function CatalogPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-petroleum-100 mb-5">
                 <Search className="w-8 h-8 text-petroleum-600" />
               </div>
-              <h3 className="font-display text-2xl font-bold text-primary-900 mb-2">
+              <h2 className="font-display text-2xl font-bold text-primary-900 mb-2">
                 {t('catalog.empty.filtered.title', 'No encontramos moldes con esos filtros')}
-              </h3>
+              </h2>
               <p className="text-gray-500 mb-6">
                 {t('catalog.empty.filtered.desc', 'Proba con otra categoria o formato, o mira todo el catalogo.')}
               </p>
@@ -882,9 +919,9 @@ export default function CatalogPage() {
               <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-petroleum-100 mb-5">
                 <PackageOpen className="w-8 h-8 text-petroleum-600" />
               </div>
-              <h3 className="font-display text-2xl font-bold text-primary-900 mb-2">
+              <h2 className="font-display text-2xl font-bold text-primary-900 mb-2">
                 {t('catalog.empty.none.title', 'Pronto sumamos nuevos moldes')}
-              </h3>
+              </h2>
               <p className="text-gray-500 mb-6">
                 {t('catalog.empty.none.desc', 'Estamos ampliando el catalogo. Necesitas un molde puntual? Pedilo a medida y lo preparamos para vos.')}
               </p>

@@ -342,7 +342,7 @@ export default function ProductDetailPage() {
                     }`}
                     aria-label={`Ver imagen ${i + 1}`}
                   >
-                    <img src={img} alt="" loading="lazy" className="w-full h-full object-contain p-1" />
+                    <img src={img} alt={`${productImageAlt(product)} — vista ${i + 1}`} loading="lazy" className="w-full h-full object-contain p-1" />
                   </button>
                 ))}
               </div>

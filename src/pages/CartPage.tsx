@@ -10,6 +10,7 @@ import {
   TALLE_ARS, TALLE_USD,
 } from '../lib/sizeUtils';
 import { isIndustrialFormat } from '../lib/productFormats';
+import { productImageAlt } from '../lib/productContent';
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, updateSizes, total, clearCart } = useCart();
@@ -103,7 +104,7 @@ export default function CartPage() {
                     <Link to={`/producto/${item.product.slug}`} className="flex-shrink-0">
                       <div className="w-20 h-20 sm:w-28 sm:h-28 rounded-xl overflow-hidden bg-gray-100">
                         {item.product.main_image_url ? (
-                          <img src={item.product.main_image_url} alt={item.product.name} loading="lazy" className="w-full h-full object-cover" />
+                          <img src={item.product.main_image_url} alt={productImageAlt(item.product)} loading="lazy" className="w-full h-full object-cover" />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">{t('common.noImage', 'Sin imagen')}</div>
                         )}

@@ -8,6 +8,7 @@ import { cartonPrice, pdfPrice, ploterPrice } from '../../lib/productFormats';
 import { ConsultButtons } from './ConsultButtons';
 import { FormatOptions } from './FormatOptions';
 import { useCountry } from '../../hooks/useCountry';
+import { productImageAlt } from '../../lib/productContent';
 
 interface ProductCardProps {
   product: Product;
@@ -42,7 +43,7 @@ export function ProductCard({ product }: ProductCardProps) {
             {product.main_image_url ? (
               <img
                 src={product.main_image_url}
-                alt={product.name}
+                alt={productImageAlt(product)}
                 loading="lazy"
                 className="w-full h-full object-contain group-hover:scale-[1.03] transition-transform duration-500"
               />
