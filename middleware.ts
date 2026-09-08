@@ -580,12 +580,70 @@ const STATIC_PAGES: Record<
 <p>Precios en pesos argentinos y en dólares para el exterior. Pagos con Mercado Pago, transferencia, PayPal y cripto. Se puede comprar con o sin cuenta. Más info en <a href="${o}/preguntas-frecuentes">preguntas frecuentes</a>, <a href="${o}/como-funciona">cómo funciona</a> y <a href="${o}/contacto">contacto</a> (WhatsApp ${WHATSAPP_DISPLAY}).</p>`,
   },
   '/moldes-pdf': {
-    title: 'Moldes PDF para imprimir | Modeltex',
-    description: 'Moldes de ropa en PDF para imprimir en A4 o plotter, con todos los talles y descarga inmediata. Para emprendedores, talleres y fabricantes.',
+    title: 'Moldes PDF para imprimir: listos para producir | Modeltex',
+    description: 'Moldes de ropa en PDF para imprimir en A4 o plotter, listos para producir, con todos los talles y descarga inmediata. Para emprendedores, talleres y fabricantes.',
     body: (o) => `
 <h1>Moldes PDF para imprimir, cortar y producir</h1>
 <p>Moldes de ropa en PDF listos para imprimir: en hojas A4 (imprimís en casa y pegás siguiendo la guía numerada) o en PDF plotter (imprimís en ancho real en cualquier servicio de ploteo). Todos incluyen la curva completa de talles y control de medida para verificar la escala.</p>
-<p><a href="${o}/catalogo">Ver el catálogo completo</a> (${CATALOGO_TXT}) — también disponibles en ${FORMATOS_TXT}.</p>`,
+<p><a href="${o}/catalogo">Ver el catálogo completo</a> (${CATALOGO_TXT}) — también disponibles en ${FORMATOS_TXT}.</p>
+<h2>Preguntas frecuentes sobre moldes PDF</h2>
+<h3>¿Qué son los moldes en PDF?</h3>
+<p>Son moldes de ropa digitales entregados en un archivo PDF, listos para imprimir y cortar: incluyen todas las piezas de la prenda a escala real, la curva de talles completa y un cuadrado de control para verificar que la impresión no perdió medida.</p>
+<h3>¿Los moldes PDF ya están listos para imprimir?</h3>
+<p>Sí: cada archivo se descarga, se imprime al 100% de escala y se corta, sin ningún paso de edición previo. En PDF A4 se pegan las hojas numeradas; en PDF plotter sale en una sola lámina de ancho real.</p>
+<h3>¿Qué diferencia hay entre un molde PDF A4 y uno para plotter?</h3>
+<p>El PDF A4 viene partido en hojas carta u oficio para imprimir en cualquier impresora casera y pegar siguiendo la numeración. El PDF plotter es la misma pieza completa en una sola lámina de 90, 120 o 150 cm de ancho, pensada para una gráfica de ploteo.</p>
+<h3>¿Los moldes PDF incluyen todos los talles?</h3>
+<p>Sí, cada molde PDF incluye la curva de talles completa (XS a 4XL en adultos, 2 a 18 en niños) ya escalada y aprobada con una muestra confeccionada.</p>
+<h3>¿Puedo usar los moldes PDF para producir y vender ropa?</h3>
+<p>Sí, la licencia es de uso productivo: podés confeccionar y vender las prendas hechas con el molde sin límite de unidades.</p>`,
+    schemas: (o) => [
+      {
+        id: 'moldes-pdf-faq',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: '¿Qué son los moldes en PDF?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Son moldes de ropa digitales entregados en un archivo PDF, listos para imprimir y cortar: incluyen todas las piezas de la prenda a escala real, la curva de talles completa y un cuadrado de control para verificar que la impresión no perdió medida.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Los moldes PDF ya están listos para imprimir?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Sí: cada archivo se descarga, se imprime al 100% de escala y se corta, sin ningún paso de edición previo. En PDF A4 se pegan las hojas numeradas; en PDF plotter sale en una sola lámina de ancho real.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Qué diferencia hay entre un molde PDF A4 y uno para plotter?',
+              acceptedAnswer: { '@type': 'Answer', text: 'El PDF A4 viene partido en hojas carta u oficio para imprimir en cualquier impresora casera y pegar siguiendo la numeración. El PDF plotter es la misma pieza completa en una sola lámina de 90, 120 o 150 cm de ancho, pensada para una gráfica de ploteo.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Los moldes PDF incluyen todos los talles?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Sí, cada molde PDF incluye la curva de talles completa (XS a 4XL en adultos, 2 a 18 en niños) ya escalada y aprobada con una muestra confeccionada.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Puedo usar los moldes PDF para producir y vender ropa?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Sí, la licencia es de uso productivo: podés confeccionar y vender las prendas hechas con el molde sin límite de unidades.' },
+            },
+          ],
+        },
+      },
+      {
+        id: 'moldes-pdf-breadcrumb',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` },
+            { '@type': 'ListItem', position: 2, name: 'Moldes PDF', item: `${o}/moldes-pdf` },
+          ],
+        },
+      },
+    ],
   },
   '/moldes-pdf-a4': {
     title: 'Moldes PDF A4 para imprimir en casa | Modeltex',
@@ -612,12 +670,77 @@ const STATIC_PAGES: Record<
 <p><a href="${o}/moldes-gratis">Probá primero un molde gratis</a> · <a href="${o}/catalogo">Ver catálogo</a></p>`,
   },
   '/moldes-gratis': {
-    title: 'Moldes de ropa gratis para descargar | Modeltex',
-    description: 'Descargá moldes de ropa reales gratis y comprobá la calidad de Modeltex antes de comprar. PDF listos para imprimir.',
+    title: 'Moldes gratis en PDF para descargar e imprimir | Modeltex',
+    description: 'Moldes de ropa gratis para descargar en PDF, listos para imprimir. Moldería gratis real, mismo nivel de calidad que el catálogo pago de Modeltex.',
     body: (o) => `
 <h1>Moldes gratis — probá la calidad antes de comprar</h1>
-<p>Publicamos moldes reales de nuestro catálogo para descarga gratuita: el mismo nivel de terminación, talles y prolijidad que los moldes pagos. Descargalos, imprimilos y comprobá cómo trabajamos antes de hacer tu primera compra.</p>
-<p><a href="${o}/moldes-gratis">Entrá a la sección Moldes Gratis</a> (algunos se descargan sin cuenta; otros pidiendo una cuenta gratuita).</p>`,
+<p>Publicamos moldes reales de nuestro catálogo para descarga gratuita, en PDF listos para imprimir: el mismo nivel de terminación, talles y prolijidad que los moldes pagos. Descargalos, imprimilos y comprobá cómo trabajamos antes de hacer tu primera compra.</p>
+<p><a href="${o}/moldes-gratis">Entrá a la sección Moldes Gratis</a> (algunos se descargan sin cuenta; otros pidiendo una cuenta gratuita).</p>
+<h2>Preguntas frecuentes sobre moldes gratis</h2>
+<h3>¿Los moldes gratis son moldes reales o solo de muestra?</h3>
+<p>Son moldes reales de nuestro catálogo, no versiones recortadas ni de muestra: mismo nivel de terminación, talles y prolijidad que los moldes pagos.</p>
+<h3>¿Cómo descargo un molde gratis para imprimir?</h3>
+<p>Entrás a la sección Moldes Gratis, elegís el que te interesa y lo descargás: algunos se bajan sin necesidad de cuenta, otros piden crear una cuenta gratuita en Modeltex. En los dos casos la descarga es inmediata.</p>
+<h3>¿Los moldes gratis vienen en PDF listos para imprimir?</h3>
+<p>Sí, se entregan en PDF, listos para imprimir en A4 o plotter según el molde, con el mismo cuadrado de control de medida que traen los moldes pagos.</p>
+<h3>¿Cada cuánto suben moldes nuevos gratis para descargar?</h3>
+<p>Sumamos moldes gratuitos nuevos de forma periódica, en general cada semana.</p>
+<h3>¿Puedo usar un molde gratis para producir y vender ropa?</h3>
+<p>Sí, tiene la misma licencia de uso productivo que los moldes pagos: podés confeccionar y vender las prendas sin límite de unidades.</p>
+<h3>¿Qué diferencia hay entre los moldes gratis y los moldes pagos?</h3>
+<p>Ninguna en calidad: la diferencia es que el catálogo gratis es una selección chica y rotativa, mientras que el catálogo completo tiene más de 2.000 moldes con curva de talles completa.</p>`,
+    schemas: (o) => [
+      {
+        id: 'moldes-gratis-faq',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            {
+              '@type': 'Question',
+              name: '¿Los moldes gratis son moldes reales o solo de muestra?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Son moldes reales de nuestro catálogo, no versiones recortadas ni de muestra: mismo nivel de terminación, talles y prolijidad que los moldes pagos.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Cómo descargo un molde gratis para imprimir?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Entrás a la sección Moldes Gratis, elegís el que te interesa y lo descargás: algunos se bajan sin necesidad de cuenta, otros piden crear una cuenta gratuita en Modeltex. En los dos casos la descarga es inmediata.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Los moldes gratis vienen en PDF listos para imprimir?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Sí, se entregan en PDF, listos para imprimir en A4 o plotter según el molde, con el mismo cuadrado de control de medida que traen los moldes pagos.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Cada cuánto suben moldes nuevos gratis para descargar?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Sumamos moldes gratuitos nuevos de forma periódica, en general cada semana.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Puedo usar un molde gratis para producir y vender ropa?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Sí, tiene la misma licencia de uso productivo que los moldes pagos: podés confeccionar y vender las prendas sin límite de unidades.' },
+            },
+            {
+              '@type': 'Question',
+              name: '¿Qué diferencia hay entre los moldes gratis y los moldes pagos?',
+              acceptedAnswer: { '@type': 'Answer', text: 'Ninguna en calidad: la diferencia es que el catálogo gratis es una selección chica y rotativa, mientras que el catálogo completo tiene más de 2.000 moldes con curva de talles completa.' },
+            },
+          ],
+        },
+      },
+      {
+        id: 'moldes-gratis-breadcrumb',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` },
+            { '@type': 'ListItem', position: 2, name: 'Moldes gratis', item: `${o}/moldes-gratis` },
+          ],
+        },
+      },
+    ],
   },
   '/como-funciona': {
     title: 'Cómo funciona la compra de moldes | Modeltex',

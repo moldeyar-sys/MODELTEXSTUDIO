@@ -2,13 +2,40 @@ import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Gift, ShieldCheck, Download, ArrowRight, PackageOpen } from 'lucide-react';
-import { useSeo } from '../lib/seo';
+import { useSeo, useStructuredData } from '../lib/seo';
 import { fetchActiveFreeMolds } from '../lib/freeMolds';
 import { fetchPromoProducts, type PromoProduct } from '../lib/promo';
 import { FreeMoldCard } from '../components/ui/FreeMoldCard';
 import { FreePromoCard } from '../components/ui/FreePromoCard';
 import { NewsletterSignup } from '../components/ui/NewsletterSignup';
 import type { FreeMold } from '../lib/types';
+
+const freeFaqs = [
+  {
+    q: '¿Los moldes gratis son moldes reales o solo de muestra?',
+    a: 'Son moldes reales de nuestro catálogo, no versiones recortadas ni de muestra: mismo nivel de terminación, talles y prolijidad que los moldes pagos. Los publicamos gratis justamente para que compruebes esa calidad antes de tu primera compra.',
+  },
+  {
+    q: '¿Cómo descargo un molde gratis para imprimir?',
+    a: 'Entrás a la sección Moldes Gratis, elegís el que te interesa y lo descargás: algunos se bajan sin necesidad de cuenta, otros piden crear una cuenta gratuita en Modeltex. En los dos casos la descarga es inmediata.',
+  },
+  {
+    q: '¿Los moldes gratis vienen en PDF listos para imprimir?',
+    a: 'Sí, se entregan en PDF, listos para imprimir en A4 o plotter según el molde, con el mismo cuadrado de control de medida que traen los moldes pagos para verificar que la impresión no perdió escala.',
+  },
+  {
+    q: '¿Cada cuánto suben moldes nuevos gratis para descargar?',
+    a: 'Sumamos moldes gratuitos nuevos de forma periódica, en general cada semana. Si te suscribís con tu email en esta página te avisamos cuando hay novedades.',
+  },
+  {
+    q: '¿Puedo usar un molde gratis para producir y vender ropa?',
+    a: 'Sí, tiene la misma licencia de uso productivo que los moldes pagos: podés confeccionar y vender las prendas sin límite de unidades. Lo que no está permitido es revender o redistribuir el archivo del molde.',
+  },
+  {
+    q: '¿Qué diferencia hay entre los moldes gratis y los moldes pagos?',
+    a: 'Ninguna en calidad: la diferencia es que el catálogo gratis es una selección chica y rotativa, mientras que el catálogo completo tiene más de 2.000 moldes con curva de talles completa, para elegir por categoría, prenda y formato.',
+  },
+];
 
 export default function FreeMoldsPage() {
   const [molds, setMolds] = useState<FreeMold[]>([]);
@@ -17,11 +44,42 @@ export default function FreeMoldsPage() {
   const [search, setSearch] = useState('');
 
   useSeo({
-    title: 'Moldes Gratis para descargar — Moldería digital gratis',
+    title: 'Moldes gratis en PDF para descargar e imprimir',
     description:
-      'Moldes de ropa GRATIS para descargar: moldería digital gratuita en PDF A4, plotter y más. Probá la calidad Modeltex antes de comprar. Descarga inmediata y nuevos moldes gratis cada semana.',
+      'Moldes de ropa gratis para descargar: moldería gratis en PDF, listos para imprimir en A4 o plotter. Probá la calidad Modeltex antes de comprar, con nuevos moldes gratis cada semana.',
     path: '/moldes-gratis',
   });
+
+  useStructuredData(
+    [
+      {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Moldes gratis para descargar',
+        url: 'https://modeltex.com.ar/moldes-gratis',
+        description:
+          'Moldes de ropa gratis para descargar en PDF, listos para imprimir. Mismo nivel de calidad que el catálogo pago de Modeltex.',
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'BreadcrumbList',
+        itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
+          { '@type': 'ListItem', position: 2, name: 'Moldes gratis', item: 'https://modeltex.com.ar/moldes-gratis' },
+        ],
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: freeFaqs.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
+      },
+    ],
+    'moldes-gratis-schema',
+  );
 
   useEffect(() => {
     Promise.all([fetchActiveFreeMolds(), fetchPromoProducts()]).then(([m, p]) => {
@@ -165,6 +223,31 @@ export default function FreeMoldsPage() {
             ))}
           </div>
         )}
+      </section>
+
+      {/* Contenido SEO/AEO + FAQ */}
+      <section className="container-custom pb-8 md:pb-10">
+        <div className="card p-6 sm:p-7 max-w-3xl">
+          <h2 className="font-display text-2xl font-bold text-primary-900">Moldería gratis para descargar y probar</h2>
+          <p className="text-gray-600 mt-3 leading-relaxed">
+            Acá vas a encontrar moldes para descargar gratis en PDF, listos para imprimir en A4 o en plotter: la
+            misma moldería digital que vendemos en el catálogo completo, publicada gratuitamente para que la
+            pruebes antes de comprar. No es una versión de muestra ni un molde recortado: es un molde real, con
+            su curva de talles y su control de medida, igual que los moldes pagos.
+          </p>
+        </div>
+
+        <div className="card p-6 sm:p-7 max-w-3xl mt-6">
+          <h2 className="font-display text-2xl font-bold text-primary-900">Preguntas frecuentes sobre moldes gratis</h2>
+          <div className="mt-4 divide-y divide-gray-100">
+            {freeFaqs.map((item) => (
+              <div key={item.q} className="py-4 first:pt-0 last:pb-0">
+                <h3 className="font-semibold text-primary-900">{item.q}</h3>
+                <p className="text-gray-600 mt-2 leading-relaxed">{item.a}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* CTA final */}

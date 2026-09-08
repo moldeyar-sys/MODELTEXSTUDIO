@@ -34,11 +34,38 @@ const sections = [
   },
 ];
 
+const pdfFaqs = [
+  {
+    q: '¿Qué son los moldes en PDF?',
+    a: 'Son moldes de ropa digitales entregados en un archivo PDF, listos para imprimir y cortar: incluyen todas las piezas de la prenda a escala real, la curva de talles completa y un cuadrado de control para verificar que la impresión no perdió medida.',
+  },
+  {
+    q: '¿Los moldes PDF ya están listos para imprimir?',
+    a: 'Sí: cada archivo se descarga, se imprime al 100% de escala (nunca "ajustar a la página") y se corta, sin ningún paso de edición previo. En PDF A4 se pegan las hojas numeradas; en PDF plotter sale en una sola lámina de ancho real.',
+  },
+  {
+    q: '¿Qué diferencia hay entre un molde PDF A4 y uno para plotter?',
+    a: 'El PDF A4 viene partido en hojas carta u oficio para imprimir en cualquier impresora casera y pegar siguiendo la numeración; es la opción más económica. El PDF plotter es la misma pieza completa en una sola lámina de 90, 120 o 150 cm de ancho, pensada para imprimirse en una gráfica de ploteo y usarse directo en un taller.',
+  },
+  {
+    q: '¿Qué necesito para imprimir un molde en PDF sin que pierda la escala?',
+    a: 'En A4 alcanza con una impresora casera configurada al 100% de escala; en plotter hace falta llevar el archivo a un servicio de ploteo textil. En los dos casos hay que verificar el cuadrado de control con una regla antes de cortar, para confirmar que la impresión salió a tamaño real.',
+  },
+  {
+    q: '¿Los moldes PDF incluyen todos los talles?',
+    a: 'Sí, cada molde PDF incluye la curva de talles completa (XS a 4XL en adultos, 2 a 18 en niños) ya escalada y aprobada con una muestra confeccionada; en la ficha del producto elegís qué talles llevar.',
+  },
+  {
+    q: '¿Puedo usar los moldes PDF para producir y vender ropa?',
+    a: 'Sí, la licencia es de uso productivo: podés confeccionar y vender las prendas hechas con el molde sin límite de unidades. Lo único que no está permitido es revender o redistribuir el archivo del molde en sí.',
+  },
+];
+
 export default function MoldesPdfPage() {
   useSeo({
-    title: 'Moldes PDF para imprimir y producir',
+    title: 'Moldes PDF para imprimir: listos para producir',
     description:
-      'Moldes PDF para imprimir: moldes de ropa en PDF A4 y PDF plotter con descarga inmediata. Modeltex ofrece molderia digital profesional para imprimir, cortar y producir.',
+      'Moldes PDF para imprimir y moldes listos para imprimir: moldes de ropa en PDF A4 y PDF plotter con curva de talles completa y descarga inmediata. Molderia digital profesional.',
     path: '/moldes-pdf',
   });
 
@@ -59,6 +86,15 @@ export default function MoldesPdfPage() {
           { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
           { '@type': 'ListItem', position: 2, name: 'Moldes PDF', item: 'https://modeltex.com.ar/moldes-pdf' },
         ],
+      },
+      {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: pdfFaqs.map((item) => ({
+          '@type': 'Question',
+          name: item.q,
+          acceptedAnswer: { '@type': 'Answer', text: item.a },
+        })),
       },
     ],
     'moldes-pdf-schema',
@@ -131,6 +167,18 @@ export default function MoldesPdfPage() {
                 </div>
               );
             })}
+          </div>
+        </div>
+
+        <div className="card p-6 sm:p-7 mt-6">
+          <h2 className="font-display text-2xl font-bold text-primary-900">Preguntas frecuentes sobre moldes PDF</h2>
+          <div className="mt-4 divide-y divide-gray-100">
+            {pdfFaqs.map((item) => (
+              <div key={item.q} className="py-4 first:pt-0 last:pb-0">
+                <h3 className="font-semibold text-primary-900">{item.q}</h3>
+                <p className="text-gray-600 mt-2 leading-relaxed">{item.a}</p>
+              </div>
+            ))}
           </div>
         </div>
       </div>
