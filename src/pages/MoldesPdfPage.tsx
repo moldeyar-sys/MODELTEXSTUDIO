@@ -2,6 +2,7 @@ import { FileText, Printer, Ruler, ArrowRight, Download, CheckCircle2 } from 'lu
 import { Link } from 'react-router-dom';
 import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useSeo, useStructuredData } from '../lib/seo';
+import { SCHEMA_IDS } from '../lib/schemaIds';
 
 const benefits = [
   'Moldes PDF listos para imprimir en A4 o plotter.',
@@ -78,34 +79,37 @@ export default function MoldesPdfPage() {
   });
 
   useStructuredData(
-    [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
-        name: 'Moldes PDF para imprimir y producir',
-        url: 'https://modeltex.com.ar/moldes-pdf',
-        description:
-          'Moldes PDF para imprimir en A4 o plotter. Molderia digital profesional con descarga inmediata.',
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
-          { '@type': 'ListItem', position: 2, name: 'Moldes PDF', item: 'https://modeltex.com.ar/moldes-pdf' },
-        ],
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: pdfFaqs.map((item) => ({
-          '@type': 'Question',
-          name: item.q,
-          acceptedAnswer: { '@type': 'Answer', text: item.a },
-        })),
-      },
-    ],
-    'moldes-pdf-schema',
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Moldes PDF para imprimir y producir',
+      url: 'https://modeltex.com.ar/moldes-pdf',
+      description: 'Moldes PDF para imprimir en A4 o plotter. Molderia digital profesional con descarga inmediata.',
+    },
+    SCHEMA_IDS.collectionPage,
+  );
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
+        { '@type': 'ListItem', position: 2, name: 'Moldes PDF', item: 'https://modeltex.com.ar/moldes-pdf' },
+      ],
+    },
+    SCHEMA_IDS.breadcrumb,
+  );
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: pdfFaqs.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+    SCHEMA_IDS.faq,
   );
 
   return (

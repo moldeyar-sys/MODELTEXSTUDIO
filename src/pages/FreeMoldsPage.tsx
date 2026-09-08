@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { Search, Gift, ShieldCheck, Download, ArrowRight, PackageOpen } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
+import { SCHEMA_IDS } from '../lib/schemaIds';
 import { fetchActiveFreeMolds } from '../lib/freeMolds';
 import { fetchPromoProducts, type PromoProduct } from '../lib/promo';
 import { FreeMoldCard } from '../components/ui/FreeMoldCard';
@@ -59,34 +60,38 @@ export default function FreeMoldsPage() {
   });
 
   useStructuredData(
-    [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
-        name: 'Moldes gratis para descargar',
-        url: 'https://modeltex.com.ar/moldes-gratis',
-        description:
-          'Moldes de ropa gratis para descargar en PDF, listos para imprimir. Mismo nivel de calidad que el catálogo pago de Modeltex.',
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
-          { '@type': 'ListItem', position: 2, name: 'Moldes gratis', item: 'https://modeltex.com.ar/moldes-gratis' },
-        ],
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: freeFaqs.map((item) => ({
-          '@type': 'Question',
-          name: item.q,
-          acceptedAnswer: { '@type': 'Answer', text: item.a },
-        })),
-      },
-    ],
-    'moldes-gratis-schema',
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Moldes gratis para descargar',
+      url: 'https://modeltex.com.ar/moldes-gratis',
+      description:
+        'Moldes de ropa gratis para descargar en PDF, listos para imprimir. Mismo nivel de calidad que el catálogo pago de Modeltex.',
+    },
+    SCHEMA_IDS.collectionPage,
+  );
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
+        { '@type': 'ListItem', position: 2, name: 'Moldes gratis', item: 'https://modeltex.com.ar/moldes-gratis' },
+      ],
+    },
+    SCHEMA_IDS.breadcrumb,
+  );
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: freeFaqs.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+    SCHEMA_IDS.faq,
   );
 
   useEffect(() => {

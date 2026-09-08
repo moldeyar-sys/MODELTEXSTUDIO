@@ -9,12 +9,24 @@
 // la app (src/lib/seo.ts): si Google renderiza la pagina con JavaScript, la
 // app reemplaza el schema en vez de duplicarlo. El bloque de texto para robots
 // lo saca src/main.tsx antes de montar la app.
+//
+// IMPORTANTE — convencion de ids de schema: los strings 'schema-breadcrumb',
+// 'schema-faq', 'schema-collection', 'schema-article', 'schema-course',
+// 'schema-definedterm', 'schema-product', 'schema-itemlist',
+// 'schema-contactpage' que aparecen mas abajo tienen que ser IDENTICOS a los
+// que exporta src/lib/schemaIds.ts (SCHEMA_IDS), que es lo que usa cada
+// pagina .tsx del lado React. Si no coinciden exacto, el schema se duplica o
+// desaparece al hidratar (useStructuredData en src/lib/seo.ts solo limpia el
+// script viejo cuando el id coincide). Este archivo no puede importar la
+// constante porque generaria un ciclo de tipos con .js en algunos bundlers
+// del edge runtime; si cambias un id, cambialo en LOS DOS lugares.
 
 import { FAQ_ITEMS } from './src/lib/faqData.js';
 import { CATEGORY_SEO, CATEGORY_TITLE_SUFFIX } from './src/lib/categorySeo.js';
-import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, type Guia } from './src/lib/guiasData.js';
+import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, getRelatedGuias, type Guia } from './src/lib/guiasData.js';
 import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent.js';
 import { SLUG_REDIRECTS } from './src/lib/slugRedirects.js';
+import { getArticleAuthor } from './src/lib/siteConfig.js';
 
 export const config = {
   matcher: [
@@ -239,6 +251,7 @@ async function pg<T>(query: string, withCount = false): Promise<{ rows: T[]; tot
 }
 
 interface ProductRow {
+  id: string;
   name: string;
   slug: string;
   codigo?: string | null;
@@ -271,7 +284,7 @@ interface ProductRow {
 }
 
 const PRODUCT_SELECT =
-  'name,slug,codigo,short_description,long_description,main_image_url,gallery,category,garment_type,season,sizes,formats,recommended_fabrics,' +
+  'id,name,slug,codigo,short_description,long_description,main_image_url,gallery,category,garment_type,season,sizes,formats,recommended_fabrics,' +
   'price,precio_carton,precio_pdf_a4,precio_pdf_ploter,precio_dxf,precio_pds,precio_mrk,precio_ads,' +
   'precio_usd_carton,precio_usd_pdf_a4,precio_usd_pdf_ploter,precio_usd_dxf,precio_usd_pds,precio_usd_mrk,precio_usd_ads,entrega_inmediata';
 
@@ -302,7 +315,26 @@ function productSeo(p: ProductRow) {
   return { title, description };
 }
 
-function productBody(p: ProductRow, pageUrl: string, origin: string): { inner: string; schemas: Schema[] } {
+async function productReviewSummary(productId: string): Promise<{ avg: number; count: number }> {
+  // Mismo calculo que src/lib/reviews.ts (reviewSummary), pero via fetch
+  // directo a PostgREST: middleware.ts no importa el cliente supabase-js del
+  // resto de la app, sigue el mismo patron que usa para leer productos.
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/reviews?target_type=eq.product&target_id=eq.${encodeURIComponent(productId)}&select=rating`,
+      { headers: { apikey: SUPABASE_ANON_KEY } },
+    );
+    if (!res.ok) return { avg: 0, count: 0 };
+    const rows = (await res.json()) as Array<{ rating: number }>;
+    if (!rows.length) return { avg: 0, count: 0 };
+    const sum = rows.reduce((s, r) => s + r.rating, 0);
+    return { avg: Math.round((sum / rows.length) * 10) / 10, count: rows.length };
+  } catch {
+    return { avg: 0, count: 0 };
+  }
+}
+
+async function productBody(p: ProductRow, pageUrl: string, origin: string): Promise<{ inner: string; schemas: Schema[] }> {
   const cat = CATEGORIAS[p.category || ''];
   const catUrl = `${origin}/catalogo?categoria=${p.category || ''}`;
   const desc = (p.short_description || p.long_description || '').toString().trim();
@@ -384,9 +416,11 @@ function productBody(p: ProductRow, pageUrl: string, origin: string): { inner: s
     .filter((pr) => pr.value)
     .map((pr) => ({ '@type': 'PropertyValue', ...pr }));
 
+  const ratingSummary = await productReviewSummary(p.id);
+
   const schemas: Schema[] = [
     {
-      id: 'product-schema',
+      id: 'schema-product',
       data: {
         '@context': 'https://schema.org',
         '@type': 'Product',
@@ -399,13 +433,18 @@ function productBody(p: ProductRow, pageUrl: string, origin: string): { inner: s
         brand: { '@type': 'Brand', name: SITE_NAME },
         ...(offers.length ? { offers } : {}),
         ...(propiedades.length ? { additionalProperty: propiedades } : {}),
+        // Solo si hay reseñas reales (nunca un rating inventado): mismo
+        // criterio que ProductDetailPage.tsx del lado React.
+        ...(ratingSummary.count > 0
+          ? { aggregateRating: { '@type': 'AggregateRating', ratingValue: ratingSummary.avg, reviewCount: ratingSummary.count } }
+          : {}),
       },
     },
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     ...(faq.length
       ? [
           {
-            id: 'product-faq-schema',
+            id: 'schema-faq',
             data: {
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
@@ -471,9 +510,9 @@ async function categoriaPage(html: string, origin: string, cat: string) {
     .join('\n');
 
   const schemas: Schema[] = [
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
-      id: 'catalog-schema',
+      id: 'schema-itemlist',
       data: {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
@@ -529,9 +568,9 @@ async function catalogoPage(html: string, origin: string) {
     .join('\n');
 
   const schemas: Schema[] = [
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
-      id: 'catalog-schema',
+      id: 'schema-itemlist',
       data: {
         '@context': 'https://schema.org',
         '@type': 'ItemList',
@@ -574,6 +613,7 @@ const STATIC_PAGES: Record<
 <li>Por categoría: <a href="${o}/catalogo?categoria=dama">dama</a>, <a href="${o}/catalogo?categoria=hombre">hombre</a>, <a href="${o}/catalogo?categoria=nina">niña</a>, <a href="${o}/catalogo?categoria=nino">niño</a>, <a href="${o}/catalogo?categoria=bebes">bebés</a>, <a href="${o}/catalogo?categoria=adultos-unisex">unisex adultos</a> y <a href="${o}/catalogo?categoria=ninos-unisex">unisex niños</a>.</li>
 <li><a href="${o}/moldes-pdf">Moldes PDF para imprimir</a> en A4 o plotter, listos para producir.</li>
 <li><a href="${o}/moldes-gratis">Moldes gratis</a> para probar la calidad antes de comprar.</li>
+<li><a href="${o}/lab">Modeltex Lab</a>: curso gratis de moldería textil, desde fundamentos hasta producción industrial.</li>
 <li><a href="${o}/diseno-a-pedido">Moldería a pedido</a>: desarrollamos tu molde a medida en el formato que uses.</li>
 <li>Tizadas computarizadas (MRK) optimizadas al ancho de tu tela.</li>
 <li><a href="${o}/guias">Guías para producción</a>: formatos de moldería, telas por prenda, curva de talles, tizadas, consumo de tela, costeo, plotter, uniformes y sublimación.</li>
@@ -606,7 +646,17 @@ const STATIC_PAGES: Record<
 <p>En el catálogo de Modeltex: elegís el molde, lo comprás y lo tenés disponible para descargar al momento (los marcados como "descarga rápida" se habilitan apenas se confirma el pago).</p>`,
     schemas: (o) => [
       {
-        id: 'moldes-pdf-faq',
+        id: 'schema-collection',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Moldes PDF para imprimir y producir',
+          url: `${o}/moldes-pdf`,
+          description: 'Moldes de ropa en PDF para imprimir en A4 o plotter. Moldería digital profesional con descarga inmediata.',
+        },
+      },
+      {
+        id: 'schema-faq',
         data: {
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
@@ -650,7 +700,7 @@ const STATIC_PAGES: Record<
         },
       },
       {
-        id: 'moldes-pdf-breadcrumb',
+        id: 'schema-breadcrumb',
         data: {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
@@ -668,7 +718,30 @@ const STATIC_PAGES: Record<
     body: (o) => `
 <h1>Moldes PDF A4 — imprimí tus moldes en casa</h1>
 <p>El formato ideal para emprendedores: imprimís el molde en hojas A4 comunes al 100% de escala, pegás siguiendo la numeración y obtenés el molde en tamaño real con todos sus talles. Cada archivo incluye cuadrado de control de medida.</p>
-<p><a href="${o}/catalogo?formato=PDF%20A4">Ver moldes PDF A4 disponibles</a> · <a href="${o}/ayuda-impresion">Guía para imprimir sin perder escala</a></p>`,
+<p><a href="${o}/catalogo?formato=PDF%20A4">Ver moldes PDF A4 disponibles</a> · <a href="${o}/ayuda-impresion">Guía para imprimir sin perder escala</a></p>
+<h2>Preguntas frecuentes</h2>
+<h3>¿Qué necesito para imprimir un molde PDF A4?</h3>
+<p>Solo una impresora casera u de oficina común, configurada al 100% de escala, y hojas A4 u oficio.</p>
+<h3>¿Cómo se arma el molde después de imprimirlo?</h3>
+<p>Cada hoja sale numerada: se pegan en orden hasta formar la pieza completa a tamaño real, verificando el cuadrado de control con una regla.</p>
+<h3>¿El PDF A4 incluye todos los talles?</h3>
+<p>Sí, la curva completa (XS a 4XL en adultos, 2 a 18 en niños) viene incluida en el archivo.</p>`,
+    schemas: (o) => [
+      { id: 'schema-breadcrumb', data: { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` }, { '@type': 'ListItem', position: 2, name: 'Moldes PDF A4', item: `${o}/moldes-pdf-a4` }] } },
+      { id: 'schema-collection', data: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Moldes PDF A4 para imprimir', url: `${o}/moldes-pdf-a4`, description: 'Moldes PDF A4 para imprimir en casa o en tu taller, con talles completos y descarga inmediata.' } },
+      {
+        id: 'schema-faq',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: '¿Qué necesito para imprimir un molde PDF A4?', acceptedAnswer: { '@type': 'Answer', text: 'Solo una impresora casera u de oficina común, configurada al 100% de escala, y hojas A4 u oficio.' } },
+            { '@type': 'Question', name: '¿Cómo se arma el molde después de imprimirlo?', acceptedAnswer: { '@type': 'Answer', text: 'Cada hoja sale numerada: se pegan en orden hasta formar la pieza completa a tamaño real, verificando el cuadrado de control con una regla.' } },
+            { '@type': 'Question', name: '¿El PDF A4 incluye todos los talles?', acceptedAnswer: { '@type': 'Answer', text: 'Sí, la curva completa (XS a 4XL en adultos, 2 a 18 en niños) viene incluida en el archivo.' } },
+          ],
+        },
+      },
+    ],
   },
   '/moldes-para-plotter': {
     title: 'Moldes para plotter en ancho real | Modeltex',
@@ -676,15 +749,58 @@ const STATIC_PAGES: Record<
     body: (o) => `
 <h1>Moldes para plotter — impresión en ancho real</h1>
 <p>PDF preparados para plotter textil en anchos de 90, 120 o 150 cm según el molde: llevás el archivo a cualquier servicio de ploteo e imprimís el molde completo sin pegar hojas. La opción más usada por talleres y fábricas que cortan a mano.</p>
-<p><a href="${o}/catalogo?formato=PDF%20Plotter">Ver moldes para plotter</a> — ¿cortás en CAD? Pedilos en DXF/AAMA, Optitex o Audaces.</p>`,
+<p><a href="${o}/catalogo?formato=PDF%20Plotter">Ver moldes para plotter</a> — ¿cortás en CAD? Pedilos en DXF/AAMA, Optitex o Audaces.</p>
+<h2>Preguntas frecuentes</h2>
+<h3>¿En qué anchos vienen los moldes para plotter?</h3>
+<p>En 90, 120 o 150 cm según el molde — la ficha de cada producto indica el ancho exacto.</p>
+<h3>¿Dónde imprimo un molde PDF plotter?</h3>
+<p>En cualquier gráfica o servicio de ploteo textil, al 100% de escala, en una sola lámina.</p>
+<h3>¿Puedo pedir el mismo molde en DXF/AAMA?</h3>
+<p>Sí, si cortás con un sistema CAD el molde también está disponible en DXF/AAMA con la curva completa.</p>`,
+    schemas: (o) => [
+      { id: 'schema-breadcrumb', data: { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` }, { '@type': 'ListItem', position: 2, name: 'Moldes para plotter', item: `${o}/moldes-para-plotter` }] } },
+      { id: 'schema-collection', data: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Moldes para plotter y producción textil', url: `${o}/moldes-para-plotter`, description: 'Moldes para plotter en PDF listos para imprimir en rollo, para talleres, gráficas y producción textil.' } },
+      {
+        id: 'schema-faq',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: '¿En qué anchos vienen los moldes para plotter?', acceptedAnswer: { '@type': 'Answer', text: 'En 90, 120 o 150 cm según el molde — la ficha de cada producto indica el ancho exacto.' } },
+            { '@type': 'Question', name: '¿Dónde imprimo un molde PDF plotter?', acceptedAnswer: { '@type': 'Answer', text: 'En cualquier gráfica o servicio de ploteo textil, al 100% de escala, en una sola lámina.' } },
+            { '@type': 'Question', name: '¿Puedo pedir el mismo molde en DXF/AAMA?', acceptedAnswer: { '@type': 'Answer', text: 'Sí, si cortás con un sistema CAD el molde también está disponible en DXF/AAMA con la curva completa.' } },
+          ],
+        },
+      },
+    ],
   },
   '/moldes-para-emprendedores': {
     title: 'Moldes de ropa para emprendedores | Modeltex',
     description: 'Moldes digitales probados con muestra para arrancar tu marca de ropa: todos los talles, descarga inmediata y soporte por WhatsApp.',
     body: (o) => `
 <h1>Moldes de ropa para emprendedores</h1>
-<p>Si estás armando tu marca de ropa, empezás con moldes ya probados en producción: cada molde de Modeltex se aprueba con una muestra confeccionada antes de publicarse, e incluye todos los talles. Descargás, imprimís (A4 o plotter) y cortás. Soporte directo por WhatsApp si te trabás.</p>
-<p><a href="${o}/moldes-gratis">Probá primero un molde gratis</a> · <a href="${o}/catalogo">Ver catálogo</a></p>`,
+<p>Moldes digitales ya probados con muestra confeccionada, con la curva de talles completa incluida: la base para producir tu primera tanda sin desarrollar moldería desde cero. Descargás, imprimís (A4 o plotter) y cortás. Soporte directo por WhatsApp si te trabás.</p>
+<p><a href="${o}/moldes-gratis">Probá primero un molde gratis</a> · <a href="${o}/catalogo">Ver catálogo</a></p>
+<h2>Preguntas frecuentes</h2>
+<h3>¿Qué moldes convienen para arrancar una marca de ropa?</h3>
+<p>Moldes ya aprobados con muestra confeccionada y con la curva de talles completa, para evitar el desarrollo desde cero.</p>
+<h3>¿Necesito plotter para empezar a producir?</h3>
+<p>No, para una primera tanda alcanza con PDF A4; el plotter conviene más adelante, cuando el volumen crece.</p>`,
+    schemas: (o) => [
+      { id: 'schema-breadcrumb', data: { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` }, { '@type': 'ListItem', position: 2, name: 'Moldes para emprendedores', item: `${o}/moldes-para-emprendedores` }] } },
+      { id: 'schema-collection', data: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Moldes para emprendedores de indumentaria', url: `${o}/moldes-para-emprendedores`, description: 'Moldes para emprendedores que quieren lanzar o crecer una marca de ropa, con talles listos para producir.' } },
+      {
+        id: 'schema-faq',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: [
+            { '@type': 'Question', name: '¿Qué moldes convienen para arrancar una marca de ropa?', acceptedAnswer: { '@type': 'Answer', text: 'Moldes ya aprobados con muestra confeccionada y con la curva de talles completa, para evitar el desarrollo desde cero.' } },
+            { '@type': 'Question', name: '¿Necesito plotter para empezar a producir?', acceptedAnswer: { '@type': 'Answer', text: 'No, para una primera tanda alcanza con PDF A4; el plotter conviene más adelante, cuando el volumen crece.' } },
+          ],
+        },
+      },
+    ],
   },
   '/moldes-gratis': {
     title: 'Moldes gratis en PDF para descargar e imprimir | Modeltex',
@@ -712,7 +828,17 @@ const STATIC_PAGES: Record<
 <p>Entrás a la sección Moldes Gratis, elegís uno de la selección gratuita y lo descargás: no se pide ningún dato de pago, algunos sin necesidad de cuenta y otros pidiendo una cuenta gratuita de Modeltex.</p>`,
     schemas: (o) => [
       {
-        id: 'moldes-gratis-faq',
+        id: 'schema-collection',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'CollectionPage',
+          name: 'Moldes gratis para descargar',
+          url: `${o}/moldes-gratis`,
+          description: 'Moldes de ropa gratis para descargar en PDF, listos para imprimir. Mismo nivel de calidad que el catálogo pago de Modeltex.',
+        },
+      },
+      {
+        id: 'schema-faq',
         data: {
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
@@ -761,7 +887,7 @@ const STATIC_PAGES: Record<
         },
       },
       {
-        id: 'moldes-gratis-breadcrumb',
+        id: 'schema-breadcrumb',
         data: {
           '@context': 'https://schema.org',
           '@type': 'BreadcrumbList',
@@ -810,12 +936,13 @@ const STATIC_PAGES: Record<
   '/preguntas-frecuentes': {
     title: 'Preguntas frecuentes sobre moldes digitales | Modeltex',
     description: 'Respuestas sobre formatos de moldes (PDF, DXF/AAMA, Optitex, Audaces), talles, impresión, pagos y entrega de moldería digital.',
-    body: () =>
-      `<h1>Preguntas frecuentes — moldes digitales Modeltex</h1>\n` +
+    body: (o) =>
+      breadcrumbHtml([{ name: 'Inicio', url: `${o}/` }, { name: 'Preguntas frecuentes', url: `${o}/preguntas-frecuentes` }]) +
+      `\n<h1>Preguntas frecuentes — moldes digitales Modeltex</h1>\n` +
       FAQ_ITEMS.map((f) => `<h2>${escapeHtml(f.q)}</h2>\n<p>${escapeHtml(f.a)}</p>`).join('\n'),
-    schemas: () => [
+    schemas: (o) => [
       {
-        id: 'faq-schema',
+        id: 'schema-faq',
         data: {
           '@context': 'https://schema.org',
           '@type': 'FAQPage',
@@ -825,6 +952,10 @@ const STATIC_PAGES: Record<
             acceptedAnswer: { '@type': 'Answer', text: item.a },
           })),
         },
+      },
+      {
+        id: 'schema-breadcrumb',
+        data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Preguntas frecuentes', url: `${o}/preguntas-frecuentes` }]),
       },
     ],
   },
@@ -846,7 +977,7 @@ const STATIC_PAGES: Record<
 <p>Antes de escribir, quizás tu duda ya esté respondida en las <a href="${o}/preguntas-frecuentes">preguntas frecuentes</a> o en la <a href="${o}/ayuda-impresion">ayuda de impresión</a>.</p>`,
     schemas: (o) => [
       {
-        id: 'page-schema',
+        id: 'schema-contactpage',
         data: {
           '@context': 'https://schema.org',
           '@type': 'ContactPage',
@@ -908,9 +1039,9 @@ function guiasIndexPage(html: string, origin: string) {
     `<p>Los moldes de ${SITE_NAME} para aplicar estas guías están en el <a href="${origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}).</p>`,
   ].join('\n');
   const schemas: Schema[] = [
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
-      id: 'page-schema',
+      id: 'schema-collection',
       data: {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
@@ -948,7 +1079,7 @@ function guiaPage(html: string, origin: string, g: Guia) {
         (s.bullets?.length ? `<ul>${s.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join('')}</ul>` : ''),
     )
     .join('\n');
-  const otras = GUIAS.filter((x) => x.slug !== g.slug);
+  const otras = getRelatedGuias(g.slug, 6);
   const inner = [
     breadcrumbHtml(migas),
     `<h1>${escapeHtml(g.title)}</h1>`,
@@ -965,27 +1096,28 @@ function guiaPage(html: string, origin: string, g: Guia) {
     .filter(Boolean)
     .join('\n');
   const schemas: Schema[] = [
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
-      id: 'page-schema',
+      id: 'schema-article',
       data: {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: g.title,
         description: g.description,
+        image: `${origin}/brand/og-image.png`,
         inLanguage: 'es-AR',
         datePublished: g.updated,
         dateModified: g.updated,
         keywords: g.keywords.join(', '),
         mainEntityOfPage: pageUrl,
-        author: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/` },
-        publisher: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/` },
+        author: getArticleAuthor(),
+        publisher: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/`, logo: { '@type': 'ImageObject', url: `${origin}/brand/modeltex-logo-full.png` } },
       },
     },
     ...(g.faqs.length
       ? [
           {
-            id: 'faq-schema',
+            id: 'schema-faq',
             data: {
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
@@ -1096,9 +1228,9 @@ async function labIndexPage(html: string, origin: string) {
     `<p>Los moldes de ${SITE_NAME} para practicar están en <a href="${origin}/moldes-gratis">Moldes Gratis</a>.</p>`,
   ].join('\n');
   const schemas: Schema[] = [
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
-      id: 'page-schema',
+      id: 'schema-collection',
       data: {
         '@context': 'https://schema.org',
         '@type': 'CollectionPage',
@@ -1167,9 +1299,9 @@ async function labCoursePage(html: string, origin: string, course: LabCourseRow)
     .join('\n');
 
   const schemas: Schema[] = [
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
-      id: 'page-schema',
+      id: 'schema-course',
       data: {
         '@context': 'https://schema.org',
         '@type': 'Course',
@@ -1178,7 +1310,9 @@ async function labCoursePage(html: string, origin: string, course: LabCourseRow)
         url: pageUrl,
         isAccessibleForFree: true,
         inLanguage: 'es-AR',
-        provider: { '@type': 'Organization', name: SITE_NAME, sameAs: `${origin}/` },
+        provider: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/`, sameAs: ['https://www.facebook.com/modeltex.ar', 'https://t.me/+5491166531086'] },
+        offers: { '@type': 'Offer', price: '0', priceCurrency: 'ARS', category: 'Free' },
+        hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'online', courseWorkload: course.estimated_duration || undefined },
       },
     },
   ];
@@ -1239,27 +1373,28 @@ async function labLessonPage(
     .join('\n');
 
   const schemas: Schema[] = [
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
-      id: 'page-schema',
+      id: 'schema-article',
       data: {
         '@context': 'https://schema.org',
         '@type': 'Article',
         headline: lesson.title,
         description,
+        image: `${origin}/brand/og-image.png`,
         inLanguage: 'es-AR',
         datePublished: lesson.created_at,
         dateModified: lesson.updated_at,
         mainEntityOfPage: pageUrl,
         isAccessibleForFree: true,
-        author: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/` },
-        publisher: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/` },
+        author: getArticleAuthor(),
+        publisher: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/`, logo: { '@type': 'ImageObject', url: `${origin}/brand/modeltex-logo-full.png` } },
       },
     },
     ...(lesson.faqs?.length
       ? [
           {
-            id: 'faq-schema',
+            id: 'schema-faq',
             data: {
               '@context': 'https://schema.org',
               '@type': 'FAQPage',
@@ -1268,6 +1403,20 @@ async function labLessonPage(
                 name: f.q,
                 acceptedAnswer: { '@type': 'Answer', text: f.a },
               })),
+            },
+          },
+        ]
+      : []),
+    ...(lesson.steps?.length >= 2
+      ? [
+          {
+            id: 'schema-howto',
+            data: {
+              '@context': 'https://schema.org',
+              '@type': 'HowTo',
+              name: lesson.title,
+              description,
+              step: lesson.steps.map((s, i) => ({ '@type': 'HowToStep', position: i + 1, text: s })),
             },
           },
         ]
@@ -1296,7 +1445,23 @@ async function labGlossaryIndexPage(html: string, origin: string) {
     `<p>${escapeHtml(description)}</p>`,
     `<ul>${terms.map((t) => `<li><a href="${origin}/lab/glosario/${t.slug}">${escapeHtml(t.term)}</a>${t.short_definition ? `: ${escapeHtml(t.short_definition)}` : ''}</li>`).join('')}</ul>`,
   ].join('\n');
-  const schemas: Schema[] = [{ id: 'breadcrumb-schema', data: breadcrumb(migas) }];
+  const schemas: Schema[] = [
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
+    {
+      id: 'schema-collection',
+      data: {
+        '@context': 'https://schema.org',
+        '@type': 'CollectionPage',
+        name: 'Glosario de moldería',
+        description,
+        url: pageUrl,
+        mainEntity: {
+          '@type': 'ItemList',
+          itemListElement: terms.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.term, url: `${origin}/lab/glosario/${t.slug}` })),
+        },
+      },
+    },
+  ];
   html = setHeadSeo(html, `Glosario de moldería | ${SITE_NAME}`, description, pageUrl);
   return injectBody(html, inner, schemas);
 }
@@ -1321,9 +1486,9 @@ async function labGlossaryTermPage(html: string, origin: string, term: LabGlossa
     .filter(Boolean)
     .join('\n');
   const schemas: Schema[] = [
-    { id: 'breadcrumb-schema', data: breadcrumb(migas) },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
-      id: 'page-schema',
+      id: 'schema-definedterm',
       data: {
         '@context': 'https://schema.org',
         '@type': 'DefinedTerm',
@@ -1392,7 +1557,7 @@ export default async function middleware(request: Request) {
       html = replaceAttr(html, 'property="og:image" ', escapeHtml(product.main_image_url || DEFAULT_IMAGE));
       html = replaceAttr(html, 'property="og:image:alt" ', escapeHtml(`${product.name} — molde digital Modeltex`));
       html = replaceAttr(html, 'name="twitter:image" ', escapeHtml(product.main_image_url || DEFAULT_IMAGE));
-      const { inner, schemas } = productBody(product, pageUrl, url.origin);
+      const { inner, schemas } = await productBody(product, pageUrl, url.origin);
       return respond(injectBody(html, inner, schemas));
     }
 
@@ -1421,8 +1586,11 @@ export default async function middleware(request: Request) {
 
       if (segments.length === 0) return respond(await labIndexPage(html, url.origin));
 
-      // /lab/ia no se prerenderiza (misma decisión que /ia-textil hoy): es una
-      // herramienta interactiva, sin contenido estático que valga la pena servir a bots.
+      // /lab/ia no se prerenderiza: es un chat interactivo, cada conversación
+      // es distinta y no hay una respuesta canónica que valga la pena indexar
+      // en esta URL (a diferencia de /ia-textil, que sí tiene contenido
+      // estático propio en STATIC_PAGES). El .tsx (src/pages/LabAiPage.tsx)
+      // ademas pone noindex explicito por si un bot ejecuta JavaScript.
       if (segments[0] === 'ia') return next();
 
       if (segments[0] === 'glosario') {

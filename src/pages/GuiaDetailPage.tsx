@@ -2,7 +2,10 @@ import { useMemo } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, BookOpen, HelpCircle } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
-import { GUIAS, findGuia } from '../lib/guiasData';
+import { findGuia, getRelatedGuias } from '../lib/guiasData';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { getArticleAuthor, SITE } from '../lib/siteConfig';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -19,43 +22,52 @@ export default function GuiaDetailPage() {
     noindex: !guia,
   });
 
-  const schema = useMemo(() => {
+  const articleSchema = useMemo(() => {
     if (!guia) return null;
-    return [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: guia.title,
-        description: guia.description,
-        inLanguage: 'es-AR',
-        datePublished: guia.updated,
-        dateModified: guia.updated,
-        keywords: guia.keywords.join(', '),
-        mainEntityOfPage: pageUrl,
-        author: { '@type': 'Organization', name: 'Modeltex', url: `${SITE_URL}/` },
-        publisher: { '@type': 'Organization', name: 'Modeltex', url: `${SITE_URL}/` },
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: guia.faqs.map((f) => ({
-          '@type': 'Question',
-          name: f.q,
-          acceptedAnswer: { '@type': 'Answer', text: f.a },
-        })),
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
-          { '@type': 'ListItem', position: 2, name: 'Guías', item: `${SITE_URL}/guias` },
-          { '@type': 'ListItem', position: 3, name: guia.title, item: pageUrl },
-        ],
-      },
-    ];
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: guia.title,
+      description: guia.description,
+      image: `${SITE_URL}/brand/og-image.png`,
+      inLanguage: 'es-AR',
+      datePublished: guia.updated,
+      dateModified: guia.updated,
+      keywords: guia.keywords.join(', '),
+      mainEntityOfPage: pageUrl,
+      author: getArticleAuthor(),
+      publisher: { '@type': 'Organization', name: SITE.name, url: `${SITE_URL}/`, logo: { '@type': 'ImageObject', url: SITE.logo } },
+    };
   }, [guia, pageUrl]);
-  useStructuredData(schema, 'page-schema');
+  useStructuredData(articleSchema, SCHEMA_IDS.article);
+
+  const faqSchema = useMemo(() => {
+    if (!guia || !guia.faqs.length) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: guia.faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    };
+  }, [guia]);
+  useStructuredData(faqSchema, SCHEMA_IDS.faq);
+
+  const breadcrumbSchema = useMemo(() => {
+    if (!guia) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Guías', item: `${SITE_URL}/guias` },
+        { '@type': 'ListItem', position: 3, name: guia.title, item: pageUrl },
+      ],
+    };
+  }, [guia, pageUrl]);
+  useStructuredData(breadcrumbSchema, SCHEMA_IDS.breadcrumb);
 
   if (!guia) {
     return (
@@ -68,12 +80,16 @@ export default function GuiaDetailPage() {
     );
   }
 
-  const otras = GUIAS.filter((g) => g.slug !== guia.slug).slice(0, 6);
+  const otras = getRelatedGuias(guia.slug, 6);
 
   return (
     <div className="min-h-screen bg-petroleum-50">
       <section className="bg-white border-b border-gray-100">
         <div className="container-custom py-8 sm:py-12">
+          <Breadcrumbs
+            items={[{ label: 'Inicio', to: '/' }, { label: 'Guías', to: '/guias' }, { label: guia.title }]}
+            className="mb-4"
+          />
           <Link to="/guias" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-800 transition-colors mb-5">
             <ArrowLeft className="w-4 h-4" /> Todas las guías
           </Link>

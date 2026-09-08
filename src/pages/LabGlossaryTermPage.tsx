@@ -4,6 +4,8 @@ import { ArrowLeft, ScrollText } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
 import { fetchGlossaryTermBySlug } from '../lib/labData';
 import type { LabGlossaryTerm } from '../lib/labTypes';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -25,29 +27,32 @@ export default function LabGlossaryTermPage() {
   });
 
   const pageUrl = `${SITE_URL}/lab/glosario/${slug}`;
-  const schema = useMemo(() => {
+  const definedTermSchema = useMemo(() => {
     if (!term) return null;
-    return [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'DefinedTerm',
-        name: term.term,
-        description: term.short_definition,
-        inDefinedTermSet: `${SITE_URL}/lab/glosario`,
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
-          { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
-          { '@type': 'ListItem', position: 3, name: 'Glosario', item: `${SITE_URL}/lab/glosario` },
-          { '@type': 'ListItem', position: 4, name: term.term, item: pageUrl },
-        ],
-      },
-    ];
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'DefinedTerm',
+      name: term.term,
+      description: term.short_definition,
+      inDefinedTermSet: `${SITE_URL}/lab/glosario`,
+    };
+  }, [term]);
+  useStructuredData(definedTermSchema, SCHEMA_IDS.definedTerm);
+
+  const breadcrumbSchema = useMemo(() => {
+    if (!term) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
+        { '@type': 'ListItem', position: 3, name: 'Glosario', item: `${SITE_URL}/lab/glosario` },
+        { '@type': 'ListItem', position: 4, name: term.term, item: pageUrl },
+      ],
+    };
   }, [term, pageUrl]);
-  useStructuredData(schema, 'page-schema');
+  useStructuredData(breadcrumbSchema, SCHEMA_IDS.breadcrumb);
 
   if (term === null) {
     return (
@@ -67,6 +72,10 @@ export default function LabGlossaryTermPage() {
   return (
     <div className="min-h-screen bg-petroleum-50">
       <div className="container-custom py-8 sm:py-12 max-w-2xl mx-auto">
+        <Breadcrumbs
+          items={[{ label: 'Inicio', to: '/' }, { label: 'Modeltex Lab', to: '/lab' }, { label: 'Glosario', to: '/lab/glosario' }, { label: term.term }]}
+          className="mb-4"
+        />
         <Link to="/lab/glosario" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-primary-800 transition-colors mb-5">
           <ArrowLeft className="w-4 h-4" /> Glosario completo
         </Link>

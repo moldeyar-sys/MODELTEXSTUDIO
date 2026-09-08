@@ -23,7 +23,10 @@ import { useAuth } from '../contexts/AuthContext';
 import { LabSidebar } from '../components/lab/LabSidebar';
 import { LabAiPanel } from '../components/lab/LabAiPanel';
 import { FreeMoldCard } from '../components/ui/FreeMoldCard';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 import { GUIAS } from '../lib/guiasData';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { SITE, getArticleAuthor } from '../lib/siteConfig';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -56,47 +59,72 @@ export default function LabLessonPage() {
     noindex: !lesson,
   });
 
-  const schema = useMemo(() => {
+  const pageUrl = `${SITE_URL}/lab/${cursoSlug}/${moduloSlug}/${claseSlug}`;
+
+  const articleSchema = useMemo(() => {
     if (!ctx) return null;
-    const pageUrl = `${SITE_URL}/lab/${cursoSlug}/${moduloSlug}/${claseSlug}`;
-    const items: Record<string, unknown>[] = [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'Article',
-        headline: ctx.lesson.title,
-        description: ctx.lesson.objective || ctx.lesson.summary,
-        inLanguage: 'es-AR',
-        author: { '@type': 'Organization', name: ctx.lesson.author || 'Modeltex' },
-        publisher: { '@type': 'Organization', name: 'Modeltex', sameAs: `${SITE_URL}/` },
-        datePublished: ctx.lesson.published_at || ctx.lesson.created_at,
-        dateModified: ctx.lesson.updated_at,
-        mainEntityOfPage: pageUrl,
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
-          { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
-          { '@type': 'ListItem', position: 3, name: ctx.course.title, item: `${SITE_URL}/lab/${ctx.course.slug}` },
-          { '@type': 'ListItem', position: 4, name: ctx.lesson.title, item: pageUrl },
-        ],
-      },
-    ];
-    if (ctx.lesson.faqs.length > 0) {
-      items.push({
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: ctx.lesson.faqs.map((f) => ({
-          '@type': 'Question',
-          name: f.q,
-          acceptedAnswer: { '@type': 'Answer', text: f.a },
-        })),
-      });
-    }
-    return items;
-  }, [ctx, cursoSlug, moduloSlug, claseSlug]);
-  useStructuredData(schema, 'page-schema');
+    // Si la lección tiene un autor real cargado en la base, se respeta (es un
+    // dato mas confiable que el autor global del sitio); si no, se cae al
+    // autor de contenido configurado en siteConfig.ts (hoy la Organization).
+    const author = ctx.lesson.author ? { '@type': 'Person' as const, name: ctx.lesson.author } : getArticleAuthor();
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Article',
+      headline: ctx.lesson.title,
+      description: ctx.lesson.objective || ctx.lesson.summary,
+      image: `${SITE_URL}/brand/og-image.png`,
+      inLanguage: 'es-AR',
+      author,
+      publisher: { '@type': 'Organization', name: SITE.name, url: SITE.url, logo: { '@type': 'ImageObject', url: SITE.logo } },
+      datePublished: ctx.lesson.published_at || ctx.lesson.created_at,
+      dateModified: ctx.lesson.updated_at,
+      mainEntityOfPage: pageUrl,
+    };
+  }, [ctx, pageUrl]);
+  useStructuredData(articleSchema, SCHEMA_IDS.article);
+
+  const breadcrumbSchema = useMemo(() => {
+    if (!ctx) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
+        { '@type': 'ListItem', position: 3, name: ctx.course.title, item: `${SITE_URL}/lab/${ctx.course.slug}` },
+        { '@type': 'ListItem', position: 4, name: ctx.lesson.title, item: pageUrl },
+      ],
+    };
+  }, [ctx, pageUrl]);
+  useStructuredData(breadcrumbSchema, SCHEMA_IDS.breadcrumb);
+
+  const faqSchema = useMemo(() => {
+    if (!ctx || !ctx.lesson.faqs.length) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: ctx.lesson.faqs.map((f) => ({
+        '@type': 'Question',
+        name: f.q,
+        acceptedAnswer: { '@type': 'Answer', text: f.a },
+      })),
+    };
+  }, [ctx]);
+  useStructuredData(faqSchema, SCHEMA_IDS.faq);
+
+  // HowTo solo cuando la leccion realmente tiene una secuencia de pasos: no
+  // se fuerza en lecciones conceptuales que no son un "como hacer X".
+  const howToSchema = useMemo(() => {
+    if (!ctx || ctx.lesson.steps.length < 2) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'HowTo',
+      name: ctx.lesson.title,
+      description: ctx.lesson.objective || ctx.lesson.summary,
+      step: ctx.lesson.steps.map((s, i) => ({ '@type': 'HowToStep', position: i + 1, text: s })),
+    };
+  }, [ctx]);
+  useStructuredData(howToSchema, SCHEMA_IDS.howTo);
 
   if (ctx === null) {
     return (
@@ -113,7 +141,7 @@ export default function LabLessonPage() {
     return <div className="min-h-[60vh] flex items-center justify-center bg-petroleum-50" />;
   }
 
-  const { course, moduleItem, prevLesson, nextLesson, resources, freeMolds } = ctx;
+  const { course, prevLesson, nextLesson, resources, freeMolds } = ctx;
   const done = isComplete(lesson!.id);
   const relatedGuias = GUIAS.filter((g) => lesson!.related_guide_slugs.includes(g.slug));
 
@@ -156,14 +184,15 @@ export default function LabLessonPage() {
 
         <article className="min-w-0">
           {/* Breadcrumb + abrir índice en mobile */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-1.5 text-xs text-gray-500 flex-wrap">
-              <Link to="/lab" className="hover:text-primary-800">Modeltex Lab</Link>
-              <ChevronRight className="w-3 h-3" />
-              <Link to={`/lab/${course.slug}`} className="hover:text-primary-800">{course.title}</Link>
-              <ChevronRight className="w-3 h-3" />
-              <span className="text-gray-700">{moduleItem.title}</span>
-            </div>
+          <div className="flex items-center justify-between mb-4 gap-3">
+            <Breadcrumbs
+              items={[
+                { label: 'Inicio', to: '/' },
+                { label: 'Modeltex Lab', to: '/lab' },
+                { label: course.title, to: `/lab/${course.slug}` },
+                { label: lesson!.title },
+              ]}
+            />
             <button
               onClick={() => setSidebarOpen(true)}
               className="lg:hidden inline-flex items-center gap-1.5 text-xs font-medium text-primary-700 bg-primary-50 px-3 py-1.5 rounded-lg"

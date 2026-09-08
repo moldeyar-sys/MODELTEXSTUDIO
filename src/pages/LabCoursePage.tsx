@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { ArrowLeft, ArrowRight, CheckCircle2, Circle, Clock, PlayCircle, Target } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { SITE, SAME_AS } from '../lib/siteConfig';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 import { fetchCourseWithContent, fetchFreeMoldsForCourse } from '../lib/labData';
 import { useLabProgress } from '../lib/labProgress';
 import { LabProgressBar } from '../components/lab/LabProgressBar';
@@ -36,30 +39,42 @@ export default function LabCoursePage() {
   const lessonIds = useMemo(() => course?.modules.flatMap((m) => m.lessons.map((l) => l.id)) || [], [course]);
   const progress = courseProgress(cursoSlug, lessonIds);
 
-  const schema = useMemo(() => {
+  const courseSchema = useMemo(() => {
     if (!course) return null;
-    return [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'Course',
-        name: course.title,
-        description: course.description || course.subtitle,
-        provider: { '@type': 'Organization', name: 'Modeltex', sameAs: `${SITE_URL}/` },
-        isAccessibleForFree: true,
-        inLanguage: 'es-AR',
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'Course',
+      name: course.title,
+      description: course.description || course.subtitle,
+      provider: { '@type': 'Organization', name: SITE.name, url: SITE.url, sameAs: SAME_AS },
+      isAccessibleForFree: true,
+      inLanguage: 'es-AR',
+      // Es real: el curso no tiene costo (no es un dato inventado, es el precio
+      // real de $0). Declarar el Offer explícito refuerza "gratis" para rich
+      // results, ademas de isAccessibleForFree.
+      offers: { '@type': 'Offer', price: '0', priceCurrency: 'ARS', category: 'Free' },
+      hasCourseInstance: {
+        '@type': 'CourseInstance',
+        courseMode: 'online',
+        courseWorkload: course.estimated_duration || undefined,
       },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
-          { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
-          { '@type': 'ListItem', position: 3, name: course.title, item: `${SITE_URL}/lab/${course.slug}` },
-        ],
-      },
-    ];
+    };
   }, [course]);
-  useStructuredData(schema, 'page-schema');
+  useStructuredData(courseSchema, SCHEMA_IDS.course);
+
+  const breadcrumbSchema = useMemo(() => {
+    if (!course) return null;
+    return {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
+        { '@type': 'ListItem', position: 3, name: course.title, item: `${SITE_URL}/lab/${course.slug}` },
+      ],
+    };
+  }, [course]);
+  useStructuredData(breadcrumbSchema, SCHEMA_IDS.breadcrumb);
 
   if (course === null) {
     return (
@@ -90,6 +105,7 @@ export default function LabCoursePage() {
     <div className="min-h-screen bg-petroleum-50">
       <section className="bg-gradient-to-br from-primary-900 to-petroleum-900 text-white">
         <div className="container-custom py-10 sm:py-14">
+          <Breadcrumbs items={[{ label: 'Inicio', to: '/' }, { label: 'Modeltex Lab', to: '/lab' }, { label: course.title }]} variant="dark" className="mb-4" />
           <Link to="/lab" className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors mb-5">
             <ArrowLeft className="w-4 h-4" /> Modeltex Lab
           </Link>

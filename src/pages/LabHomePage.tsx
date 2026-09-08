@@ -13,6 +13,8 @@ import {
 } from 'lucide-react';
 import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useSeo, useStructuredData } from '../lib/seo';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 import { fetchAllCoursesWithContent, fetchGlossaryTerms, fetchLabFreeMolds } from '../lib/labData';
 import { useLabProgress } from '../lib/labProgress';
 import { LabProgressBar } from '../components/lab/LabProgressBar';
@@ -36,20 +38,39 @@ export default function LabHomePage() {
     path: '/lab',
   });
 
-  const schema = useMemo(
-    () => [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
-          { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
-        ],
+  const collectionSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Curso Gratis de Moldería Textil — MODELTEX LAB',
+      description: 'Curso gratuito de moldería textil de Modeltex, desde fundamentos hasta producción industrial.',
+      url: `${SITE_URL}/lab`,
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: courses.map((c, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: c.title,
+          url: `${SITE_URL}/lab/${c.slug}`,
+        })),
       },
-    ],
+    }),
+    [courses],
+  );
+  useStructuredData(courses.length ? collectionSchema : null, SCHEMA_IDS.collectionPage);
+
+  const breadcrumbSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
+      ],
+    }),
     [],
   );
-  useStructuredData(schema, 'page-schema');
+  useStructuredData(breadcrumbSchema, SCHEMA_IDS.breadcrumb);
 
   useEffect(() => {
     Promise.all([fetchAllCoursesWithContent(), fetchGlossaryTerms(), fetchLabFreeMolds(4)]).then(
@@ -79,6 +100,9 @@ export default function LabHomePage() {
       <section className="relative overflow-hidden bg-gradient-to-br from-primary-900 via-primary-800 to-petroleum-900 text-white">
         <FloatingPatterns variant="white" />
         <div className="container-custom relative py-12 sm:py-16 md:py-24 text-center">
+          <div className="flex justify-center mb-4">
+            <Breadcrumbs items={[{ label: 'Inicio', to: '/' }, { label: 'Modeltex Lab' }]} variant="dark" />
+          </div>
           <span className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-green-500/20 border border-green-400/30 text-sm font-semibold backdrop-blur-sm">
             <Gift className="w-4 h-4 text-green-300" /> 100% Gratis
           </span>
@@ -220,8 +244,8 @@ export default function LabHomePage() {
           </section>
         )}
 
-        {/* Guías y CTA final */}
-        <section className="grid md:grid-cols-2 gap-5">
+        {/* Guías, catálogo y CTA final */}
+        <section className="grid md:grid-cols-3 gap-5">
           <div className="card p-6 flex flex-col">
             <BookOpen className="w-8 h-8 text-primary-700 mb-3" />
             <h3 className="font-display text-lg font-bold text-primary-900">Guías complementarias</h3>
@@ -230,6 +254,16 @@ export default function LabHomePage() {
             </p>
             <Link to="/guias" className="btn-secondary mt-4 inline-flex items-center justify-center gap-2 text-sm">
               Ver guías <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+          <div className="card p-6 flex flex-col">
+            <Factory className="w-8 h-8 text-primary-700 mb-3" />
+            <h3 className="font-display text-lg font-bold text-primary-900">¿Ya sabés qué producir?</h3>
+            <p className="text-sm text-gray-600 mt-2 flex-1">
+              Saltá directo al catálogo: más de 2.000 moldes con la curva de talles completa y muestra aprobada.
+            </p>
+            <Link to="/catalogo" className="btn-secondary mt-4 inline-flex items-center justify-center gap-2 text-sm">
+              Ver catálogo <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
           <div className="card p-6 flex flex-col bg-gradient-to-br from-primary-900 to-petroleum-800 text-white border-0">

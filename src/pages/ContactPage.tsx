@@ -1,8 +1,11 @@
 import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useState } from 'react';
 import { MessageCircle, Mail, Instagram, MapPin, Clock, Send, Loader2, CheckCircle2, Facebook, Music2 } from 'lucide-react';
-import { useSeo } from '../lib/seo';
+import { useSeo, useStructuredData } from '../lib/seo';
 import { CONTACT_INFO, submitContactMessage, buildContactWhatsApp } from '../lib/contact';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { organizationSchemaId } from '../lib/siteConfig';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', whatsapp: '', email: '', subject: '', message: '' });
@@ -15,6 +18,27 @@ export default function ContactPage() {
       'Contactá a Modeltex por WhatsApp, email o redes. Consultas sobre moldes digitales, diseño a pedido y producción textil. Respondemos a la brevedad.',
     path: '/contacto',
   });
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'ContactPage',
+      name: 'Contacto Modeltex',
+      url: 'https://modeltex.com.ar/contacto',
+      about: { '@id': organizationSchemaId() },
+    },
+    SCHEMA_IDS.contactPage,
+  );
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
+        { '@type': 'ListItem', position: 2, name: 'Contacto', item: 'https://modeltex.com.ar/contacto' },
+      ],
+    },
+    SCHEMA_IDS.breadcrumb,
+  );
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -87,6 +111,7 @@ export default function ContactPage() {
           style={{ backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(255,255,255,0.25), transparent 40%), radial-gradient(circle at 85% 0%, rgba(203,110,231,0.35), transparent 45%)' }}
         />
         <div className="container-custom relative py-10 md:py-14">
+          <Breadcrumbs items={[{ label: 'Inicio', to: '/' }, { label: 'Contacto' }]} variant="dark" className="mb-4" />
           <h1 className="font-display text-3xl sm:text-4xl md:text-5xl font-bold max-w-3xl text-balance">Contacto</h1>
           <p className="text-lg text-white/90 mt-4 max-w-2xl">
             ¿Tenés una consulta sobre moldes, diseño a pedido o producción? Escribinos y te respondemos a la brevedad.

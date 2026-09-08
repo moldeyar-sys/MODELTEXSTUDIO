@@ -3,6 +3,8 @@ import type { LucideIcon } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useSeo, useStructuredData } from '../lib/seo';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 
 type LandingSection = {
   title: string;
@@ -11,6 +13,8 @@ type LandingSection = {
   cta: string;
   icon: LucideIcon;
 };
+
+type LandingFaq = { q: string; a: string };
 
 type LandingConfig = {
   path: string;
@@ -25,6 +29,8 @@ type LandingConfig = {
   benefits: string[];
   sections: LandingSection[];
   schemaName: string;
+  /** Preguntas reales sobre este formato/segmento: dan profundidad y agregan FAQPage. */
+  faqs?: LandingFaq[];
 };
 
 export function SeoLandingTemplate({
@@ -40,28 +46,44 @@ export function SeoLandingTemplate({
   benefits,
   sections,
   schemaName,
+  faqs = [],
 }: LandingConfig) {
   useSeo({ title, description, path });
 
   useStructuredData(
-    [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
-        name: title,
-        url: `https://modeltex.com.ar${path}`,
-        description,
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
-          { '@type': 'ListItem', position: 2, name: schemaName, item: `https://modeltex.com.ar${path}` },
-        ],
-      },
-    ],
-    `${schemaName.toLowerCase().replace(/\s+/g, '-')}-schema`,
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: title,
+      url: `https://modeltex.com.ar${path}`,
+      description,
+    },
+    SCHEMA_IDS.collectionPage,
+  );
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
+        { '@type': 'ListItem', position: 2, name: schemaName, item: `https://modeltex.com.ar${path}` },
+      ],
+    },
+    SCHEMA_IDS.breadcrumb,
+  );
+  useStructuredData(
+    faqs.length
+      ? {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: faqs.map((f) => ({
+            '@type': 'Question',
+            name: f.q,
+            acceptedAnswer: { '@type': 'Answer', text: f.a },
+          })),
+        }
+      : null,
+    SCHEMA_IDS.faq,
   );
 
   return (
@@ -70,6 +92,7 @@ export function SeoLandingTemplate({
         <FloatingPatterns variant="dark" />
         <div className="container-custom py-10 sm:py-14">
           <div className="max-w-4xl">
+            <Breadcrumbs items={[{ label: 'Inicio', to: '/' }, { label: schemaName }]} className="mb-4" />
             <div className="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-800">
               <FileText className="w-4 h-4" /> Moldes digitales
             </div>
@@ -128,6 +151,20 @@ export function SeoLandingTemplate({
             })}
           </div>
         </div>
+
+        {faqs.length > 0 && (
+          <div className="card p-6 sm:p-7 mt-6 max-w-3xl">
+            <h2 className="font-display text-2xl font-bold text-primary-900">Preguntas frecuentes</h2>
+            <div className="mt-4 divide-y divide-gray-100">
+              {faqs.map((item) => (
+                <div key={item.q} className="py-4 first:pt-0 last:pb-0">
+                  <h3 className="font-semibold text-primary-900">{item.q}</h3>
+                  <p className="text-gray-600 mt-2 leading-relaxed">{item.a}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

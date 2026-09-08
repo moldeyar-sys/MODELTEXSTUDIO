@@ -4,8 +4,11 @@ import { ArrowLeft, ArrowRight, Search, ScrollText } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
 import { fetchGlossaryTerms } from '../lib/labData';
 import type { LabGlossaryTerm } from '../lib/labTypes';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 
 const SITE_URL = 'https://modeltex.com.ar';
+const GLOSSARY_DESCRIPTION = 'Glosario con los términos más usados de moldería textil: holgura, piquetes, tiro, tizada y más.';
 
 export default function LabGlossaryPage() {
   const [terms, setTerms] = useState<LabGlossaryTerm[]>([]);
@@ -14,25 +17,39 @@ export default function LabGlossaryPage() {
 
   useSeo({
     title: 'Glosario de moldería textil — Modeltex Lab',
-    description: 'Glosario con los términos más usados de moldería textil: holgura, piquetes, tiro, tizada y más.',
+    description: GLOSSARY_DESCRIPTION,
     path: '/lab/glosario',
   });
 
-  const schema = useMemo(
-    () => [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
-          { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
-          { '@type': 'ListItem', position: 3, name: 'Glosario', item: `${SITE_URL}/lab/glosario` },
-        ],
+  const collectionSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: 'Glosario de moldería',
+      description: GLOSSARY_DESCRIPTION,
+      url: `${SITE_URL}/lab/glosario`,
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: terms.map((t, i) => ({ '@type': 'ListItem', position: i + 1, name: t.term, url: `${SITE_URL}/lab/glosario/${t.slug}` })),
       },
-    ],
+    }),
+    [terms],
+  );
+  useStructuredData(terms.length ? collectionSchema : null, SCHEMA_IDS.collectionPage);
+
+  const breadcrumbSchema = useMemo(
+    () => ({
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Modeltex Lab', item: `${SITE_URL}/lab` },
+        { '@type': 'ListItem', position: 3, name: 'Glosario', item: `${SITE_URL}/lab/glosario` },
+      ],
+    }),
     [],
   );
-  useStructuredData(schema, 'page-schema');
+  useStructuredData(breadcrumbSchema, SCHEMA_IDS.breadcrumb);
 
   useEffect(() => {
     fetchGlossaryTerms().then((t) => {
@@ -51,6 +68,7 @@ export default function LabGlossaryPage() {
     <div className="min-h-screen bg-petroleum-50">
       <section className="bg-gradient-to-br from-primary-900 to-petroleum-900 text-white">
         <div className="container-custom py-10 sm:py-14">
+          <Breadcrumbs items={[{ label: 'Inicio', to: '/' }, { label: 'Modeltex Lab', to: '/lab' }, { label: 'Glosario' }]} variant="dark" className="mb-4" />
           <Link to="/lab" className="inline-flex items-center gap-2 text-sm text-white/70 hover:text-white transition-colors mb-5">
             <ArrowLeft className="w-4 h-4" /> Modeltex Lab
           </Link>

@@ -28,6 +28,7 @@ import { fetchReviews, reviewSummary } from '../lib/reviews';
 import { useLocale } from '../lib/locale';
 import { PRODUCT_COLUMNS } from '../lib/productColumns';
 import { SLUG_REDIRECTS } from '../lib/slugRedirects';
+import { SCHEMA_IDS } from '../lib/schemaIds';
 import {
   buildProductFaq,
   descriptionParagraphs,
@@ -151,7 +152,7 @@ export default function ProductDetailPage() {
       ],
     };
   }, [product, categoryLabel]);
-  useStructuredData(breadcrumbSchema, 'breadcrumb-schema');
+  useStructuredData(breadcrumbSchema, SCHEMA_IDS.breadcrumb);
 
   // Resumen de reseñas: alimenta las estrellas de Google en los resultados de búsqueda.
   const [ratingSummary, setRatingSummary] = useState({ avg: 0, count: 0 });
@@ -222,7 +223,7 @@ export default function ProductDetailPage() {
     return schema;
   }, [product, ratingSummary]);
 
-  useStructuredData(productSchema, 'product-schema');
+  useStructuredData(productSchema, SCHEMA_IDS.product);
 
   // Preguntas y respuestas armadas con los datos reales de la ficha (talles,
   // formatos, precios, telas, entrega): lo mismo que sirve middleware.ts a
@@ -243,7 +244,7 @@ export default function ProductDetailPage() {
         : null,
     [productFaq],
   );
-  useStructuredData(productFaqSchema, 'product-faq-schema');
+  useStructuredData(productFaqSchema, SCHEMA_IDS.faq);
   const longParagraphs = product ? descriptionParagraphs(product) : [];
 
   if (loading) {

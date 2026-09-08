@@ -502,6 +502,29 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* MODELTEX LAB SECTION */}
+      <section className="relative py-12 md:py-16 bg-petroleum-50">
+        <div className="container-custom">
+          <div className="rounded-2xl md:rounded-3xl bg-gradient-to-br from-primary-900 to-petroleum-800 text-white px-6 py-10 md:px-12 md:py-14 flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="text-center md:text-left">
+              <span className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-green-500/20 border border-green-400/30 text-xs font-semibold">
+                <Gift className="w-3.5 h-3.5 text-green-300" /> 100% gratis
+              </span>
+              <h2 className="font-display text-2xl md:text-3xl font-bold mt-3">Modeltex Lab — Curso gratis de moldería</h2>
+              <p className="text-white/80 mt-2 max-w-xl">
+                Aprendé desde los fundamentos hasta producción industrial, con clases gratuitas y una IA especializada que te acompaña.
+              </p>
+            </div>
+            <Link
+              to="/lab"
+              className="flex-shrink-0 inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-primary-900 font-semibold rounded-xl hover:bg-white/90 transition-all active:scale-[0.98]"
+            >
+              Empezar el curso <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* TESTIMONIALS SECTION */}
       <section className="relative py-14 md:py-24 bg-white overflow-hidden">
         <FloatingPatterns variant="dark" />

@@ -16,6 +16,11 @@ export default function LabAiPage() {
     description:
       'Preguntale a la IA de MODELTEX LAB cualquier duda sobre moldería textil, producción o el curso gratis de Modeltex.',
     path: '/lab/ia',
+    // Herramienta interactiva, no contenido: cada conversación es distinta y
+    // no hay una respuesta canónica que indexar en esta URL (misma decisión
+    // que /ia-textil... salvo que esa SÍ tiene contenido estático completo;
+    // acá se decide por lo que realmente hay en la página, no por analogía).
+    noindex: true,
   });
 
   return (

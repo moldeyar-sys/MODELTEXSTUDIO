@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { HelpCircle, ArrowRight, MessageCircle } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
 import { FAQ_ITEMS } from '../lib/faqData';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 
 export default function FaqPage() {
   useSeo({
@@ -12,26 +14,27 @@ export default function FaqPage() {
   });
 
   useStructuredData(
-    [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'FAQPage',
-        mainEntity: FAQ_ITEMS.map((item) => ({
-          '@type': 'Question',
-          name: item.q,
-          acceptedAnswer: { '@type': 'Answer', text: item.a },
-        })),
-      },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
-          { '@type': 'ListItem', position: 2, name: 'Preguntas frecuentes', item: 'https://modeltex.com.ar/preguntas-frecuentes' },
-        ],
-      },
-    ],
-    'faq-schema',
+    {
+      '@context': 'https://schema.org',
+      '@type': 'FAQPage',
+      mainEntity: FAQ_ITEMS.map((item) => ({
+        '@type': 'Question',
+        name: item.q,
+        acceptedAnswer: { '@type': 'Answer', text: item.a },
+      })),
+    },
+    SCHEMA_IDS.faq,
+  );
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: 'https://modeltex.com.ar/' },
+        { '@type': 'ListItem', position: 2, name: 'Preguntas frecuentes', item: 'https://modeltex.com.ar/preguntas-frecuentes' },
+      ],
+    },
+    SCHEMA_IDS.breadcrumb,
   );
 
   return (
@@ -39,6 +42,7 @@ export default function FaqPage() {
       <section className="bg-white border-b border-gray-100">
         <div className="container-custom py-10 sm:py-14">
           <div className="max-w-3xl">
+            <Breadcrumbs items={[{ label: 'Inicio', to: '/' }, { label: 'Preguntas frecuentes' }]} className="mb-4" />
             <div className="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-800">
               <HelpCircle className="w-4 h-4" /> Preguntas frecuentes
             </div>

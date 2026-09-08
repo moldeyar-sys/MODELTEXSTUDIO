@@ -2,6 +2,8 @@ import { Link } from 'react-router-dom';
 import { BookOpen, ArrowRight } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
 import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION } from '../lib/guiasData';
+import { SCHEMA_IDS } from '../lib/schemaIds';
+import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -13,33 +15,34 @@ export default function GuiasPage() {
   });
 
   useStructuredData(
-    [
-      {
-        '@context': 'https://schema.org',
-        '@type': 'CollectionPage',
-        name: GUIAS_TITLE,
-        description: GUIAS_DESCRIPTION,
-        url: `${SITE_URL}/guias`,
-        mainEntity: {
-          '@type': 'ItemList',
-          itemListElement: GUIAS.map((g, i) => ({
-            '@type': 'ListItem',
-            position: i + 1,
-            name: g.title,
-            url: `${SITE_URL}/guias/${g.slug}`,
-          })),
-        },
+    {
+      '@context': 'https://schema.org',
+      '@type': 'CollectionPage',
+      name: GUIAS_TITLE,
+      description: GUIAS_DESCRIPTION,
+      url: `${SITE_URL}/guias`,
+      mainEntity: {
+        '@type': 'ItemList',
+        itemListElement: GUIAS.map((g, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          name: g.title,
+          url: `${SITE_URL}/guias/${g.slug}`,
+        })),
       },
-      {
-        '@context': 'https://schema.org',
-        '@type': 'BreadcrumbList',
-        itemListElement: [
-          { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
-          { '@type': 'ListItem', position: 2, name: 'Guías', item: `${SITE_URL}/guias` },
-        ],
-      },
-    ],
-    'page-schema',
+    },
+    SCHEMA_IDS.collectionPage,
+  );
+  useStructuredData(
+    {
+      '@context': 'https://schema.org',
+      '@type': 'BreadcrumbList',
+      itemListElement: [
+        { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${SITE_URL}/` },
+        { '@type': 'ListItem', position: 2, name: 'Guías', item: `${SITE_URL}/guias` },
+      ],
+    },
+    SCHEMA_IDS.breadcrumb,
   );
 
   return (
@@ -47,6 +50,7 @@ export default function GuiasPage() {
       <section className="bg-white border-b border-gray-100">
         <div className="container-custom py-10 sm:py-14">
           <div className="max-w-3xl">
+            <Breadcrumbs items={[{ label: 'Inicio', to: '/' }, { label: 'Guías' }]} className="mb-4" />
             <div className="inline-flex items-center gap-2 rounded-full border border-primary-100 bg-primary-50 px-4 py-2 text-sm font-medium text-primary-800">
               <BookOpen className="w-4 h-4" /> Guías para producción
             </div>

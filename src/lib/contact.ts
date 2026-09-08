@@ -1,21 +1,23 @@
 import { supabase } from './supabase';
 import { WHATSAPP_NUMBER } from './whatsapp';
+import { CONTACT as CONTACT_FACTS } from './siteConfig';
 import type { ContactMessage } from './types';
 
 /**
- * Datos de contacto que se muestran en la página.
- * 👉 SON PLACEHOLDERS DE EJEMPLO: cambialos por los reales cuando los tengas.
- * (email, instagram y horario son genéricos; WhatsApp es el número real.)
+ * Datos de contacto que se muestran en la página. Lee de `siteConfig.ts`
+ * (fuente única de verdad) — email, instagram y horario siguen siendo
+ * placeholders de ejemplo hasta que se confirmen ahí (ver PENDING_FIELDS en
+ * siteConfig.ts); WhatsApp, Telegram y Facebook son datos reales.
  */
 export const CONTACT_INFO = {
-  email: 'contacto@modeltex.com.ar',
+  email: CONTACT_FACTS.email.value,
   whatsapp: WHATSAPP_NUMBER,   // 5491166531086 → se usa en wa.me
-  telegram: '5491166531086',   // se usa en t.me/+<telegram>
-  facebook: 'modeltex.ar',     // se usa en facebook.com/<facebook>
-  instagram: '',               // ← agregar después (usuario sin @)
-  tiktok: '',                  // ← agregar después (usuario sin @)
+  telegram: CONTACT_FACTS.telegramNumber.value,   // se usa en t.me/+<telegram>
+  facebook: CONTACT_FACTS.facebookHandle.value,     // se usa en facebook.com/<facebook>
+  instagram: CONTACT_FACTS.instagramHandle.value,
+  tiktok: CONTACT_FACTS.tiktokHandle.value,
   location: 'Argentina — envíos digitales a todo el mundo',
-  hours: 'Lunes a sábado, 9 a 18 hs',
+  hours: CONTACT_FACTS.hours.value,
 };
 
 export interface ContactInput {

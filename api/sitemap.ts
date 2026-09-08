@@ -65,7 +65,9 @@ const staticRoutes = [
   { path: '/moldes-para-emprendedores', changefreq: 'weekly', priority: '0.84' },
   { path: '/moldes-gratis', changefreq: 'weekly', priority: '0.85' },
   { path: '/lab', changefreq: 'weekly', priority: '0.92' },
-  { path: '/lab/ia', changefreq: 'monthly', priority: '0.55' },
+  // /lab/ia queda fuera a propósito: es un chat interactivo con noindex real
+  // (ver middleware.ts y src/pages/LabAiPage.tsx) — no tiene sentido pedirle
+  // a Google que indexe una URL que le va a devolver "noindex".
   { path: '/lab/glosario', changefreq: 'weekly', priority: '0.70' },
   { path: '/diseno-a-pedido', changefreq: 'monthly', priority: '0.80' },
   { path: '/preguntas-frecuentes', changefreq: 'monthly', priority: '0.78' },

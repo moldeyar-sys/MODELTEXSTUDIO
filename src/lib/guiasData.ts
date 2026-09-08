@@ -79,3 +79,88 @@ export function findGuia(slug: string): Guia | undefined {
 export const GUIAS_TITLE = 'Guías para producir ropa con moldes digitales';
 export const GUIAS_DESCRIPTION =
   'Guías prácticas para fabricantes, talleres y marcas: cómo hacer moldes paso a paso, medidas, escalado de talles, formatos, telas, tizadas, costeo, uniformes y sublimación.';
+
+// ---------------------------------------------------------------------------
+// Autoridad temática: cluster por guía + "más guías" determinístico.
+//
+// Antes, el sidebar "Más guías" tomaba siempre los primeros 6 elementos de
+// GUIAS (mismo array, mismo orden) → 25 de 32 guías mostraban siempre el
+// mismo listado, y 7 nunca recibían un link de otra guía. Ahora cada guía
+// tiene un "cluster" temático (pillar/tema, no una entidad nueva por guía
+// para no sobre-modelar); getRelatedGuias() arma el listado real: primero
+// hermanas del mismo cluster (en el orden en que aparecen en GUIAS, asi es
+// reproducible), y si faltan para completar `count`, suma de otros clusters
+// — nunca aleatorio, siempre el mismo resultado para la misma guía.
+// ---------------------------------------------------------------------------
+export type GuiaCluster =
+  | 'fundamentos'
+  | 'moldes-base'
+  | 'digital-cad'
+  | 'produccion'
+  | 'negocio'
+  | 'nichos';
+
+export const GUIA_CLUSTERS: Record<GuiaCluster, string> = {
+  fundamentos: 'Fundamentos de moldería',
+  'moldes-base': 'Moldes base y calce',
+  'digital-cad': 'Formatos y CAD',
+  produccion: 'Producción y costos',
+  negocio: 'Vender y escalar',
+  nichos: 'Nichos de producción',
+};
+
+const CLUSTER_BY_SLUG: Record<string, GuiaCluster> = {
+  'como-hacer-moldes-de-ropa-paso-a-paso': 'fundamentos',
+  'medidas-corporales-para-moldes-de-ropa': 'fundamentos',
+  'tabla-de-medidas-industriales': 'fundamentos',
+  'tabla-de-medidas-s-a-xl-dama-hombre-nino': 'fundamentos',
+  'diferencia-entre-molderia-y-patronaje': 'fundamentos',
+  'que-es-el-patronaje-industrial': 'fundamentos',
+  'glosario-de-molderia': 'fundamentos',
+
+  'como-hacer-el-molde-base-de-un-pantalon': 'moldes-base',
+  'como-hacer-el-molde-base-de-una-falda': 'moldes-base',
+  'arrugas-en-el-tiro-del-pantalon-causas-y-correccion': 'moldes-base',
+  'reglas-de-escalado-de-sisa-y-escote': 'moldes-base',
+  'como-escalar-patrones-de-costura': 'moldes-base',
+
+  'formatos-de-molderia-digital': 'digital-cad',
+  'abrir-moldes-dxf-en-optitex-audaces-gerber-lectra': 'digital-cad',
+  'exportar-y-convertir-dxf-entre-optitex-y-audaces': 'digital-cad',
+  'programas-gratis-de-molderia-digital': 'digital-cad',
+  'como-digitalizar-patrones-de-papel': 'digital-cad',
+  'conversion-de-pulgadas-a-centimetros-para-molderia': 'digital-cad',
+  'ficha-tecnica-de-diseno-para-taller-de-confeccion': 'digital-cad',
+
+  'telas-por-tipo-de-prenda': 'produccion',
+  'consumo-de-tela-por-prenda': 'produccion',
+  'como-calcular-consumo-de-tela-con-el-rinde': 'produccion',
+  'costeo-de-una-prenda': 'produccion',
+  'tizada-computarizada-mrk': 'produccion',
+  'impresion-de-moldes-en-plotter': 'produccion',
+  'curva-de-talles-industrial': 'produccion',
+
+  'armar-una-coleccion-con-moldes-digitales': 'negocio',
+  'como-elegir-el-nombre-de-una-marca-de-moldes-o-ropa': 'negocio',
+  'copy-para-vender-moldes-digitales-en-instagram': 'negocio',
+  'diccionario-ingles-espanol-de-molderia-y-costura': 'negocio',
+
+  'uniformes-escolares-y-de-trabajo': 'nichos',
+  'moldes-para-sublimacion': 'nichos',
+};
+
+export function guiaCluster(slug: string): GuiaCluster | undefined {
+  return CLUSTER_BY_SLUG[slug];
+}
+
+/**
+ * Guías relacionadas, deterministico. Mismo cluster primero (en el orden de
+ * GUIAS), completando con el resto si hace falta. Nunca la propia guía.
+ */
+export function getRelatedGuias(slug: string, count = 6): Guia[] {
+  const cluster = CLUSTER_BY_SLUG[slug];
+  const others = GUIAS.filter((g) => g.slug !== slug);
+  const sameCluster = cluster ? others.filter((g) => CLUSTER_BY_SLUG[g.slug] === cluster) : [];
+  const rest = others.filter((g) => !sameCluster.includes(g));
+  return [...sameCluster, ...rest].slice(0, count);
+}
