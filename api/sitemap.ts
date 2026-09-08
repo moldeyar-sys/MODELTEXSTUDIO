@@ -74,6 +74,7 @@ const staticRoutes = [
   { path: '/guias', changefreq: 'weekly', priority: '0.80' },
   ...GUIA_SLUGS.map((slug) => ({ path: `/guias/${slug}`, changefreq: 'monthly', priority: '0.76' })),
   { path: '/como-funciona', changefreq: 'monthly', priority: '0.75' },
+  { path: '/quienes-somos', changefreq: 'monthly', priority: '0.65' },
   { path: '/ayuda-impresion', changefreq: 'monthly', priority: '0.75' },
   { path: '/politica-descargas', changefreq: 'monthly', priority: '0.65' },
   { path: '/contacto', changefreq: 'monthly', priority: '0.60' },

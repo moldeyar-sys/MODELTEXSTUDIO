@@ -26,7 +26,7 @@ import { CATEGORY_SEO, CATEGORY_TITLE_SUFFIX } from './src/lib/categorySeo.js';
 import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, getRelatedGuias, type Guia } from './src/lib/guiasData.js';
 import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent.js';
 import { SLUG_REDIRECTS } from './src/lib/slugRedirects.js';
-import { getArticleAuthor } from './src/lib/siteConfig.js';
+import { getArticleAuthor, SITE } from './src/lib/siteConfig.js';
 
 export const config = {
   matcher: [
@@ -47,6 +47,7 @@ export const config = {
     '/lab/:path*',
     '/diseno-a-pedido',
     '/contacto',
+    '/quienes-somos',
     '/ia-textil',
     '/politica-descargas',
     '/terminos',
@@ -985,6 +986,36 @@ const STATIC_PAGES: Record<
           url: `${o}/contacto`,
           about: { '@id': 'https://modeltex.com.ar/#organization' },
         },
+      },
+      {
+        id: 'schema-breadcrumb',
+        data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Contacto', url: `${o}/contacto` }]),
+      },
+    ],
+  },
+  '/quienes-somos': {
+    title: 'Quiénes somos | Modeltex',
+    description: `${SITE.description} Conocé quiénes hacemos Modeltex y cómo contactarnos.`,
+    body: (o) =>
+      breadcrumbHtml([{ name: 'Inicio', url: `${o}/` }, { name: 'Quiénes somos', url: `${o}/quienes-somos` }]) +
+      `\n<h1>Quiénes somos</h1>\n<p>${escapeHtml(SITE.description)}</p>\n` +
+      `<h2>Experiencia</h2>\n<p>Más de ${SITE.experienceYearsMin} años en la industria textil ${SITE.countryName.toLowerCase()}, produciendo moldería para fabricantes, talleres y marcas.</p>\n` +
+      `<h2>Qué hacemos</h2>\n<p>Moldes digitales con curva de talles completa en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces), listos para producir sin pasos intermedios.</p>\n` +
+      `<h2>Hablemos</h2>\n<ul>\n<li>WhatsApp: <a href="${WHATSAPP_LINK}">${WHATSAPP_DISPLAY}</a></li>\n<li>Telegram: <a href="https://t.me/+5491166531086">${WHATSAPP_DISPLAY}</a></li>\n<li>Facebook: <a href="https://www.facebook.com/modeltex.ar">facebook.com/modeltex.ar</a></li>\n</ul>`,
+    schemas: (o) => [
+      {
+        id: 'schema-aboutpage',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'AboutPage',
+          name: 'Quiénes somos | Modeltex',
+          url: `${o}/quienes-somos`,
+          about: { '@id': 'https://modeltex.com.ar/#organization' },
+        },
+      },
+      {
+        id: 'schema-breadcrumb',
+        data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Quiénes somos', url: `${o}/quienes-somos` }]),
       },
     ],
   },

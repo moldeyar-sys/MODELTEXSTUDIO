@@ -26,6 +26,7 @@ export const SCHEMA_IDS = {
   aggregateRating: 'schema-product', // va anidado DENTRO del Product, no es un script propio
   contactPage: 'schema-contactpage',
   howTo: 'schema-howto',
+  aboutPage: 'schema-aboutpage',
 } as const;
 
 export type SchemaIdKey = keyof typeof SCHEMA_IDS;

@@ -31,6 +31,7 @@ const LabAiPage = lazy(() => import('./pages/LabAiPage'));
 const LabGlossaryPage = lazy(() => import('./pages/LabGlossaryPage'));
 const LabGlossaryTermPage = lazy(() => import('./pages/LabGlossaryTermPage'));
 const ContactPage = lazy(() => import('./pages/ContactPage'));
+const AboutPage = lazy(() => import('./pages/AboutPage'));
 const TrustPage = lazy(() => import('./pages/TrustPage'));
 const RespaldoDrivePage = lazy(() => import('./pages/RespaldoDrivePage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
@@ -85,6 +86,7 @@ function AppLayout() {
             <Route path="/lab/:cursoSlug" element={<LabCoursePage />} />
             <Route path="/lab/:cursoSlug/:moduloSlug/:claseSlug" element={<LabLessonPage />} />
             <Route path="/contacto" element={<ContactPage />} />
+            <Route path="/quienes-somos" element={<AboutPage />} />
             <Route path="/preguntas-frecuentes" element={<FaqPage />} />
             <Route path="/guias" element={<GuiasPage />} />
             <Route path="/guias/:slug" element={<GuiaDetailPage />} />

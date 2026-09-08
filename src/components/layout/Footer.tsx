@@ -60,6 +60,7 @@ export function Footer() {
             <h4 className="font-semibold text-white mb-4">{t('footer.help', 'Ayuda y confianza')}</h4>
             <ul className="space-y-2">
               <li><Link to="/como-funciona" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.howItWorks', 'Cómo funciona')}</Link></li>
+              <li><Link to="/quienes-somos" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.about', 'Quiénes somos')}</Link></li>
               <li><Link to="/moldes-pdf" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.moldesPdf', 'Moldes PDF para imprimir')}</Link></li>
               <li><Link to="/preguntas-frecuentes" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.faq', 'Preguntas frecuentes')}</Link></li>
               <li><Link to="/guias" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.guides', 'Guías para producción')}</Link></li>
