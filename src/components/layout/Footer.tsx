@@ -60,6 +60,7 @@ export function Footer() {
             <h4 className="font-semibold text-white mb-4">{t('footer.help', 'Ayuda y confianza')}</h4>
             <ul className="space-y-2">
               <li><Link to="/como-funciona" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.howItWorks', 'Cómo funciona')}</Link></li>
+              <li><Link to="/moldes-pdf" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.moldesPdf', 'Moldes PDF para imprimir')}</Link></li>
               <li><Link to="/preguntas-frecuentes" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.faq', 'Preguntas frecuentes')}</Link></li>
               <li><Link to="/guias" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.guides', 'Guías para producción')}</Link></li>
               <li><Link to="/ayuda-impresion" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.printHelp', 'Ayuda para imprimir')}</Link></li>
@@ -73,7 +74,9 @@ export function Footer() {
           <div>
             <h4 className="font-semibold text-white mb-4">{t('footer.formats', 'Formatos disponibles')}</h4>
             <ul className="space-y-2">
-              {['PDF A4', 'PDF Plotter', 'DXF / AAMA', 'PDS (Optitex)', 'MRK (Tizado)', 'ADS (Audaces)', 'PLT', 'CDR', 'Sublimación'].map(f => (
+              <li><Link to="/moldes-pdf-a4" className="text-primary-200 text-sm hover:text-white transition-colors">PDF A4</Link></li>
+              <li><Link to="/moldes-para-plotter" className="text-primary-200 text-sm hover:text-white transition-colors">PDF Plotter</Link></li>
+              {['DXF / AAMA', 'PDS (Optitex)', 'MRK (Tizado)', 'ADS (Audaces)', 'PLT', 'CDR', 'Sublimación'].map(f => (
                 <li key={f} className="text-primary-200 text-sm">{f}</li>
               ))}
             </ul>

@@ -129,11 +129,13 @@ const HomePage = () => {
       name: 'PDF A4',
       description: t('home.fmt.a4', 'Listo para imprimir en casa'),
       icon: FileText,
+      href: '/moldes-pdf-a4',
     },
     {
       name: 'PDF Plotter',
       description: t('home.fmt.plotter', 'Para impresoras de rollo'),
       icon: Ruler,
+      href: '/moldes-para-plotter',
     },
     {
       name: 'DXF / AAMA',
@@ -472,19 +474,27 @@ const HomePage = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {formats.map((format, index) => {
               const Icon = format.icon;
-              return (
-                <div key={index} className="card p-8 border-2 border-petroleum-100 hover:border-petroleum-400 transition-colors">
-                  <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0">
-                      <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-accent-100">
-                        <Icon className="text-accent-600" size={24} />
-                      </div>
-                    </div>
-                    <div>
-                      <h3 className="font-display text-lg font-semibold text-primary-900 mb-2">{format.name}</h3>
-                      <p className="font-sans text-gray-600">{format.description}</p>
+              const cardClass = 'card p-8 border-2 border-petroleum-100 hover:border-petroleum-400 transition-colors block';
+              const content = (
+                <div className="flex items-start gap-4">
+                  <div className="flex-shrink-0">
+                    <div className="flex items-center justify-center w-12 h-12 rounded-lg bg-accent-100">
+                      <Icon className="text-accent-600" size={24} />
                     </div>
                   </div>
+                  <div>
+                    <h3 className="font-display text-lg font-semibold text-primary-900 mb-2">{format.name}</h3>
+                    <p className="font-sans text-gray-600">{format.description}</p>
+                  </div>
+                </div>
+              );
+              return format.href ? (
+                <Link key={index} to={format.href} className={cardClass}>
+                  {content}
+                </Link>
+              ) : (
+                <div key={index} className={cardClass}>
+                  {content}
                 </div>
               );
             })}

@@ -59,6 +59,14 @@ const pdfFaqs = [
     q: '¿Puedo usar los moldes PDF para producir y vender ropa?',
     a: 'Sí, la licencia es de uso productivo: podés confeccionar y vender las prendas hechas con el molde sin límite de unidades. Lo único que no está permitido es revender o redistribuir el archivo del molde en sí.',
   },
+  {
+    q: '¿Qué significa que un molde esté "listo para imprimir"?',
+    a: 'Que no hace falta ningún paso de edición ni ajuste antes de imprimirlo: el archivo ya viene con las piezas ordenadas, a escala real y con un cuadrado de control de medida. Lo único que tenés que hacer es abrirlo, imprimirlo al 100% de escala (nunca "ajustar a la página") y cortar.',
+  },
+  {
+    q: '¿Dónde consigo moldes listos en PDF para imprimir hoy mismo?',
+    a: 'En el catálogo de Modeltex: elegís el molde, lo comprás y lo tenés disponible para descargar al momento (los marcados como "descarga rápida" se habilitan apenas se confirma el pago). No hay tiempos de espera de envío porque es un archivo digital, no un producto físico.',
+  },
 ];
 
 export default function MoldesPdfPage() {
@@ -168,6 +176,21 @@ export default function MoldesPdfPage() {
               );
             })}
           </div>
+        </div>
+
+        <div className="card p-6 sm:p-7 mt-6 max-w-3xl">
+          <h2 className="font-display text-2xl font-bold text-primary-900">Moldes listos para imprimir: qué incluye cada archivo</h2>
+          <p className="text-gray-600 mt-3 leading-relaxed">
+            Un molde listo para imprimir no necesita ningún ajuste antes de usarse: las piezas ya vienen ordenadas
+            a escala real, numeradas si es PDF A4, y con un cuadrado de control de medida para verificar con una
+            regla que la impresión no perdió escala. Es la diferencia entre un molde PDF y un dibujo cualquiera de
+            una prenda: acá cada línea está pensada para cortar tela real.
+          </p>
+          <p className="text-gray-600 mt-3 leading-relaxed">
+            Si es tu primera vez imprimiendo un molde digital, la <Link to="/ayuda-impresion" className="text-primary-700 font-medium hover:text-primary-900">guía de ayuda para imprimir</Link> explica
+            paso a paso cómo configurar la escala en A4 y en plotter. Para producción en serie, también tenemos una
+            guía completa sobre <Link to="/guias/impresion-de-moldes-en-plotter" className="text-primary-700 font-medium hover:text-primary-900">cómo imprimir moldes en plotter para un taller</Link>.
+          </p>
         </div>
 
         <div className="card p-6 sm:p-7 mt-6">

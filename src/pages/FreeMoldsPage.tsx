@@ -35,6 +35,14 @@ const freeFaqs = [
     q: '¿Qué diferencia hay entre los moldes gratis y los moldes pagos?',
     a: 'Ninguna en calidad: la diferencia es que el catálogo gratis es una selección chica y rotativa, mientras que el catálogo completo tiene más de 2.000 moldes con curva de talles completa, para elegir por categoría, prenda y formato.',
   },
+  {
+    q: '¿Los moldes gratis en PDF son moldes completos o solo una parte?',
+    a: 'Son el molde completo, con todas sus piezas y su curva de talles, igual que un molde pago: no es una versión parcial ni un recorte del archivo. Se entregan en PDF listo para imprimir en A4 o plotter según el molde.',
+  },
+  {
+    q: '¿Cómo descargo moldes gratis para imprimir sin pagar nada?',
+    a: 'Entrás a esta sección, elegís un molde de la selección gratuita y lo descargás: no se pide ningún dato de pago porque son moldes gratis, algunos sin necesidad de cuenta y otros pidiendo una cuenta gratuita de Modeltex.',
+  },
 ];
 
 export default function FreeMoldsPage() {
@@ -234,6 +242,12 @@ export default function FreeMoldsPage() {
             misma moldería digital que vendemos en el catálogo completo, publicada gratuitamente para que la
             pruebes antes de comprar. No es una versión de muestra ni un molde recortado: es un molde real, con
             su curva de talles y su control de medida, igual que los moldes pagos.
+          </p>
+          <p className="text-gray-600 mt-3 leading-relaxed">
+            Los moldes gratis en PDF se descargan igual que los pagos: abrís el archivo, lo imprimís al 100% de
+            escala y cortás. Si nunca imprimiste un molde digital, la <Link to="/ayuda-impresion" className="text-primary-700 font-medium hover:text-primary-900">guía de ayuda para imprimir</Link> te
+            muestra el paso a paso; y si te gusta lo que ves, el <Link to="/catalogo" className="text-primary-700 font-medium hover:text-primary-900">catálogo completo</Link> tiene
+            más de 2.000 moldes en PDF A4, plotter y otros formatos profesionales.
           </p>
         </div>
 
