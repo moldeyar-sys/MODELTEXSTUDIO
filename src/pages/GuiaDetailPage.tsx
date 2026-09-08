@@ -1,11 +1,12 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, BookOpen, HelpCircle } from 'lucide-react';
+import { ArrowLeft, ArrowRight, BookOpen, GraduationCap, HelpCircle } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
 import { findGuia, getRelatedGuias } from '../lib/guiasData';
 import { SCHEMA_IDS } from '../lib/schemaIds';
 import { getArticleAuthor, SITE } from '../lib/siteConfig';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
+import { fetchLessonsForGuide, type RelatedLabLesson } from '../lib/labData';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -68,6 +69,18 @@ export default function GuiaDetailPage() {
     };
   }, [guia, pageUrl]);
   useStructuredData(breadcrumbSchema, SCHEMA_IDS.breadcrumb);
+
+  const [labLessons, setLabLessons] = useState<RelatedLabLesson[]>([]);
+  useEffect(() => {
+    if (!guia) return;
+    let active = true;
+    fetchLessonsForGuide(guia.slug).then((rows) => {
+      if (active) setLabLessons(rows);
+    });
+    return () => {
+      active = false;
+    };
+  }, [guia]);
 
   if (!guia) {
     return (
@@ -165,6 +178,25 @@ export default function GuiaDetailPage() {
               ))}
             </ul>
           </div>
+          {labLessons.length > 0 && (
+            <div className="card p-5">
+              <h2 className="text-sm font-bold text-primary-900 mb-3 inline-flex items-center gap-1.5">
+                <GraduationCap className="w-4 h-4 text-primary-600" /> Clases de Modeltex Lab
+              </h2>
+              <ul className="space-y-2">
+                {labLessons.map(({ lesson, courseSlug, moduleSlug }) => (
+                  <li key={lesson.id}>
+                    <Link
+                      to={`/lab/${courseSlug}/${moduleSlug}/${lesson.slug}`}
+                      className="text-sm text-primary-700 hover:text-primary-900 hover:underline"
+                    >
+                      {lesson.title}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <div className="card p-5">
             <h2 className="text-sm font-bold text-primary-900 mb-3">Más guías</h2>
             <ul className="space-y-2">

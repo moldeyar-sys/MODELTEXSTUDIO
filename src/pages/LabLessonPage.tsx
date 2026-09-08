@@ -27,6 +27,7 @@ import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 import { GUIAS } from '../lib/guiasData';
 import { SCHEMA_IDS } from '../lib/schemaIds';
 import { SITE, getArticleAuthor } from '../lib/siteConfig';
+import { trackLabLessonComplete } from '../lib/analytics';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -153,6 +154,7 @@ export default function LabLessonPage() {
       moduleSlug: moduloSlug,
       lessonSlug: claseSlug,
     });
+    trackLabLessonComplete(course.slug, claseSlug);
   };
 
   return (

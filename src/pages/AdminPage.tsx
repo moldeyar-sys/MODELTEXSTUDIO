@@ -24,6 +24,7 @@ import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } 
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
 import { PRODUCT_COLUMNS } from '../lib/productColumns';
+import { queueIndexNowUrl } from '../lib/indexNowClient';
 
 type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'lab' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats' | 'chats';
 
@@ -192,7 +193,11 @@ export default function AdminPage() {
 
   const toggleProductActive = async (id: string, is_active: boolean) => {
     const { error } = await supabase.from('products').update({ is_active }).eq('id', id);
-    if (!error) setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active } : p));
+    if (!error) {
+      setProducts(prev => prev.map(p => p.id === id ? { ...p, is_active } : p));
+      const slug = products.find(p => p.id === id)?.slug;
+      if (slug) queueIndexNowUrl(`/producto/${slug}`);
+    }
   };
 
   const toggleProductFeatured = async (id: string, is_featured: boolean) => {
@@ -2000,6 +2005,8 @@ function ProductForm({
       if (saveError) throw saveError;
       if (!data) throw new Error('NO_ROWS');
       setCurrentProduct(data as Product);
+      const savedSlug = (data as Product).slug;
+      if (savedSlug) queueIndexNowUrl(`/producto/${savedSlug}`);
       setSaved(true);
       setTimeout(() => setSaved(false), 2500);
       onRefresh();

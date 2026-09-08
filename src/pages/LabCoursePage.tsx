@@ -11,6 +11,7 @@ import { LabProgressBar } from '../components/lab/LabProgressBar';
 import { FreeMoldCard } from '../components/ui/FreeMoldCard';
 import type { LabCourseWithContent } from '../lib/labTypes';
 import type { FreeMold } from '../lib/types';
+import { trackLabStart } from '../lib/analytics';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -125,6 +126,7 @@ export default function LabCoursePage() {
           {continueTarget && (
             <Link
               to={continueTarget}
+              onClick={() => { if (progress.completedLessonIds.length === 0) trackLabStart(course.slug); }}
               className="inline-flex items-center gap-2 mt-6 px-6 py-3 bg-white text-primary-900 font-semibold rounded-xl hover:bg-white/90 transition-all active:scale-[0.98]"
             >
               <PlayCircle className="w-5 h-5" /> {progress.completedLessonIds.length > 0 ? 'Continuar curso' : 'Comenzar curso'}

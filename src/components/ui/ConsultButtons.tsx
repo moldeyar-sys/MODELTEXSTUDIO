@@ -3,6 +3,7 @@ import { useLocale } from '../../lib/locale';
 import { whatsappAppLink, isMobileDevice } from '../../lib/whatsapp';
 import { whatsappLink, whatsappMessage, telegramLink, type ConsultFormat } from '../../lib/productFormats';
 import type { Product } from '../../lib/types';
+import { trackWhatsAppClick } from '../../lib/analytics';
 
 interface ConsultButtonsProps {
   product: Product;
@@ -20,6 +21,7 @@ export function ConsultButtons({ product, format = 'general', variant = 'full' }
 
   const openWhatsApp = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation();
+    trackWhatsAppClick(`product:${format}`);
     if (isMobileDevice()) {
       e.preventDefault();
       window.location.href = whatsappAppLink(message);

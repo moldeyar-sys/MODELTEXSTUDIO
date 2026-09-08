@@ -166,6 +166,55 @@ export async function fetchFreeMoldsForCourse(courseId: string): Promise<FreeMol
   return (data || []) as FreeMold[];
 }
 
+export interface RelatedLabLesson {
+  lesson: LabLesson;
+  courseSlug: string;
+  moduleSlug: string;
+}
+
+/**
+ * Clases del Lab que declaran esta guía como relacionada (related_guide_slugs
+ * es cargado por el admin en cada clase real, nunca inventado acá). Devuelve
+ * [] mientras no haya clases publicadas que la referencien — es infraestructura
+ * lista para cuando el Lab tenga contenido, no una lista simulada.
+ */
+export async function fetchLessonsForGuide(guideSlug: string): Promise<RelatedLabLesson[]> {
+  const { data: lessons, error } = await supabase
+    .from('lab_lessons')
+    .select('*')
+    .eq('status', 'published')
+    .contains('related_guide_slugs', [guideSlug]);
+  if (error || !lessons || lessons.length === 0) return [];
+
+  const moduleIds = [...new Set((lessons as LabLesson[]).map((l) => l.module_id))];
+  const { data: modules } = await supabase
+    .from('lab_modules')
+    .select('id,slug,course_id')
+    .eq('status', 'published')
+    .in('id', moduleIds);
+  if (!modules || modules.length === 0) return [];
+
+  const courseIds = [...new Set(modules.map((m) => m.course_id))];
+  const { data: courses } = await supabase
+    .from('lab_courses')
+    .select('id,slug')
+    .eq('status', 'published')
+    .in('id', courseIds);
+  if (!courses || courses.length === 0) return [];
+
+  const courseSlugById = new Map(courses.map((c) => [c.id, c.slug as string]));
+  const moduleById = new Map(modules.map((m) => [m.id, m]));
+
+  const result: RelatedLabLesson[] = [];
+  for (const lesson of lessons as LabLesson[]) {
+    const moduleItem = moduleById.get(lesson.module_id);
+    const courseSlug = moduleItem && courseSlugById.get(moduleItem.course_id);
+    if (!moduleItem || !courseSlug) continue;
+    result.push({ lesson, courseSlug, moduleSlug: moduleItem.slug });
+  }
+  return result;
+}
+
 /** Moldes gratis vinculados a cualquier curso/clase del Lab (para la Home). */
 export async function fetchLabFreeMolds(limit = 4): Promise<FreeMold[]> {
   const { data, error } = await supabase

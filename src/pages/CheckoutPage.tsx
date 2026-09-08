@@ -10,6 +10,7 @@ import { PAYMENT_METHODS } from '../lib/types';
 import { WhatsAppConsultButton } from '../components/ui/WhatsAppConsultButton';
 import { fetchPaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
+import { trackBeginCheckout, trackPurchase } from '../lib/analytics';
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
@@ -30,6 +31,11 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     fetchPaymentSettings().then(s => setPaySettings(s));
+  }, []);
+
+  useEffect(() => {
+    if (items.length > 0) trackBeginCheckout(total, items.length);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const copyAmount = () => {
@@ -102,6 +108,8 @@ export default function CheckoutPage() {
       }
 
       if (orderError) throw orderError;
+
+      trackPurchase({ id: newOrderId, value: total, itemCount: items.length });
 
       const baseItems = items.map(item => ({
         order_id: newOrderId,

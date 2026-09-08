@@ -6,6 +6,7 @@ import { createSignedDownloadUrl, isStoragePath } from '../../lib/storage';
 import { ReviewsSection } from './ReviewsSection';
 import type { PromoProduct } from '../../lib/promo';
 import { productImageAlt } from '../../lib/productContent';
+import { trackFreeDownload } from '../../lib/analytics';
 
 const categoryLabel = (c: string) => {
   switch (c) {
@@ -34,6 +35,7 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
 
   const handleDownload = async (file: { id: string; file_name: string; file_url: string }) => {
     if (!user) return;
+    trackFreeDownload({ id: product.id, name: product.name });
     if (!isStoragePath(file.file_url)) {
       window.open(file.file_url, '_blank', 'noopener,noreferrer');
       return;

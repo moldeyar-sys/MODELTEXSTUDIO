@@ -1,5 +1,6 @@
 import { createContext, useContext, useState, useEffect, type ReactNode } from 'react';
 import type { CartItem, Product } from '../lib/types';
+import { trackAddToCart } from '../lib/analytics';
 
 interface AddOptions {
   format?: string;
@@ -51,6 +52,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const unitPrice = opts?.unitPrice;
     const sizes = opts?.sizes;
     const key = `${product.id}|${format ?? ''}`;
+    trackAddToCart({ id: product.id, name: product.name, category: product.category, price: unitPrice ?? product.sale_price ?? product.price, format });
     setItems(prev => {
       const existing = prev.find(i => cartItemKey(i) === key);
       if (existing) {

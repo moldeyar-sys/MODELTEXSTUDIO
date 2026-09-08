@@ -1,6 +1,7 @@
 import { MessageCircle } from 'lucide-react';
 import { isMobileDevice, whatsappAppLink, whatsappWebLink } from '../../lib/whatsapp';
 import { useLocale } from '../../lib/locale';
+import { trackWhatsAppClick } from '../../lib/analytics';
 
 interface WhatsAppConsultButtonProps {
   /** Mensaje prearmado que se abre en WhatsApp. */
@@ -9,6 +10,8 @@ interface WhatsAppConsultButtonProps {
   className?: string;
   /** Texto del botón. */
   label?: string;
+  /** Dónde vive el botón (para el evento whatsapp_click de GA4), ej: "cart", "product". */
+  context?: string;
 }
 
 /**
@@ -19,12 +22,14 @@ export function WhatsAppConsultButton({
   message = 'Hola Modeltex, tengo una duda con mi compra.',
   className = '',
   label,
+  context = 'general',
 }: WhatsAppConsultButtonProps) {
   const { t } = useLocale();
   const buttonLabel = label ?? t('product.whatsapp', 'Consultar por WhatsApp');
   const url = whatsappWebLink(message);
   const openWhatsApp = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation();
+    trackWhatsAppClick(context);
     if (isMobileDevice()) {
       e.preventDefault();
       window.location.href = whatsappAppLink(message);

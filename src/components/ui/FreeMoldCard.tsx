@@ -5,6 +5,7 @@ import type { FreeMold } from '../../lib/types';
 import { buildFreeMoldWhatsApp, incrementFreeMoldDownload } from '../../lib/freeMolds';
 import { useAuth } from '../../contexts/AuthContext';
 import { ReviewsSection } from './ReviewsSection';
+import { trackFreeDownload } from '../../lib/analytics';
 
 interface Props {
   mold: FreeMold;
@@ -46,6 +47,7 @@ export function FreeMoldCard({ mold }: Props) {
 
   const handleDownload = (f: { url: string; label?: string; name?: string }) => {
     incrementFreeMoldDownload(mold.id, fileDisplayName(f), !!user, user?.id ?? null);
+    trackFreeDownload({ id: mold.id, name: mold.name });
     window.open(f.url, '_blank', 'noopener,noreferrer');
   };
 

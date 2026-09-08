@@ -23,6 +23,7 @@ import type { Product } from '../lib/types';
 import { CATEGORIES } from '../lib/types';
 import { FormatOptions } from '../components/ui/FormatOptions';
 import { ReviewsSection } from '../components/ui/ReviewsSection';
+import { trackViewProduct } from '../lib/analytics';
 import { productCode, cartonPrice, pdfPrice, ploterPrice, productUrl } from '../lib/productFormats';
 import { fetchReviews, reviewSummary } from '../lib/reviews';
 import { useLocale } from '../lib/locale';
@@ -85,9 +86,11 @@ export default function ProductDetailPage() {
     }
 
     if (data) {
-      setProduct(data as unknown as Product);
+      const p = data as unknown as Product;
+      setProduct(p);
       setActiveImage(0);
-      fetchRelated(data as unknown as Product);
+      fetchRelated(p);
+      trackViewProduct({ id: p.id, name: p.name, category: p.category, price: p.sale_price ?? p.price });
       // Cuenta para "productos mas vistos" del panel admin. El propio admin
       // navegando su catalogo no debe inflar el conteo. Best-effort: si
       // falla, no afecta la pagina.

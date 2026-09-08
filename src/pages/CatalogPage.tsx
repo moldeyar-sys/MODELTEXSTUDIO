@@ -24,6 +24,7 @@ import { CATEGORY_SEO } from '../lib/categorySeo';
 import { PRODUCT_COLUMNS } from '../lib/productColumns';
 import { SCHEMA_IDS } from '../lib/schemaIds';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
+import { trackSearch } from '../lib/analytics';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -384,6 +385,7 @@ export default function CatalogPage() {
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
+    trackSearch(search);
     setSearchParams(buildSearchParams(search, false), { replace: true });
   };
 
