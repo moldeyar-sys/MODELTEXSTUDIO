@@ -8,7 +8,8 @@ import {
   Upload, ImagePlus, X, FileText, Loader2, Gift, Mail, Image as ImageIcon, CreditCard, Save, Bot, Users, Copy, Check,
   Sparkles, RefreshCw, PenLine, BarChart3, Eye, MessageSquare, ChevronDown, ChevronUp, GraduationCap
 } from 'lucide-react';
-import type { Product, ProductFile, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage, NewsletterSubscriber } from '../lib/types';
+import type { Product, ProductFile, FileType, Order, Profile, CustomRequest, CustomRequestStatus, FreeMold, ContactMessage, HeroImage, NewsletterSubscriber } from '../lib/types';
+import { FILE_TYPE_LABELS } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
 import { fetchAllFreeMolds, fetchFreeMoldDownloadStats } from '../lib/freeMolds';
@@ -1927,6 +1928,15 @@ function ProductForm({
     }
   };
 
+  // La extensión no alcanza para distinguir formatos que comparten archivo
+  // (PDF A4 y PDF Plóter son los dos .pdf): esto deja corregir a mano el
+  // tipo real. Es lo que usa la RLS para no entregar un formato caro cuando
+  // el cliente pagó uno más barato del mismo producto (ver migración 037).
+  const updateFileType = async (f: ProductFile, file_type: FileType) => {
+    setFiles(prev => prev.map(x => (x.id === f.id ? { ...x, file_type } : x)));
+    await supabase.from('product_files').update({ file_type }).eq('id', f.id);
+  };
+
   const deleteFile = async (f: ProductFile) => {
     if (!confirm('¿Eliminar este archivo?')) return;
     await removeProductFile(f.file_url);
@@ -2398,14 +2408,28 @@ function ProductForm({
             <p className="text-xs text-gray-500">
               Se guardan en un bucket privado. Los clientes solo accederán con un enlace temporal tras pagar.
             </p>
+            {files.length > 0 && new Set(files.map(f => f.file_type)).size > 1 && (
+              <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                Este producto tiene más de un formato cargado: revisá que el formato de cada archivo (el selector de al lado) sea el correcto — el cliente solo va a poder descargar el que coincida con lo que pagó.
+              </p>
+            )}
             {files.length > 0 && (
               <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl">
                 {files.map(f => (
                   <div key={f.id} className="flex items-center justify-between gap-3 px-4 py-2.5">
-                    <div className="flex items-center gap-2 min-w-0">
+                    <div className="flex items-center gap-2 min-w-0 flex-1">
                       <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
                       <span className="text-sm text-gray-700 truncate">{f.file_name}</span>
-                      <span className="text-[10px] uppercase font-medium text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded flex-shrink-0">{f.file_type}</span>
+                      <select
+                        value={f.file_type}
+                        onChange={(e) => updateFileType(f, e.target.value as FileType)}
+                        title="Formato real de este archivo (no se adivina solo por la extensión: revisalo si es PDF Plóter, Cartón, etc.)"
+                        className="text-[11px] font-medium text-gray-600 bg-gray-100 border-0 rounded px-1.5 py-0.5 flex-shrink-0 cursor-pointer"
+                      >
+                        {(Object.keys(FILE_TYPE_LABELS) as FileType[]).map((ft) => (
+                          <option key={ft} value={ft}>{FILE_TYPE_LABELS[ft]}</option>
+                        ))}
+                      </select>
                     </div>
                     <button type="button" onClick={() => deleteFile(f)} className="p-1.5 text-gray-400 hover:text-red-600 rounded flex-shrink-0">
                       <Trash2 className="w-4 h-4" />

@@ -15,6 +15,51 @@ function signPath(path: string): string {
   return path.split('/').map(encodeURIComponent).join('/');
 }
 
+// Mismo mapeo que la migración 037 (formato_a_file_type) y que api/mp-webhook.ts
+// (precioReal): texto libre que el comprador eligió -> file_type real del archivo.
+// Este endpoint usa la service role (ignora RLS), así que el filtro por formato
+// tiene que aplicarse acá también — la policy de product_files sola no alcanza.
+function formatoAFileType(formato: string | null | undefined): string {
+  const f = (formato || '').toLowerCase();
+  if (f.includes('cart')) return 'carton';
+  if (f.includes('pl')) return 'pdf_plotter';
+  if (f.includes('dxf') || f.includes('aama')) return 'dxf';
+  if (f.includes('pds') || f.includes('optitex')) return 'pds';
+  if (f.includes('mrk') || f.includes('tizado')) return 'mrk';
+  if (f.includes('ads') || f.includes('audaces')) return 'ads';
+  return 'pdf_a4';
+}
+
+/**
+ * Filtra los archivos de un producto según lo que efectivamente compró el
+ * cliente: si el producto tiene un solo file_type entre todos sus archivos,
+ * se entregan todos (compatibilidad con productos ya cargados donde son
+ * piezas del mismo formato). Si tiene más de uno, solo el que coincide con
+ * el formato pagado.
+ */
+function filesPermitidosPorFormato(
+  fileRows: { id: string; product_id: string; file_type?: string | null }[],
+  formatoPorProducto: Map<string, string[]>,
+): typeof fileRows {
+  const byProduct = new Map<string, typeof fileRows>();
+  for (const f of fileRows) {
+    const list = byProduct.get(f.product_id) || [];
+    list.push(f);
+    byProduct.set(f.product_id, list);
+  }
+  const result: typeof fileRows = [];
+  for (const [productId, files] of byProduct) {
+    const distinctTypes = new Set(files.map((f) => f.file_type || 'pdf_a4'));
+    if (distinctTypes.size <= 1) {
+      result.push(...files);
+      continue;
+    }
+    const purchasedTypes = new Set(formatoPorProducto.get(productId) || []);
+    result.push(...files.filter((f) => purchasedTypes.has(f.file_type || 'pdf_a4')));
+  }
+  return result;
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -84,14 +129,23 @@ export default async function handler(req: any, res: any) {
           }));
     const productIds = Array.from(new Set(items.map((it) => it.product?.id).filter(Boolean)));
     const productNames = new Map(items.map((it) => [it.product?.id, it.product?.name || it.product_name || 'Producto']));
+    const formatoPorProducto = new Map<string, string[]>();
+    for (const it of items) {
+      const pid = it.product?.id;
+      if (!pid) continue;
+      const list = formatoPorProducto.get(pid) || [];
+      list.push(formatoAFileType(it.formato));
+      formatoPorProducto.set(pid, list);
+    }
 
     let files: { id: string; product_name: string; file_name: string; signed_url: string | null }[] = [];
     if (productIds.length > 0) {
       const filesRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/product_files?product_id=in.(${productIds.join(',')})&select=id,product_id,file_name,file_url`,
+        `${SUPABASE_URL}/rest/v1/product_files?product_id=in.(${productIds.join(',')})&select=id,product_id,file_name,file_url,file_type`,
         { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
       );
-      const fileRows = filesRes.ok ? ((await filesRes.json()) as any[]) : [];
+      const allFileRows = filesRes.ok ? ((await filesRes.json()) as any[]) : [];
+      const fileRows = filesPermitidosPorFormato(allFileRows, formatoPorProducto);
 
       files = await Promise.all(
         fileRows.map(async (f) => {

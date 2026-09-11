@@ -5,7 +5,21 @@ export type PaymentStatus = 'pendiente' | 'pagado' | 'rechazado' | 'cancelado';
 export type OrderStatus = 'pendiente' | 'entregado' | 'cancelado';
 export type CustomRequestStatus = 'pendiente' | 'contactando' | 'en_proceso' | 'completado';
 export type ProductCategory = 'dama' | 'hombre' | 'nina' | 'nino' | 'adultos-unisex' | 'ninos-unisex' | 'bebes';
-export type FileType = 'pdf_a4' | 'pdf_plotter' | 'plt' | 'dxf' | 'cdr' | 'sublimacion' | 'other';
+export type FileType = 'pdf_a4' | 'pdf_plotter' | 'carton' | 'plt' | 'dxf' | 'pds' | 'mrk' | 'ads' | 'cdr' | 'sublimacion' | 'other';
+
+export const FILE_TYPE_LABELS: Record<FileType, string> = {
+  pdf_a4: 'PDF A4',
+  pdf_plotter: 'PDF Plóter',
+  carton: 'Cartón',
+  plt: 'PLT',
+  dxf: 'DXF / AAMA',
+  pds: 'PDS (Optitex)',
+  mrk: 'MRK (Tizado)',
+  ads: 'ADS (Audaces)',
+  cdr: 'CDR',
+  sublimacion: 'Sublimación',
+  other: 'Otro',
+};
 
 export interface Profile {
   id: string;
