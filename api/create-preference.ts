@@ -85,6 +85,10 @@ export default async function handler(req: any, res: any) {
     }
 
     const pedido = await itemsReales(orderId);
+    if (pedido.status === null) {
+      res.status(404).json({ error: 'Pedido no encontrado.' });
+      return;
+    }
     if (pedido.status !== 'pendiente') {
       res.status(409).json({ error: 'Este pedido ya no está pendiente de pago.' });
       return;
