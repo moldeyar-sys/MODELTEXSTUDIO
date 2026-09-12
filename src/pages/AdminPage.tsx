@@ -1754,6 +1754,10 @@ function ProductForm({
   const [uploadingGallery, setUploadingGallery] = useState(false);
   const [uploadingFile, setUploadingFile] = useState(false);
   const [error, setError] = useState('');
+  // Error puntual de la imagen principal, mostrado AL LADO del botón de subir
+  // (el `error` general se muestra recién abajo de todo el formulario, lejos
+  // de donde se mira al subir una foto — por eso antes pasaba desapercibido).
+  const [imageError, setImageError] = useState('');
 
   useEffect(() => {
     const loadFiles = async () => {
@@ -1864,12 +1868,13 @@ function ProductForm({
     e.target.value = '';
     if (!file) return;
     setUploadingImage(true);
-    setError('');
+    setImageError('');
     try {
       const url = await uploadProductImage(file);
       setForm(prev => ({ ...prev, main_image_url: url }));
-    } catch {
-      setError('Error al subir la imagen principal. Revisá que sea una imagen de menos de 5 MB.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido';
+      setImageError(`No se pudo subir la imagen: ${msg}`);
     } finally {
       setUploadingImage(false);
     }
@@ -1880,13 +1885,14 @@ function ProductForm({
     e.target.value = '';
     if (!list.length) return;
     setUploadingGallery(true);
-    setError('');
+    setImageError('');
     try {
       const urls: string[] = [];
       for (const f of list) urls.push(await uploadProductImage(f));
       setGallery(prev => [...prev, ...urls]);
-    } catch {
-      setError('Error al subir imágenes de la galería.');
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Error desconocido';
+      setImageError(`No se pudieron subir las imágenes de la galería: ${msg}`);
     } finally {
       setUploadingGallery(false);
     }
@@ -2068,6 +2074,9 @@ function ProductForm({
                 className="input-field text-xs"
                 placeholder="...o pegá una URL https://"
               />
+              {imageError && (
+                <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1.5">{imageError}</p>
+              )}
             </div>
           </div>
         </div>
@@ -2345,6 +2354,9 @@ function ProductForm({
               <input type="file" accept="image/*" multiple className="hidden" onChange={handleGalleryUpload} disabled={uploadingGallery} />
             </label>
           </div>
+          {imageError && (
+            <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-lg px-2.5 py-1.5 mt-2">{imageError}</p>
+          )}
         </div>
 
         <div>

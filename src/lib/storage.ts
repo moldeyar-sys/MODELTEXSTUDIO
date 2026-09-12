@@ -73,6 +73,18 @@ function fileToBase64(file: File | Blob): Promise<string> {
  */
 export async function uploadProductImage(file: File): Promise<string> {
   const optimized = await compressImage(file);
+  // Vercel rechaza requests de más de 4.5 MB antes de que el código llegue a
+  // correr; en base64 eso son ~3.3 MB de archivo real. Si compressImage no
+  // pudo achicarla (ej. HEIC de iPhone, que el navegador no sabe decodificar
+  // y compressImage devuelve tal cual), frenar acá con un mensaje claro es
+  // mejor que un fetch que cuelga o falla sin explicación.
+  if (optimized.size > 3 * 1024 * 1024) {
+    throw new Error(
+      `La imagen pesa ${(optimized.size / (1024 * 1024)).toFixed(1)} MB, demasiado para subir. ` +
+      `Si es una foto de iPhone (HEIC), convertila a JPG primero, o elegí una más liviana.`,
+    );
+  }
+
   const { data: { session } } = await supabase.auth.getSession();
   const token = session?.access_token;
   if (!token) throw new Error('Necesitás estar logueado como admin para subir imágenes.');
