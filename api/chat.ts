@@ -78,6 +78,30 @@ async function countSessionMessages(sessionId: string): Promise<number> {
   }
 }
 
+// sessionId lo genera y manda el propio navegador: borrar el localStorage
+// resetea el contador de arriba a cero. Este segundo conteo por IP (24hs)
+// es mas dificil de rotar sin cambiar de red.
+async function countIpMessagesToday(ip: string): Promise<number> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/count_ip_messages_today`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_ip: ip }),
+    });
+    if (!res.ok) return 0;
+    return (await res.json()) as number;
+  } catch {
+    return 0;
+  }
+}
+
+// IP real del visitante detras del proxy de Vercel.
+function getClientIp(req: any): string | null {
+  const fwd = req.headers['x-forwarded-for'];
+  const first = (Array.isArray(fwd) ? fwd[0] : fwd || '').split(',')[0].trim();
+  return first || req.headers['x-real-ip'] || null;
+}
+
 // Guarda un mensaje en el historial (best-effort: si falla, no interrumpe el chat).
 // Usa la service role: chat_messages ya no acepta INSERT público (migración 033),
 // asi que solo este endpoint (server-side) puede escribir el historial real.
@@ -87,6 +111,7 @@ async function logMessage(
   role: 'user' | 'assistant',
   content: string,
   labContext?: string,
+  ip?: string | null,
 ): Promise<void> {
   if (!SUPABASE_SERVICE_ROLE_KEY) return;
   try {
@@ -104,6 +129,7 @@ async function logMessage(
         role,
         content: content.slice(0, 4000),
         lab_context: labContext || null,
+        ip_address: ip || null,
       }),
     });
   } catch {
@@ -426,11 +452,18 @@ export default async function handler(req: any, res: any) {
 
     const lastUserMessage = [...history].reverse().find((m) => m.role === 'user')?.content || '';
 
+    const clientIp = getClientIp(req);
+
     // Limite de preguntas para quien no tiene cuenta. Se chequea ANTES de
     // gastar en OpenRouter: si ya llego al tope, ni se llama al modelo.
+    // Dos conteos combinados: por sessionId (lo manda el navegador, se
+    // resetea borrando localStorage) y por IP+dia (mas dificil de rotar).
     if (sessionId && !userId && lastUserMessage) {
-      const askedSoFar = await countSessionMessages(sessionId);
-      if (askedSoFar >= ANON_MESSAGE_LIMIT) {
+      const [askedSoFar, askedFromIpToday] = await Promise.all([
+        countSessionMessages(sessionId),
+        clientIp ? countIpMessagesToday(clientIp) : Promise.resolve(0),
+      ]);
+      if (askedSoFar >= ANON_MESSAGE_LIMIT || askedFromIpToday >= ANON_MESSAGE_LIMIT) {
         res.status(200).json({
           reply:
             `Llegaste al máximo de ${ANON_MESSAGE_LIMIT} preguntas sin cuenta. Creá una cuenta gratis (es rápido) para seguir preguntando sin límite: /registro`,
@@ -445,7 +478,7 @@ export default async function handler(req: any, res: any) {
       : undefined;
 
     if (sessionId && lastUserMessage) {
-      await logMessage(sessionId, userId, 'user', lastUserMessage, labContextLabel);
+      await logMessage(sessionId, userId, 'user', lastUserMessage, labContextLabel, clientIp);
     }
 
     let messages: ChatMessage[];

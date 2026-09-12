@@ -30,13 +30,31 @@ export function initGA(): void {
     window.dataLayer!.push(args);
   };
   window.gtag('js', new Date());
-  window.gtag('config', GA_MEASUREMENT_ID, { anonymize_ip: true });
+  // send_page_view:false porque el page_view automático de gtag.js manda
+  // location.href COMPLETO, con query string incluida — y algunas URLs del
+  // sitio llevan el email del comprador invitado ahí (/mi-pedido?...&email=...).
+  // El page_view real se dispara a mano con trackPageView(), sin esa parte.
+  window.gtag('config', GA_MEASUREMENT_ID, { anonymize_ip: true, send_page_view: false });
 }
 
 /** Wrapper seguro: no explota ni hace nada si GA no está configurado. */
 export function trackEvent(name: string, params: Record<string, unknown> = {}): void {
   if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || !window.gtag) return;
   window.gtag('event', name, params);
+}
+
+/**
+ * Page view manual, con la URL saneada (sin query string) — ver el porqué en
+ * initGA(). Llamar en cada cambio de ruta (ver src/App.tsx).
+ */
+export function trackPageView(path: string): void {
+  if (!GA_MEASUREMENT_ID || typeof window === 'undefined' || !window.gtag) return;
+  const cleanPath = path.split('?')[0].split('#')[0];
+  window.gtag('event', 'page_view', {
+    page_location: `${window.location.origin}${cleanPath}`,
+    page_path: cleanPath,
+    page_title: document.title,
+  });
 }
 
 // ── Eventos clave del negocio (los 9 pedidos) ──────────────────────────────

@@ -76,7 +76,7 @@ async function handleNotifyOrder(req: any, res: any) {
 
     const query =
       `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}` +
-      `&select=id,total,payment_method,payment_status,created_at,` +
+      `&select=id,total,payment_method,payment_status,created_at,notified_at,` +
       `order_items(quantity,price,formato,sizes,product_name,product:products(name)),` +
       `buyer:profiles(email,whatsapp,full_name)`;
 
@@ -88,6 +88,19 @@ async function handleNotifyOrder(req: any, res: any) {
     const rows = (await dbRes.json()) as any[];
     const order = rows?.[0];
     if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
+
+    // Este endpoint no tiene sesion (se llama con sendBeacon justo despues del
+    // checkout, invitados incluidos) asi que no se le puede exigir un token de
+    // admin. Como mitigacion: solo notifica pedidos recien creados, y una sola
+    // vez por pedido — asi un orderId ajeno (viejo) no sirve para releer datos
+    // ni para spamear notificaciones repetidas sobre la misma compra.
+    if (order.notified_at) {
+      return res.status(200).json({ ok: true, skipped: 'already_notified' });
+    }
+    const ageMs = Date.now() - new Date(order.created_at).getTime();
+    if (ageMs > 30 * 60 * 1000) {
+      return res.status(404).json({ error: 'Pedido no encontrado' });
+    }
 
     const items: any[] = order.order_items ?? [];
     const lines = items.map((it) => {
@@ -165,6 +178,21 @@ async function handleNotifyOrder(req: any, res: any) {
       }
     } else {
       results.email = 'skip (sin RESEND_API_KEY/NOTIFY_EMAIL)';
+    }
+
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`, {
+        method: 'PATCH',
+        headers: {
+          apikey: SERVICE_ROLE,
+          Authorization: `Bearer ${SERVICE_ROLE}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=minimal',
+        },
+        body: JSON.stringify({ notified_at: new Date().toISOString() }),
+      });
+    } catch (e) {
+      console.error('notify-order: no se pudo marcar notified_at', e);
     }
 
     res.status(200).json({ ok: true, results });

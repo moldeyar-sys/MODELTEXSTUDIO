@@ -1,5 +1,5 @@
-import { lazy, Suspense } from 'react';
-import { BrowserRouter, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
 import { LocaleProvider } from './lib/locale';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
@@ -7,7 +7,23 @@ import { Navbar } from './components/layout/Navbar';
 import { Footer } from './components/layout/Footer';
 import { ContactDock } from './components/layout/ContactDock';
 import { ProtectedRoute, AdminRoute } from './components/layout/ProtectedRoute';
+import { trackPageView } from './lib/analytics';
 import HomePage from './pages/HomePage';
+
+/**
+ * Dispara el page_view de GA4 a mano en cada cambio de ruta, con la URL
+ * SIN query string (ver src/lib/analytics.ts: send_page_view:false en
+ * initGA — algunas rutas como /mi-pedido llevan el email del comprador
+ * invitado en la query string, y el page_view automático de gtag.js lo
+ * hubiera mandado tal cual).
+ */
+function PageViewTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    trackPageView(location.pathname);
+  }, [location.pathname]);
+  return null;
+}
 
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
@@ -54,6 +70,7 @@ function PageLoader() {
 function AppLayout() {
   return (
     <div className="flex flex-col min-h-screen">
+      <PageViewTracker />
       <Navbar />
       <main className="flex-1">
         <Suspense fallback={<PageLoader />}>
