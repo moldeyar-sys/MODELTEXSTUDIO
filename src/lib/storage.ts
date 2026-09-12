@@ -51,15 +51,41 @@ export async function compressImage(file: File, maxDim = 1600, quality = 0.82): 
   return new File([blob], newName, { type: 'image/webp' });
 }
 
-/** Sube una imagen (comprimida) al bucket publico y devuelve su URL publica. */
+function fileToBase64(file: File | Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      // result es "data:<mime>;base64,<datos>" — solo interesa la parte de datos.
+      const result = reader.result as string;
+      resolve(result.slice(result.indexOf(',') + 1));
+    };
+    reader.onerror = () => reject(reader.error);
+    reader.readAsDataURL(file);
+  });
+}
+
+/**
+ * Sube una imagen (comprimida) a Cloudflare R2 vía /api/utils?action=upload-image
+ * y devuelve su URL pública. Antes iba a Supabase Storage: las fotos del
+ * catálogo eran la mayor parte del egress que hizo que Supabase restringiera
+ * el proyecto entero (ver memoria del proyecto, incidente de sept. 2026). R2
+ * no cobra por transferencia de salida.
+ */
 export async function uploadProductImage(file: File): Promise<string> {
   const optimized = await compressImage(file);
-  const path = `${Date.now()}-${safeName(optimized.name)}`;
-  const { error } = await supabase.storage
-    .from(IMAGES_BUCKET)
-    .upload(path, optimized, { cacheControl: '3600', upsert: false, contentType: optimized.type });
-  if (error) throw error;
-  return supabase.storage.from(IMAGES_BUCKET).getPublicUrl(path).data.publicUrl;
+  const { data: { session } } = await supabase.auth.getSession();
+  const token = session?.access_token;
+  if (!token) throw new Error('Necesitás estar logueado como admin para subir imágenes.');
+
+  const dataBase64 = await fileToBase64(optimized);
+  const res = await fetch('/api/utils?action=upload-image', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ fileName: optimized.name, contentType: optimized.type, dataBase64, folder: 'products' }),
+  });
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok) throw new Error(data.error || `Error subiendo imagen (${res.status})`);
+  return data.url as string;
 }
 
 /**

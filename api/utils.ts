@@ -13,6 +13,9 @@
 //   GET  ?action=geo                 -> pais del visitante (geolocalizacion de Vercel)
 //   GET  ?action=indexnow-key        -> archivo de verificacion de IndexNow (texto plano)
 //   POST ?action=indexnow            -> notifica URLs nuevas/actualizadas a IndexNow (Bing/Yandex)
+//   POST ?action=upload-image        -> sube una imagen a Cloudflare R2 (reemplaza Supabase Storage)
+
+import { AwsClient } from 'aws4fetch';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
 const SUPABASE_ANON_KEY =
@@ -301,6 +304,77 @@ async function handleIndexNow(req: any, res: any) {
   }
 }
 
+// ---------------------------------------------------------------------------
+// upload-image: sube una imagen a Cloudflare R2 (bucket privado, servido con
+// un dominio público propio) en vez de Supabase Storage. Motivo: las fotos
+// del catálogo eran la mayor parte del "egress" que hizo que Supabase
+// restringiera el proyecto entero (ver README/memoria del proyecto). R2 no
+// cobra por transferencia de salida, así que esto saca ese consumo de raíz.
+//
+// El navegador manda el archivo ya comprimido en base64 (dentro del límite
+// de body de Vercel de sobra: las imágenes salen en <500 KB de storage.ts).
+// Solo admin puede subir. Requiere estas variables de entorno:
+//   R2_ACCOUNT_ID, R2_ACCESS_KEY_ID, R2_SECRET_ACCESS_KEY, R2_BUCKET_NAME,
+//   VITE_R2_PUBLIC_URL (dominio público del bucket, sin barra al final)
+// ---------------------------------------------------------------------------
+function safeFileName(name: string): string {
+  const dot = name.lastIndexOf('.');
+  const base = dot > 0 ? name.slice(0, dot) : name;
+  const ext = dot > 0 ? name.slice(dot + 1) : '';
+  const cleanBase = base.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/(^-|-$)/g, '');
+  const cleanExt = ext.toLowerCase().replace(/[^a-z0-9]/g, '');
+  return cleanExt ? `${cleanBase || 'archivo'}.${cleanExt}` : (cleanBase || 'archivo');
+}
+
+async function handleUploadImage(req: any, res: any) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!token || !(await isAdmin(token))) {
+    return res.status(403).json({ error: 'Esta accion es solo para administradores.' });
+  }
+
+  const accountId = process.env.R2_ACCOUNT_ID;
+  const accessKeyId = process.env.R2_ACCESS_KEY_ID;
+  const secretAccessKey = process.env.R2_SECRET_ACCESS_KEY;
+  const bucket = process.env.R2_BUCKET_NAME;
+  const publicUrl = process.env.VITE_R2_PUBLIC_URL;
+  if (!accountId || !accessKeyId || !secretAccessKey || !bucket || !publicUrl) {
+    return res.status(500).json({ error: 'Cloudflare R2 no está configurado (faltan variables de entorno).' });
+  }
+
+  try {
+    const body = readBody(req);
+    const fileName = typeof body.fileName === 'string' ? body.fileName : '';
+    const contentType = typeof body.contentType === 'string' ? body.contentType : 'application/octet-stream';
+    const dataBase64 = typeof body.dataBase64 === 'string' ? body.dataBase64 : '';
+    const folder = typeof body.folder === 'string' && /^[a-z0-9-]+$/.test(body.folder) ? body.folder : 'products';
+    if (!fileName || !dataBase64) return res.status(400).json({ error: 'fileName y dataBase64 son requeridos' });
+
+    const bytes = Buffer.from(dataBase64, 'base64');
+    // Tope de seguridad: storage.ts comprime a <1600px webp antes de mandar,
+    // así que esto nunca debería acercarse a 15 MB salvo un archivo mal enviado.
+    if (bytes.length > 15 * 1024 * 1024) return res.status(413).json({ error: 'Archivo demasiado grande' });
+
+    const path = `${folder}/${Date.now()}-${safeFileName(fileName)}`;
+    const client = new AwsClient({ accessKeyId, secretAccessKey, service: 's3', region: 'auto' });
+    const endpoint = `https://${accountId}.r2.cloudflarestorage.com/${bucket}/${path}`;
+    const uploadRes = await client.fetch(endpoint, {
+      method: 'PUT',
+      body: bytes,
+      headers: { 'Content-Type': contentType },
+    });
+    if (!uploadRes.ok) {
+      console.error('upload-image R2 error', uploadRes.status, await uploadRes.text());
+      return res.status(502).json({ error: 'No se pudo subir la imagen a Cloudflare' });
+    }
+
+    res.status(200).json({ url: `${publicUrl.replace(/\/$/, '')}/${path}`, path });
+  } catch (err) {
+    console.error('upload-image error', err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+}
+
 export default async function handler(req: any, res: any) {
   const action = String(req.query?.action || '');
   switch (action) {
@@ -314,7 +388,9 @@ export default async function handler(req: any, res: any) {
       return handleIndexNowKey(req, res);
     case 'indexnow':
       return handleIndexNow(req, res);
+    case 'upload-image':
+      return handleUploadImage(req, res);
     default:
-      res.status(400).json({ error: 'Accion desconocida. Usa ?action=geo|notify-order|notify-buyer-paid|indexnow-key|indexnow' });
+      res.status(400).json({ error: 'Accion desconocida. Usa ?action=geo|notify-order|notify-buyer-paid|indexnow-key|indexnow|upload-image' });
   }
 }
