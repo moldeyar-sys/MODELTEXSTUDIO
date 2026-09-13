@@ -30,7 +30,9 @@ export default function MyGuestOrderPage() {
   const [error, setError] = useState('');
   const [result, setResult] = useState<GuestOrderResult | null>(null);
 
-  useSeo({ title: 'Mi pedido', path: '/mi-pedido' });
+  // noindex: la URL real lleva ?order=...&email=... (dato personal del
+  // comprador invitado) — no debe quedar indexable ni aparecer en buscadores.
+  useSeo({ title: 'Mi pedido', path: '/mi-pedido', noindex: true });
 
   const lookup = useCallback(async (id: string, mail: string) => {
     if (!id.trim() || !mail.trim()) return;
