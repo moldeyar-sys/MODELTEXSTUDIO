@@ -65,7 +65,9 @@ export const CONTACT = {
   whatsappNumber: confirmed('5491166531086'), // wa.me/<numero>
   telegramNumber: confirmed('5491166531086'), // t.me/+<numero>
   facebookHandle: confirmed('modeltex.ar'), // facebook.com/<handle>
-  email: pending('contacto@modeltex.com.ar', 'Placeholder de ejemplo desde el inicio del proyecto (ver contact.ts). Confirmar el email real de atención antes de usarlo en schema.org.'),
+  // Confirmado 2026-09-13: Cloudflare Email Routing activo, reenvia a la
+  // casilla real que Denis revisa. Antes era un placeholder sin confirmar.
+  email: confirmed('contacto@modeltex.com.ar'),
   hours: pending('Lunes a sábado, 9 a 18 hs', 'Placeholder de ejemplo. Confirmar horario real de atención.'),
   instagramHandle: pending('', 'Sin cuenta de Instagram cargada todavía.'),
   tiktokHandle: pending('', 'Sin cuenta de TikTok cargada todavía.'),
@@ -164,7 +166,6 @@ export function buildOrganizationSchema(): Record<string, unknown> {
 // checklist de "datos institucionales que faltan".
 // ---------------------------------------------------------------------------
 export const PENDING_FIELDS: ReadonlyArray<{ field: string; note: string }> = [
-  { field: 'CONTACT.email', note: CONTACT.email.confirmed ? '' : CONTACT.email.note },
   { field: 'CONTACT.hours', note: CONTACT.hours.confirmed ? '' : CONTACT.hours.note },
   { field: 'CONTACT.instagramHandle', note: CONTACT.instagramHandle.confirmed ? '' : CONTACT.instagramHandle.note },
   { field: 'CONTACT.tiktokHandle', note: CONTACT.tiktokHandle.confirmed ? '' : CONTACT.tiktokHandle.note },
