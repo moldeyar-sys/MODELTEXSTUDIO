@@ -15,6 +15,10 @@ export function BrandLogo({ variant = 'full', size = 40, className = '' }: Brand
 
   // Logo COMPLETO (buzo + M + MODELTEX) tal cual el isotipo de marca.
   const src = variant === 'icon' ? '/brand/modeltex-icon.png?v=2' : '/brand/modeltex-logo-full.png?v=3';
+  // Relacion de aspecto real de cada archivo (256x256 el icono, 382x360 el
+  // completo): sin esto el navegador no puede reservar el ancho antes de que
+  // la imagen cargue, y el texto de al lado salta un poco cuando aparece.
+  const aspectRatio = variant === 'icon' ? '1 / 1' : '382 / 360';
 
   if (imgError) {
     return (
@@ -32,7 +36,7 @@ export function BrandLogo({ variant = 'full', size = 40, className = '' }: Brand
       src={src}
       alt="Modeltex"
       onError={() => setImgError(true)}
-      style={{ height: size, width: 'auto' }}
+      style={{ height: size, width: 'auto', aspectRatio }}
       className={`object-contain rounded-lg select-none ${className}`}
       draggable={false}
     />

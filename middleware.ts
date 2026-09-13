@@ -52,6 +52,16 @@ export const config = {
     '/politica-descargas',
     '/terminos',
     '/privacidad',
+    // Catch-all: cualquier otra ruta (typos, links rotos, escaneos, rutas
+    // privadas sin contenido para bots). Antes estas URLs ni siquiera
+    // llegaban a este archivo — el rewrite catch-all de vercel.json las
+    // mandaba directo al index.html crudo (200, con el robots/canonical de
+    // la HOME), asi que un bot sin JS (GPTBot, ClaudeBot, PerplexityBot,
+    // etc., a los que robots.txt invita explicitamente) veia cualquier URL
+    // inventada como si fuera un duplicado indexable de la home. Se excluyen
+    // los prefijos que ya sirven contenido real por otra via (funciones,
+    // build, imagenes) y los archivos estaticos de la raiz.
+    '/((?!api|assets|brand|img|sitemap\\.xml|llms-full\\.txt|llms\\.txt|robots\\.txt).*)',
   ],
 };
 
@@ -404,6 +414,16 @@ async function productBody(p: ProductRow, pageUrl: string, origin: string): Prom
       itemCondition: 'https://schema.org/NewCondition',
       url: pageUrl,
       seller: { '@type': 'Organization', name: SITE_NAME },
+      // Refleja la politica real (FAQ "¿Hacen reembolsos si me arrepiento?"):
+      // por ser producto digital, sin reembolso automatico una vez habilitada
+      // o descargada la compra (casos de error tecnico verificable se
+      // resuelven aparte, fuera de esta politica estandar). Sin este campo,
+      // Google puede optar por no mostrar precio/disponibilidad en el
+      // resultado enriquecido de producto.
+      hasMerchantReturnPolicy: {
+        '@type': 'MerchantReturnPolicy',
+        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+      },
     };
     if (f.ars) offers.push({ ...base, price: f.ars, priceCurrency: 'ARS' });
     if (f.usd) offers.push({ ...base, name: `${f.nombre} (internacional)`, price: f.usd, priceCurrency: 'USD' });
@@ -484,25 +504,38 @@ function otrasCategoriasHtml(origin: string, actual: string) {
     .join('')}</ul>`;
 }
 
-async function categoriaPage(html: string, origin: string, cat: string) {
+const CATEGORIA_PAGE_SIZE = 100;
+
+async function categoriaPage(html: string, origin: string, cat: string, pagina: number) {
   const c = CATEGORIAS[cat];
-  const pageUrl = `${origin}/catalogo?categoria=${cat}`;
+  const baseUrl = `${origin}/catalogo?categoria=${cat}`;
+  const offset = (pagina - 1) * CATEGORIA_PAGE_SIZE;
   const { rows, total } = await pg<ListRow>(
-    `is_active=eq.true&category=eq.${cat}&select=${LIST_SELECT}&order=created_at.desc&limit=100`,
+    `is_active=eq.true&category=eq.${cat}&select=${LIST_SELECT}&order=created_at.desc&limit=${CATEGORIA_PAGE_SIZE}&offset=${offset}`,
     true,
   );
+  const totalPaginas = total ? Math.max(1, Math.ceil(total / CATEGORIA_PAGE_SIZE)) : 1;
+  const pageUrl = pagina > 1 ? `${baseUrl}&pagina=${pagina}` : baseUrl;
   const migas = [
     { name: 'Inicio', url: `${origin}/` },
     { name: 'Catálogo', url: `${origin}/catalogo` },
-    { name: c.label, url: pageUrl },
+    { name: pagina > 1 ? `${c.label} (página ${pagina})` : c.label, url: pageUrl },
   ];
   const inner = [
     breadcrumbHtml(migas),
-    `<h1>Moldes de ropa ${escapeHtml(c.sufijo)}${total ? ` (${fmtCantidad(total)} moldes)` : ''}</h1>`,
+    `<h1>Moldes de ropa ${escapeHtml(c.sufijo)}${total ? ` (${fmtCantidad(total)} moldes)` : ''}${pagina > 1 ? ` — página ${pagina} de ${totalPaginas}` : ''}</h1>`,
     `<p>${escapeHtml(c.intro)} Todos aprobados con muestra confeccionada, con descarga digital inmediata en PDF A4 y plotter, y disponibles a pedido en ${FORMATOS_TXT}. Precios en pesos argentinos y en dólares para el exterior.</p>`,
     rows.length ? `<h2>Moldes ${escapeHtml(c.sufijo)} disponibles</h2>\n${listadoHtml(rows, origin)}` : '',
-    total && total > rows.length
-      ? `<p>Se muestran los ${rows.length} más recientes de ${fmtCantidad(total)}. El listado completo, con búsqueda por prenda, temporada y formato, está en <a href="${pageUrl}">${pageUrl}</a>.</p>`
+    // Paginado real (antes el link "ver el listado completo" apuntaba a la
+    // MISMA url de la categoria: era circular y solo el 4-7% de los
+    // productos tenia un link real con texto de anclaje, el resto solo
+    // existia en el sitemap). Ahora cada pagina enlaza a la siguiente/
+    // anterior con href real, asi el 100% queda alcanzable navegando.
+    totalPaginas > 1
+      ? `<p>Página ${pagina} de ${totalPaginas} (${fmtCantidad(total || 0)} moldes ${escapeHtml(c.sufijo)} en total).` +
+        (pagina > 1 ? ` <a href="${pagina === 2 ? baseUrl : `${baseUrl}&pagina=${pagina - 1}`}">← Página anterior</a>` : '') +
+        (pagina < totalPaginas ? ` <a href="${baseUrl}&pagina=${pagina + 1}">Página siguiente →</a>` : '') +
+        `</p>`
       : '',
     `<h2>Otras categorías</h2>${otrasCategoriasHtml(origin, cat)}`,
     `<p>Ver el <a href="${origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}), <a href="${origin}/moldes-gratis">moldes gratis</a> para probar la calidad o las <a href="${origin}/preguntas-frecuentes">preguntas frecuentes</a>.</p>`,
@@ -520,16 +553,18 @@ async function categoriaPage(html: string, origin: string, cat: string) {
         name: c.title.replace(` | ${SITE_NAME}`, ''),
         url: pageUrl,
         numberOfItems: total ?? rows.length,
-        itemListElement: rows.slice(0, 50).map((p, i) => ({
+        itemListElement: rows.map((p, i) => ({
           '@type': 'ListItem',
-          position: i + 1,
+          position: offset + i + 1,
           name: p.name,
           url: `${origin}/producto/${encodeURIComponent(p.slug)}`,
         })),
       },
     },
   ];
-  html = setHeadSeo(html, c.title, c.description, pageUrl);
+  html = setHeadSeo(html, pagina > 1 ? `${c.title.replace(` | ${SITE_NAME}`, '')} — página ${pagina} | ${SITE_NAME}` : c.title, c.description, pageUrl);
+  if (pagina > 1) html = html.replace('</head>', `<link rel="prev" href="${escapeHtml(pagina === 2 ? baseUrl : `${baseUrl}&pagina=${pagina - 1}`)}" />\n</head>`);
+  if (pagina < totalPaginas) html = html.replace('</head>', `<link rel="next" href="${escapeHtml(`${baseUrl}&pagina=${pagina + 1}`)}" />\n</head>`);
   return injectBody(html, inner, schemas);
 }
 
@@ -1744,14 +1779,32 @@ export default async function middleware(request: Request) {
     // ---------- Home, catalogo, landings, guias y legales ----------
     const page = STATIC_PAGES[path];
     const isCatalog = path === '/catalogo';
-    if (!page && !isCatalog) return next();
+    if (!page && !isCatalog) {
+      // Catch-all real: cualquier URL que no matchea ninguna pagina conocida
+      // (typos, links rotos, escaneos) recibe un 404 real con noindex, igual
+      // que ya se hace para "producto no encontrado" etc. Antes esto hacia
+      // next() y el bot recibia el index.html crudo (200, robots=index,
+      // canonical=home), como si esa URL inventada fuera la home duplicada.
+      const htmlRes404 = await fetch(`${url.origin}/index.html`);
+      let html404 = await htmlRes404.text();
+      html404 = setHeadSeo(html404, `Página no encontrada | ${SITE_NAME}`, 'Esta página no existe en Modeltex.', `${url.origin}/`);
+      html404 = setRobots(html404, 'noindex, follow');
+      html404 = injectBody(
+        html404,
+        `<h1>Página no encontrada</h1>\n<p><a href="${url.origin}/">Ir al inicio</a> o ver el <a href="${url.origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}).</p>`,
+      );
+      return respond(html404, 404);
+    }
 
     const htmlRes = await fetch(`${url.origin}/index.html`);
     let html = await htmlRes.text();
 
     if (isCatalog) {
       const cat = url.searchParams.get('categoria') || '';
-      return respond(CATEGORIAS[cat] ? await categoriaPage(html, url.origin, cat) : await catalogoPage(html, url.origin));
+      if (!CATEGORIAS[cat]) return respond(await catalogoPage(html, url.origin));
+      const paginaNum = parseInt(url.searchParams.get('pagina') || '1', 10);
+      const pagina = Number.isFinite(paginaNum) && paginaNum > 1 ? paginaNum : 1;
+      return respond(await categoriaPage(html, url.origin, cat, pagina));
     }
 
     const pageUrl = `${url.origin}${path === '/' ? '/' : path}`;

@@ -6,7 +6,8 @@ export type Currency = 'ARS' | 'USD';
 const LANG_KEY = 'modeltex_lang';
 const CURRENCY_KEY = 'modeltex_currency';
 const CURRENCY_CHOSEN_KEY = 'modeltex_currency_chosen'; // '1' si el usuario eligió a mano
-const FALLBACK_ARS_PER_USD = 1450; // tasa de respaldo si falla la API
+const RATE_CACHE_KEY = 'modeltex_last_known_rate'; // ultima cotizacion real obtenida (respaldo si la API falla)
+const FALLBACK_ARS_PER_USD = 1450; // respaldo final si nunca se pudo obtener una cotizacion real
 
 // Diccionario solo para inglés. Si falta la clave (o el idioma es 'es'),
 // se usa el texto en español que se pasa como fallback en t(key, es).
@@ -539,7 +540,15 @@ const LocaleContext = createContext<LocaleContextType | undefined>(undefined);
 export function LocaleProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(() => (localStorage.getItem(LANG_KEY) as Lang) || 'es');
   const [currency, setCurrencyState] = useState<Currency>(() => (localStorage.getItem(CURRENCY_KEY) as Currency) || 'ARS');
-  const [rate, setRate] = useState<number>(FALLBACK_ARS_PER_USD);
+  const [rate, setRate] = useState<number>(() => {
+    // Si el servicio externo de cotizacion falla (mismo patron de riesgo que
+    // tuvo ipapi.co: gratuito, sin API key, puede empezar a devolver error o
+    // limitar pedidos en cualquier momento), es mejor mostrar la ULTIMA
+    // cotizacion real que se pudo obtener que un numero fijo que va
+    // quedando cada vez mas desactualizado con el tiempo.
+    const cached = Number(localStorage.getItem(RATE_CACHE_KEY));
+    return Number.isFinite(cached) && cached > 0 ? cached : FALLBACK_ARS_PER_USD;
+  });
 
   // Tasa de cambio en vivo (con fallback). Solo se usa para mostrar en USD.
   useEffect(() => {
@@ -548,9 +557,14 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
       .then(r => r.json())
       .then(d => {
         const ars = d?.rates?.ARS;
-        if (!cancelled && typeof ars === 'number' && ars > 0) setRate(ars);
+        if (!cancelled && typeof ars === 'number' && ars > 0) {
+          setRate(ars);
+          try {
+            localStorage.setItem(RATE_CACHE_KEY, String(ars));
+          } catch { /* localStorage no disponible (modo privado, etc.) */ }
+        }
       })
-      .catch(() => { /* se mantiene el fallback */ });
+      .catch(() => { /* se mantiene el fallback (ultima cotizacion cacheada, o la fija) */ });
     return () => { cancelled = true; };
   }, []);
 
