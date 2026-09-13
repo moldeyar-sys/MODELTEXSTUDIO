@@ -447,25 +447,34 @@ interface Row {
 
 const PAGE = 1000;
 
-async function fetchProducts(): Promise<Row[]> {
-  const out: Row[] = [];
-  try {
-    for (let offset = 0; ; offset += PAGE) {
-      const res = await fetch(
-        `${SUPABASE_URL}/rest/v1/products?select=name,slug,category,garment_type,short_description,sizes,precio_pdf_a4,price,precio_usd_pdf_a4` +
-          `&is_active=eq.true&order=category.asc,name.asc&limit=${PAGE}&offset=${offset}`,
-        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
-      );
-      if (!res.ok) break;
-      const rows = (await res.json()) as Row[];
-      if (!Array.isArray(rows)) break;
-      out.push(...rows);
-      if (rows.length < PAGE) break;
-    }
-  } catch {
-    /* se devuelve lo que se alcanzó a juntar */
+// Supabase/PostgREST corta CUALQUIER respuesta a "Max Rows" (1000 por
+// defecto) sin avisar, sin importar el limit= pedido. Este helper pagina con
+// offset hasta agotar los resultados (mismo criterio que api/sitemap.ts).
+async function fetchAllRows<T>(baseUrl: string): Promise<T[]> {
+  const out: T[] = [];
+  const sep = baseUrl.includes('?') ? '&' : '?';
+  for (let offset = 0; ; offset += PAGE) {
+    const res = await fetch(`${baseUrl}${sep}limit=${PAGE}&offset=${offset}`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+    });
+    if (!res.ok) break;
+    const rows = (await res.json()) as T[];
+    if (!Array.isArray(rows)) break;
+    out.push(...rows);
+    if (rows.length < PAGE) break;
   }
   return out;
+}
+
+async function fetchProducts(): Promise<Row[]> {
+  try {
+    return await fetchAllRows<Row>(
+      `${SUPABASE_URL}/rest/v1/products?select=name,slug,category,garment_type,short_description,sizes,precio_pdf_a4,price,precio_usd_pdf_a4&is_active=eq.true&order=category.asc,name.asc`,
+    );
+  } catch {
+    /* se devuelve lo que se alcanzó a juntar */
+    return [];
+  }
 }
 
 function ars(n: unknown): string {
@@ -487,28 +496,21 @@ interface LabGlossaryLite { slug: string; term: string; short_definition?: strin
 
 async function fetchLabContent() {
   try {
-    const headers = { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` };
-    const [coursesRes, glossaryRes] = await Promise.all([
-      fetch(`${SUPABASE_URL}/rest/v1/lab_courses?select=id,slug,title,subtitle&status=eq.published&order=order_index.asc`, { headers }),
-      fetch(`${SUPABASE_URL}/rest/v1/lab_glossary_terms?select=slug,term,short_definition&status=eq.published&order=order_index.asc`, { headers }),
+    const [courses, glossary] = await Promise.all([
+      fetchAllRows<LabCourseLite>(`${SUPABASE_URL}/rest/v1/lab_courses?select=id,slug,title,subtitle&status=eq.published&order=order_index.asc`),
+      fetchAllRows<LabGlossaryLite>(`${SUPABASE_URL}/rest/v1/lab_glossary_terms?select=slug,term,short_definition&status=eq.published&order=order_index.asc`),
     ]);
-    const courses = coursesRes.ok ? ((await coursesRes.json()) as LabCourseLite[]) : [];
-    const glossary = glossaryRes.ok ? ((await glossaryRes.json()) as LabGlossaryLite[]) : [];
     if (courses.length === 0) return { courses: [], modules: [] as LabModuleLite[], lessons: [] as LabLessonLite[], glossary };
 
-    const modulesRes = await fetch(
+    const modules = await fetchAllRows<LabModuleLite>(
       `${SUPABASE_URL}/rest/v1/lab_modules?select=id,course_id,slug,title&course_id=in.(${courses.map((c) => c.id).join(',')})&status=eq.published&order=level_order.asc,order_index.asc`,
-      { headers },
     );
-    const modules = modulesRes.ok ? ((await modulesRes.json()) as LabModuleLite[]) : [];
 
     let lessons: LabLessonLite[] = [];
     if (modules.length > 0) {
-      const lessonsRes = await fetch(
+      lessons = await fetchAllRows<LabLessonLite>(
         `${SUPABASE_URL}/rest/v1/lab_lessons?select=module_id,slug,title,objective&module_id=in.(${modules.map((m) => m.id).join(',')})&status=eq.published&order=order_index.asc`,
-        { headers },
       );
-      lessons = lessonsRes.ok ? ((await lessonsRes.json()) as LabLessonLite[]) : [];
     }
 
     return { courses, modules, lessons, glossary };

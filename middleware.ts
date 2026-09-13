@@ -912,6 +912,34 @@ const STATIC_PAGES: Record<
 <li>Descargás tus archivos: los de descarga rápida al confirmarse el pago, el resto dentro de las 24 hs.</li>
 </ol>
 <p>Dudas: <a href="${o}/preguntas-frecuentes">preguntas frecuentes</a>.</p>`,
+    schemas: (o) => [
+      {
+        id: 'schema-howto',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'HowTo',
+          name: 'Cómo funciona la compra de moldes en Modeltex',
+          description: 'Elegís el molde y formato, pagás y descargás.',
+          step: [
+            { '@type': 'HowToStep', position: 1, text: 'Elegís el molde en el catálogo y el formato (cartón, PDF A4 o PDF plotter; otros formatos CAD a pedido).' },
+            { '@type': 'HowToStep', position: 2, text: 'Elegís los talles — la curva completa viene incluida.' },
+            { '@type': 'HowToStep', position: 3, text: 'Pagás con Mercado Pago, transferencia bancaria, PayPal o criptomonedas. Podés comprar sin crear cuenta.' },
+            { '@type': 'HowToStep', position: 4, text: 'Descargás tus archivos: los de descarga rápida al confirmarse el pago, el resto dentro de las 24 hs.' },
+          ],
+        },
+      },
+      {
+        id: 'schema-breadcrumb',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` },
+            { '@type': 'ListItem', position: 2, name: 'Cómo funciona', item: `${o}/como-funciona` },
+          ],
+        },
+      },
+    ],
   },
   '/ayuda-impresion': {
     title: 'Cómo imprimir moldes PDF sin perder escala | Modeltex',
@@ -925,6 +953,34 @@ const STATIC_PAGES: Record<
 <li>Para plotter: llevá el PDF a cualquier servicio de ploteo e indicá impresión al 100%.</li>
 </ul>
 <p>Más ayuda en <a href="${o}/preguntas-frecuentes">preguntas frecuentes</a> o por WhatsApp desde <a href="${o}/contacto">contacto</a>.</p>`,
+    schemas: (o) => [
+      {
+        id: 'schema-howto',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'HowTo',
+          name: 'Cómo imprimir un molde PDF sin perder la escala',
+          description: 'Guía para imprimir moldes PDF en A4 o plotter sin perder la escala real.',
+          step: [
+            { '@type': 'HowToStep', position: 1, text: 'Configurá la impresión al 100% / tamaño real — nunca "ajustar a la página".' },
+            { '@type': 'HowToStep', position: 2, text: 'Imprimí primero la hoja con el cuadrado de control y verificá su medida con regla.' },
+            { '@type': 'HowToStep', position: 3, text: 'Pegá las hojas A4 siguiendo la numeración de la guía.' },
+            { '@type': 'HowToStep', position: 4, text: 'Para plotter: llevá el PDF a cualquier servicio de ploteo e indicá impresión al 100%.' },
+          ],
+        },
+      },
+      {
+        id: 'schema-breadcrumb',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` },
+            { '@type': 'ListItem', position: 2, name: 'Ayuda para imprimir', item: `${o}/ayuda-impresion` },
+          ],
+        },
+      },
+    ],
   },
   '/diseno-a-pedido': {
     title: 'Moldería a pedido y moldes a medida | Modeltex',
@@ -1676,7 +1732,13 @@ export default async function middleware(request: Request) {
         return respond(await labLessonPage(html, url.origin, course, moduleItem, lesson));
       }
 
-      return next();
+      // Ruta del Lab mal formada (ej. /lab/curso/modulo sin la clase): antes
+      // esto caia en next() y un bot sin JS recibia el shell crudo de la SPA,
+      // con el robots/canonical de la HOME como si esta URL fuera valida.
+      html = setHeadSeo(html, `Página no encontrada | ${SITE_NAME}`, LAB_DESCRIPTION, `${url.origin}/lab`);
+      html = setRobots(html, 'noindex, follow');
+      html = injectBody(html, `<h1>Página no encontrada</h1>\n<p><a href="${url.origin}/lab">Ver Modeltex Lab</a>.</p>`);
+      return respond(html, 404);
     }
 
     // ---------- Home, catalogo, landings, guias y legales ----------

@@ -20,7 +20,7 @@ import { useLocale } from '../lib/locale';
 import type { Product, ProductCategory } from '../lib/types';
 import { CATEGORIES, FORMATS } from '../lib/types';
 import { isPromoActive } from '../lib/promo';
-import { CATEGORY_SEO } from '../lib/categorySeo';
+import { CATEGORY_SEO, CATEGORY_TITLE_SUFFIX } from '../lib/categorySeo';
 import { PRODUCT_COLUMNS } from '../lib/productColumns';
 import { SCHEMA_IDS } from '../lib/schemaIds';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
@@ -461,6 +461,15 @@ export default function CatalogPage() {
   const currentCategoryLabel = CATEGORIES.find((item) => item.value === category)?.label || 'Todos los productos';
   const currentSeasonLabel = SEASON_OPTIONS.find((item) => item.value === temporada)?.label || 'Todas';
 
+  // Mismo H1 que arma middleware.ts para bots (categoriaPage()): antes quedaba
+  // fijo en "Moldes aprobados con muestra" sin importar la categoria activa,
+  // mientras que el <title> de la pestaña si cambiaba.
+  const catalogH1 = category
+    ? `Moldes de ropa ${CATEGORY_TITLE_SUFFIX[category] || currentCategoryLabel.toLowerCase()}${
+        !loading ? ` (${visibleProducts.length.toLocaleString('es-AR')} moldes)` : ''
+      }`
+    : t('catalog.title', 'Moldes aprobados con muestra');
+
   const categorySeo = category ? CATEGORY_SEO[category] : undefined;
   useSeo({
     title: categorySeo
@@ -517,7 +526,7 @@ export default function CatalogPage() {
             <div className="max-w-3xl">
               <Breadcrumbs items={breadcrumbItems} className="mb-2" />
               <h1 className="font-sans text-xl sm:text-3xl md:text-4xl font-extrabold text-primary-900 tracking-tight text-balance">
-                {t('catalog.title', 'Moldes aprobados con muestra')}
+                {catalogH1}
               </h1>
               {/* El volumen del catalogo es el mejor argumento de venta: va como dato, no como pie de pagina. */}
               <p className="mt-2 flex items-baseline gap-2 flex-wrap">

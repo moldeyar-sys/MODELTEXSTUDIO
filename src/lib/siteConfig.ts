@@ -129,7 +129,10 @@ export function buildOrganizationSchema(): Record<string, unknown> {
     contactType: 'sales',
     telephone: `+${CONTACT.whatsappNumber.value.replace(/^54/, '54-')}`,
     url: `${SITE_URL}/contacto`,
-    availableLanguage: ['es', 'en'],
+    // Solo 'es': el selector de idioma ingles de src/lib/locale.tsx existe en
+    // el codigo pero no esta conectado a ningun control, asi que ninguna
+    // pagina se renderiza realmente en ingles todavia.
+    availableLanguage: ['es'],
     areaServed: 'Worldwide',
   };
   const email = factOrUndefined(CONTACT.email);

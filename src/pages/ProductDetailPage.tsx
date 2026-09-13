@@ -33,6 +33,7 @@ import { SCHEMA_IDS } from '../lib/schemaIds';
 import {
   buildProductFaq,
   descriptionParagraphs,
+  productH1,
   productImageAlt,
   productTitle,
   PRODUCT_GUIDE_LINKS,
@@ -370,7 +371,7 @@ export default function ProductDetailPage() {
               </div>
 
               <h1 className="font-display text-2xl sm:text-3xl md:text-4xl font-bold text-primary-900 mb-4 leading-tight">
-                {product.name}
+                {productH1(product)}
               </h1>
 
               <p className="text-gray-600 leading-relaxed">

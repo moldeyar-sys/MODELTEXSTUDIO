@@ -15,6 +15,7 @@ export interface ProductContentInput {
   recommended_fabrics?: string[] | null;
   short_description?: string | null;
   long_description?: string | null;
+  codigo?: string | null;
   entrega_inmediata?: boolean | null;
   price?: number | null;
   precio_carton?: number | null;
@@ -68,6 +69,18 @@ export function productTitle(p: ProductContentInput): string {
   const phrase = garmentPhrase(p);
   const sufijo = categorySuffix(p.category);
   return `${p.name} — ${phrase ? `${phrase}, ` : ''}molde digital${sufijo ? ` ${sufijo}` : ''}`;
+}
+
+/**
+ * H1 real de la ficha ("SHORT 09 — short deportivo con bolsillos"), igual al
+ * que arma middleware.ts para bots. Antes ProductDetailPage.tsx mostraba solo
+ * p.name a secas: como muchos moldes comparten nombre ("TOP DAMA" x43), el H1
+ * que veía cualquier usuario o el renderizador de Google quedaba duplicado
+ * entre decenas de fichas, aunque el <title> sí las distinguía.
+ */
+export function productH1(p: ProductContentInput): string {
+  const phrase = garmentPhrase(p);
+  return `${p.name}${phrase ? ` — ${phrase}` : ''}${p.codigo ? ` (cód. ${p.codigo})` : ''}`;
 }
 
 export function productImageAlt(p: ProductContentInput): string {

@@ -117,32 +117,41 @@ function toUrlNode(entry: RouteEntry) {
 
 const PAGE = 1000;
 
+// Supabase/PostgREST corta CUALQUIER respuesta a "Max Rows" (1000 por
+// defecto) sin avisar, sin importar el limit= pedido. Este helper pagina con
+// offset hasta agotar los resultados, en vez de confiar en un limit fijo
+// (eso fue justo el bug que dejaba productos fuera del sitemap sin aviso).
+async function fetchAllRows<T>(baseUrl: string): Promise<T[]> {
+  const out: T[] = [];
+  const sep = baseUrl.includes('?') ? '&' : '?';
+  for (let offset = 0; ; offset += PAGE) {
+    const res = await fetch(`${baseUrl}${sep}limit=${PAGE}&offset=${offset}`, {
+      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+    });
+    if (!res.ok) break;
+    const rows = (await res.json()) as T[];
+    if (!Array.isArray(rows)) break;
+    out.push(...rows);
+    if (rows.length < PAGE) break;
+  }
+  return out;
+}
+
 async function fetchProducts(): Promise<RouteEntry[]> {
   const out: RouteEntry[] = [];
   try {
-    // Paginado: antes habia un limit=2000 fijo y todo producto por encima de
-    // ese numero quedaba fuera del sitemap sin aviso.
-    for (let offset = 0; ; offset += PAGE) {
-      const url =
-        `${SUPABASE_URL}/rest/v1/products` +
-        `?select=slug,name,main_image_url,created_at&is_active=eq.true&order=created_at.desc&limit=${PAGE}&offset=${offset}`;
-      const res = await fetch(url, {
-        headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` },
+    const rows = await fetchAllRows<{ slug?: string; name?: string; main_image_url?: string; created_at?: string }>(
+      `${SUPABASE_URL}/rest/v1/products?select=slug,name,main_image_url,created_at&is_active=eq.true&order=created_at.desc`,
+    );
+    for (const item of rows) {
+      if (!item?.slug) continue;
+      out.push({
+        path: `/producto/${item.slug}`,
+        changefreq: 'weekly',
+        priority: '0.80',
+        lastmod: item.created_at || undefined,
+        image: item.main_image_url ? { loc: item.main_image_url, title: item.name || item.slug } : undefined,
       });
-      if (!res.ok) break;
-      const rows = (await res.json()) as Array<{ slug?: string; name?: string; main_image_url?: string; created_at?: string }>;
-      if (!Array.isArray(rows)) break;
-      for (const item of rows) {
-        if (!item?.slug) continue;
-        out.push({
-          path: `/producto/${item.slug}`,
-          changefreq: 'weekly',
-          priority: '0.80',
-          lastmod: item.created_at || undefined,
-          image: item.main_image_url ? { loc: item.main_image_url, title: item.name || item.slug } : undefined,
-        });
-      }
-      if (rows.length < PAGE) break;
     }
   } catch {
     /* se devuelve lo que se alcanzo a juntar */
@@ -153,30 +162,21 @@ async function fetchProducts(): Promise<RouteEntry[]> {
 async function fetchLabRoutes(): Promise<RouteEntry[]> {
   const out: RouteEntry[] = [];
   try {
-    const coursesRes = await fetch(
+    const courses = await fetchAllRows<{ id: string; slug: string; updated_at?: string }>(
       `${SUPABASE_URL}/rest/v1/lab_courses?select=id,slug,updated_at&status=eq.published`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
     );
-    if (!coursesRes.ok) return out;
-    const courses = (await coursesRes.json()) as { id: string; slug: string; updated_at?: string }[];
 
     for (const course of courses) {
       out.push({ path: `/lab/${course.slug}`, changefreq: 'weekly', priority: '0.85', lastmod: course.updated_at });
 
-      const modulesRes = await fetch(
+      const modules = await fetchAllRows<{ id: string; slug: string }>(
         `${SUPABASE_URL}/rest/v1/lab_modules?select=id,slug&course_id=eq.${course.id}&status=eq.published`,
-        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
       );
-      if (!modulesRes.ok) continue;
-      const modules = (await modulesRes.json()) as { id: string; slug: string }[];
       if (modules.length === 0) continue;
 
-      const lessonsRes = await fetch(
+      const lessons = await fetchAllRows<{ module_id: string; slug: string; updated_at?: string }>(
         `${SUPABASE_URL}/rest/v1/lab_lessons?select=module_id,slug,updated_at&module_id=in.(${modules.map((m) => m.id).join(',')})&status=eq.published`,
-        { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
       );
-      if (!lessonsRes.ok) continue;
-      const lessons = (await lessonsRes.json()) as { module_id: string; slug: string; updated_at?: string }[];
       const moduleSlugById = new Map(modules.map((m) => [m.id, m.slug]));
       for (const lesson of lessons) {
         const moduleSlug = moduleSlugById.get(lesson.module_id);
@@ -190,15 +190,11 @@ async function fetchLabRoutes(): Promise<RouteEntry[]> {
       }
     }
 
-    const glossaryRes = await fetch(
+    const terms = await fetchAllRows<{ slug: string; updated_at?: string }>(
       `${SUPABASE_URL}/rest/v1/lab_glossary_terms?select=slug,updated_at&status=eq.published`,
-      { headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${SUPABASE_ANON_KEY}` } },
     );
-    if (glossaryRes.ok) {
-      const terms = (await glossaryRes.json()) as { slug: string; updated_at?: string }[];
-      for (const t of terms) {
-        out.push({ path: `/lab/glosario/${t.slug}`, changefreq: 'monthly', priority: '0.65', lastmod: t.updated_at });
-      }
+    for (const t of terms) {
+      out.push({ path: `/lab/glosario/${t.slug}`, changefreq: 'monthly', priority: '0.65', lastmod: t.updated_at });
     }
   } catch {
     /* se devuelve lo que se alcanzo a juntar */
