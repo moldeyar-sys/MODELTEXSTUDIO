@@ -349,7 +349,7 @@ const FAQ_ITEMS = [
   },
   {
     q: '¿Cómo me contacto con Modeltex?',
-    a: 'Por WhatsApp o Telegram al +54 9 11 6653 1086, por email a contacto@modeltex.com.ar, por el formulario de contacto del sitio o por Facebook (facebook.com/modeltex.ar). Atendemos las 24 horas, los 7 días de la semana, y respondemos consultas de cualquier país.',
+    a: 'Por WhatsApp o Telegram al +54 9 11 6653 1086, por email a contacto@modeltex.com.ar, por el formulario de contacto del sitio, por Facebook (facebook.com/modeltex.ar) o Instagram (@modeltex.com.ar). Atendemos las 24 horas, los 7 días de la semana, y respondemos consultas de cualquier país.',
   },
   {
     q: '¿Cómo hacer moldes de ropa paso a paso?',

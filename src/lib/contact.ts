@@ -5,9 +5,8 @@ import type { ContactMessage } from './types';
 
 /**
  * Datos de contacto que se muestran en la página. Lee de `siteConfig.ts`
- * (fuente única de verdad) — email, instagram y horario siguen siendo
- * placeholders de ejemplo hasta que se confirmen ahí (ver PENDING_FIELDS en
- * siteConfig.ts); WhatsApp, Telegram y Facebook son datos reales.
+ * (fuente única de verdad) — TikTok y ciudad/domicilio siguen sin confirmar
+ * (ver PENDING_FIELDS en siteConfig.ts); el resto ya son datos reales.
  */
 export const CONTACT_INFO = {
   email: CONTACT_FACTS.email.value,

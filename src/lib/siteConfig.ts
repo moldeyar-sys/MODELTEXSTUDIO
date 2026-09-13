@@ -71,7 +71,8 @@ export const CONTACT = {
   // Confirmado 2026-09-13 por Denis: atencion 24/7 (compra y descarga
   // digital automatica en cualquier momento, sin horario de local fisico).
   hours: confirmed('Las 24 horas, los 7 días de la semana'),
-  instagramHandle: pending('', 'Sin cuenta de Instagram cargada todavía.'),
+  // Confirmado 2026-09-13 por Denis: @modeltex.com.ar (162 seguidores).
+  instagramHandle: confirmed('modeltex.com.ar'),
   tiktokHandle: pending('', 'Sin cuenta de TikTok cargada todavía.'),
   city: pending('', 'Sin ciudad/localidad confirmada — el Organization schema hoy solo declara el país (AR).'),
   streetAddress: pending('', 'Sin domicilio confirmado.'),
@@ -80,9 +81,10 @@ export const CONTACT = {
 export const WHATSAPP_LINK = `https://wa.me/${CONTACT.whatsappNumber.value}`;
 export const TELEGRAM_LINK = `https://t.me/+${CONTACT.telegramNumber.value}`;
 export const FACEBOOK_LINK = `https://www.facebook.com/${CONTACT.facebookHandle.value}`;
+export const INSTAGRAM_LINK = `https://www.instagram.com/${CONTACT.instagramHandle.value}`;
 
 /** sameAs: solo perfiles reales y confirmados. */
-export const SAME_AS: readonly string[] = [FACEBOOK_LINK, TELEGRAM_LINK];
+export const SAME_AS: readonly string[] = [FACEBOOK_LINK, TELEGRAM_LINK, INSTAGRAM_LINK];
 
 /**
  * Autoría de contenido (E-E-A-T). Hoy no hay una persona real con nombre y
@@ -170,7 +172,6 @@ export function buildOrganizationSchema(): Record<string, unknown> {
 // checklist de "datos institucionales que faltan".
 // ---------------------------------------------------------------------------
 export const PENDING_FIELDS: ReadonlyArray<{ field: string; note: string }> = [
-  { field: 'CONTACT.instagramHandle', note: CONTACT.instagramHandle.confirmed ? '' : CONTACT.instagramHandle.note },
   { field: 'CONTACT.tiktokHandle', note: CONTACT.tiktokHandle.confirmed ? '' : CONTACT.tiktokHandle.note },
   { field: 'CONTACT.city', note: CONTACT.city.confirmed ? '' : CONTACT.city.note },
   { field: 'CONTACT.streetAddress', note: CONTACT.streetAddress.confirmed ? '' : CONTACT.streetAddress.note },

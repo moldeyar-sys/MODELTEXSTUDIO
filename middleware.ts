@@ -1062,6 +1062,7 @@ const STATIC_PAGES: Record<
 <li>WhatsApp: <a href="${WHATSAPP_LINK}">${WHATSAPP_DISPLAY}</a> (la vía más rápida)</li>
 <li>Telegram: <a href="https://t.me/+5491166531086">${WHATSAPP_DISPLAY}</a></li>
 <li>Facebook: <a href="https://www.facebook.com/modeltex.ar">facebook.com/modeltex.ar</a></li>
+<li>Instagram: <a href="https://www.instagram.com/modeltex.com.ar">@modeltex.com.ar</a></li>
 <li>Email: <a href="mailto:contacto@modeltex.com.ar">contacto@modeltex.com.ar</a></li>
 <li>Formulario de contacto en <a href="${o}/contacto">${o}/contacto</a></li>
 <li>Horario de atención: las 24 horas, los 7 días de la semana</li>
@@ -1093,7 +1094,7 @@ const STATIC_PAGES: Record<
       `\n<h1>Quiénes somos</h1>\n<p>${escapeHtml(SITE.description)}</p>\n` +
       `<h2>Experiencia</h2>\n<p>Más de ${SITE.experienceYearsMin} años en la industria textil ${SITE.countryName.toLowerCase()}, produciendo moldería para fabricantes, talleres y marcas.</p>\n` +
       `<h2>Qué hacemos</h2>\n<p>Moldes digitales con curva de talles completa en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces), listos para producir sin pasos intermedios.</p>\n` +
-      `<h2>Hablemos</h2>\n<ul>\n<li>WhatsApp: <a href="${WHATSAPP_LINK}">${WHATSAPP_DISPLAY}</a></li>\n<li>Telegram: <a href="https://t.me/+5491166531086">${WHATSAPP_DISPLAY}</a></li>\n<li>Facebook: <a href="https://www.facebook.com/modeltex.ar">facebook.com/modeltex.ar</a></li>\n</ul>`,
+      `<h2>Hablemos</h2>\n<ul>\n<li>WhatsApp: <a href="${WHATSAPP_LINK}">${WHATSAPP_DISPLAY}</a></li>\n<li>Telegram: <a href="https://t.me/+5491166531086">${WHATSAPP_DISPLAY}</a></li>\n<li>Facebook: <a href="https://www.facebook.com/modeltex.ar">facebook.com/modeltex.ar</a></li>\n<li>Instagram: <a href="https://www.instagram.com/modeltex.com.ar">@modeltex.com.ar</a></li>\n</ul>`,
     schemas: (o) => [
       {
         id: 'schema-aboutpage',
@@ -1433,7 +1434,7 @@ async function labCoursePage(html: string, origin: string, course: LabCourseRow)
         url: pageUrl,
         isAccessibleForFree: true,
         inLanguage: 'es-AR',
-        provider: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/`, sameAs: ['https://www.facebook.com/modeltex.ar', 'https://t.me/+5491166531086'] },
+        provider: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/`, sameAs: ['https://www.facebook.com/modeltex.ar', 'https://t.me/+5491166531086', 'https://www.instagram.com/modeltex.com.ar'] },
         offers: { '@type': 'Offer', price: '0', priceCurrency: 'ARS', category: 'Free' },
         hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'online', courseWorkload: course.estimated_duration || undefined },
       },
