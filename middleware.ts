@@ -1054,7 +1054,7 @@ const STATIC_PAGES: Record<
   '/contacto': {
     title: 'Contacto — WhatsApp, Telegram y email | Modeltex',
     description:
-      'Contactá a Modeltex por WhatsApp (+54 9 11 6653 1086), Telegram o email. Consultas sobre moldes digitales, diseño a pedido y producción textil. Lunes a sábado de 9 a 18 hs.',
+      'Contactá a Modeltex por WhatsApp (+54 9 11 6653 1086), Telegram o email. Consultas sobre moldes digitales, diseño a pedido y producción textil. Atención las 24 horas, los 7 días.',
     body: (o) => `
 <h1>Contacto — hablá con Modeltex</h1>
 <p>Consultas sobre moldes, formatos, diseño a pedido o producción textil. Respondemos a la brevedad.</p>
@@ -1062,8 +1062,9 @@ const STATIC_PAGES: Record<
 <li>WhatsApp: <a href="${WHATSAPP_LINK}">${WHATSAPP_DISPLAY}</a> (la vía más rápida)</li>
 <li>Telegram: <a href="https://t.me/+5491166531086">${WHATSAPP_DISPLAY}</a></li>
 <li>Facebook: <a href="https://www.facebook.com/modeltex.ar">facebook.com/modeltex.ar</a></li>
+<li>Email: <a href="mailto:contacto@modeltex.com.ar">contacto@modeltex.com.ar</a></li>
 <li>Formulario de contacto en <a href="${o}/contacto">${o}/contacto</a></li>
-<li>Horario de atención: lunes a sábado, 9 a 18 hs (Argentina)</li>
+<li>Horario de atención: las 24 horas, los 7 días de la semana</li>
 <li>Ubicación: Argentina — envíos digitales a todo el mundo</li>
 </ul>
 <p>Antes de escribir, quizás tu duda ya esté respondida en las <a href="${o}/preguntas-frecuentes">preguntas frecuentes</a> o en la <a href="${o}/ayuda-impresion">ayuda de impresión</a>.</p>`,

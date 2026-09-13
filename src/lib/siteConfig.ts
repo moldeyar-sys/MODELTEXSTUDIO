@@ -68,7 +68,9 @@ export const CONTACT = {
   // Confirmado 2026-09-13: Cloudflare Email Routing activo, reenvia a la
   // casilla real que Denis revisa. Antes era un placeholder sin confirmar.
   email: confirmed('contacto@modeltex.com.ar'),
-  hours: pending('Lunes a sábado, 9 a 18 hs', 'Placeholder de ejemplo. Confirmar horario real de atención.'),
+  // Confirmado 2026-09-13 por Denis: atencion 24/7 (compra y descarga
+  // digital automatica en cualquier momento, sin horario de local fisico).
+  hours: confirmed('Las 24 horas, los 7 días de la semana'),
   instagramHandle: pending('', 'Sin cuenta de Instagram cargada todavía.'),
   tiktokHandle: pending('', 'Sin cuenta de TikTok cargada todavía.'),
   city: pending('', 'Sin ciudad/localidad confirmada — el Organization schema hoy solo declara el país (AR).'),
@@ -89,10 +91,12 @@ export const SAME_AS: readonly string[] = [FACEBOOK_LINK, TELEGRAM_LINK];
  * lecciones del Lab, "Quiénes somos") lo va a usar automáticamente vía
  * getArticleAuthor().
  */
-export const CONTENT_AUTHOR: Fact<{ name: string; jobTitle: string; url?: string } | null> = pending(
-  null,
-  'Sin autor humano confirmado. Completar {name, jobTitle, url?} acá cuando exista una persona real detrás del contenido técnico (moldista/patronista con nombre).',
-);
+// Confirmado 2026-09-13 por Denis.
+export const CONTENT_AUTHOR: Fact<{ name: string; jobTitle: string; url?: string } | null> = confirmed({
+  name: 'J. Denis Espinoza',
+  jobTitle: 'Fundador y CEO de Modeltex',
+  url: `${SITE_URL}/quienes-somos`,
+});
 
 export interface SchemaAuthor {
   '@type': 'Person' | 'Organization';
@@ -166,10 +170,8 @@ export function buildOrganizationSchema(): Record<string, unknown> {
 // checklist de "datos institucionales que faltan".
 // ---------------------------------------------------------------------------
 export const PENDING_FIELDS: ReadonlyArray<{ field: string; note: string }> = [
-  { field: 'CONTACT.hours', note: CONTACT.hours.confirmed ? '' : CONTACT.hours.note },
   { field: 'CONTACT.instagramHandle', note: CONTACT.instagramHandle.confirmed ? '' : CONTACT.instagramHandle.note },
   { field: 'CONTACT.tiktokHandle', note: CONTACT.tiktokHandle.confirmed ? '' : CONTACT.tiktokHandle.note },
   { field: 'CONTACT.city', note: CONTACT.city.confirmed ? '' : CONTACT.city.note },
   { field: 'CONTACT.streetAddress', note: CONTACT.streetAddress.confirmed ? '' : CONTACT.streetAddress.note },
-  { field: 'CONTENT_AUTHOR', note: CONTENT_AUTHOR.confirmed ? '' : CONTENT_AUTHOR.note },
 ].filter((f) => f.note);
