@@ -26,7 +26,8 @@ export type Fact<T> = ConfirmedFact<T> | PendingFact<T>;
 function confirmed<T>(value: T): ConfirmedFact<T> {
   return { value, confirmed: true };
 }
-function pending<T>(value: T, note: string): PendingFact<T> {
+/** Para el proximo dato institucional que se cargue como pendiente. */
+export function pending<T>(value: T, note: string): PendingFact<T> {
   return { value, confirmed: false, note };
 }
 /** Devuelve el valor solo si el dato está confirmado; si no, `undefined`. */
@@ -73,7 +74,8 @@ export const CONTACT = {
   hours: confirmed('Las 24 horas, los 7 días de la semana'),
   // Confirmado 2026-09-13 por Denis: @modeltex.com.ar (162 seguidores).
   instagramHandle: confirmed('modeltex.com.ar'),
-  tiktokHandle: pending('', 'Sin cuenta de TikTok cargada todavía.'),
+  // Confirmado 2026-09-14 por Denis: @modeltex.
+  tiktokHandle: confirmed('modeltex'),
   // Confirmado 2026-09-13 por Denis.
   city: confirmed('Gregorio de Laferrère'),
   region: confirmed('Buenos Aires'),
@@ -84,9 +86,10 @@ export const WHATSAPP_LINK = `https://wa.me/${CONTACT.whatsappNumber.value}`;
 export const TELEGRAM_LINK = `https://t.me/+${CONTACT.telegramNumber.value}`;
 export const FACEBOOK_LINK = `https://www.facebook.com/${CONTACT.facebookHandle.value}`;
 export const INSTAGRAM_LINK = `https://www.instagram.com/${CONTACT.instagramHandle.value}`;
+export const TIKTOK_LINK = `https://www.tiktok.com/@${CONTACT.tiktokHandle.value}`;
 
 /** sameAs: solo perfiles reales y confirmados. */
-export const SAME_AS: readonly string[] = [FACEBOOK_LINK, TELEGRAM_LINK, INSTAGRAM_LINK];
+export const SAME_AS: readonly string[] = [FACEBOOK_LINK, TELEGRAM_LINK, INSTAGRAM_LINK, TIKTOK_LINK];
 
 /**
  * Autoría de contenido (E-E-A-T). Hoy no hay una persona real con nombre y
@@ -175,6 +178,4 @@ export function buildOrganizationSchema(): Record<string, unknown> {
 // futuro panel de admin (o el propio Visibility Engine) la muestre como
 // checklist de "datos institucionales que faltan".
 // ---------------------------------------------------------------------------
-export const PENDING_FIELDS: ReadonlyArray<{ field: string; note: string }> = [
-  { field: 'CONTACT.tiktokHandle', note: CONTACT.tiktokHandle.confirmed ? '' : CONTACT.tiktokHandle.note },
-].filter((f) => f.note);
+export const PENDING_FIELDS: ReadonlyArray<{ field: string; note: string }> = [];
