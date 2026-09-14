@@ -74,8 +74,10 @@ export const CONTACT = {
   // Confirmado 2026-09-13 por Denis: @modeltex.com.ar (162 seguidores).
   instagramHandle: confirmed('modeltex.com.ar'),
   tiktokHandle: pending('', 'Sin cuenta de TikTok cargada todavía.'),
-  city: pending('', 'Sin ciudad/localidad confirmada — el Organization schema hoy solo declara el país (AR).'),
-  streetAddress: pending('', 'Sin domicilio confirmado.'),
+  // Confirmado 2026-09-13 por Denis.
+  city: confirmed('Gregorio de Laferrère'),
+  region: confirmed('Buenos Aires'),
+  streetAddress: confirmed('Olmos 1838'),
 } as const;
 
 export const WHATSAPP_LINK = `https://wa.me/${CONTACT.whatsappNumber.value}`;
@@ -128,8 +130,10 @@ export function organizationSchemaId(): string {
 export function buildOrganizationSchema(): Record<string, unknown> {
   const address: Record<string, unknown> = { '@type': 'PostalAddress', addressCountry: SITE.countryCode };
   const city = factOrUndefined(CONTACT.city);
+  const region = factOrUndefined(CONTACT.region);
   const street = factOrUndefined(CONTACT.streetAddress);
   if (city) address.addressLocality = city;
+  if (region) address.addressRegion = region;
   if (street) address.streetAddress = street;
 
   const contactPoint: Record<string, unknown> = {
@@ -173,6 +177,4 @@ export function buildOrganizationSchema(): Record<string, unknown> {
 // ---------------------------------------------------------------------------
 export const PENDING_FIELDS: ReadonlyArray<{ field: string; note: string }> = [
   { field: 'CONTACT.tiktokHandle', note: CONTACT.tiktokHandle.confirmed ? '' : CONTACT.tiktokHandle.note },
-  { field: 'CONTACT.city', note: CONTACT.city.confirmed ? '' : CONTACT.city.note },
-  { field: 'CONTACT.streetAddress', note: CONTACT.streetAddress.confirmed ? '' : CONTACT.streetAddress.note },
 ].filter((f) => f.note);
