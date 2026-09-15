@@ -78,7 +78,7 @@ export function findGuia(slug: string): Guia | undefined {
 
 export const GUIAS_TITLE = 'Guías para producir ropa con moldes digitales';
 export const GUIAS_DESCRIPTION =
-  'Guías prácticas para fabricantes, talleres y marcas: cómo hacer moldes paso a paso, medidas, escalado de talles, formatos, telas, tizadas, costeo, uniformes y sublimación.';
+  'Guías para fabricantes, talleres y marcas: cómo hacer moldes paso a paso, medidas, escalado de talles, formatos, telas, tizadas, costeo y sublimación.';
 
 // ---------------------------------------------------------------------------
 // Autoridad temática: cluster por guía + "más guías" determinístico.

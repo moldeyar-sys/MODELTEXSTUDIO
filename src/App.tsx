@@ -53,6 +53,7 @@ const RespaldoDrivePage = lazy(() => import('./pages/RespaldoDrivePage'));
 const FaqPage = lazy(() => import('./pages/FaqPage'));
 const GuiasPage = lazy(() => import('./pages/GuiasPage'));
 const GuiaDetailPage = lazy(() => import('./pages/GuiaDetailPage'));
+const MolderiaDigitalPage = lazy(() => import('./pages/MolderiaDigitalPage'));
 const MoldesPdfPage = lazy(() => import('./pages/MoldesPdfPage'));
 const MoldesPdfA4Page = lazy(() => import('./pages/MoldesPdfA4Page'));
 const MoldesPlotterPage = lazy(() => import('./pages/MoldesPlotterPage'));
@@ -80,6 +81,7 @@ function AppLayout() {
             <Route path="/registro" element={<RegisterPage />} />
             <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
             <Route path="/catalogo" element={<CatalogPage />} />
+            <Route path="/molderia-digital" element={<MolderiaDigitalPage />} />
             <Route path="/moldes-pdf" element={<MoldesPdfPage />} />
             <Route path="/moldes-pdf-a4" element={<MoldesPdfA4Page />} />
             <Route path="/moldes-para-plotter" element={<MoldesPlotterPage />} />

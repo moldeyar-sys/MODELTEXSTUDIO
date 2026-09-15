@@ -27,6 +27,7 @@ export const SCHEMA_IDS = {
   contactPage: 'schema-contactpage',
   howTo: 'schema-howto',
   aboutPage: 'schema-aboutpage',
+  webPage: 'schema-webpage',
 } as const;
 
 export type SchemaIdKey = keyof typeof SCHEMA_IDS;

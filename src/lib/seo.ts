@@ -13,7 +13,7 @@ interface SeoOptions {
 const SITE_NAME = 'Modeltex';
 const SITE_URL = 'https://modeltex.com.ar';
 const DEFAULT_DESCRIPTION =
-  'Modeltex: moldes PDF, moldes para imprimir y molderia digital para producir. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT, con escalado completo y descarga inmediata.';
+  'Moldería digital para producir: más de 2.000 moldes de ropa en PDF A4, plotter, DXF/AAMA, Optitex y Audaces, con curva de talles y descarga inmediata.';
 const DEFAULT_IMAGE = 'https://modeltex.com.ar/brand/og-image.png';
 // Mismo valor que el <meta name="robots"> base de index.html: al ser una SPA,
 // la etiqueta persiste entre navegaciones y hay que restaurarla al salir de

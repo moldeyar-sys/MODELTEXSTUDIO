@@ -13,16 +13,20 @@ export const CATEGORY_TITLE_SUFFIX: Record<string, string> = {
   'ninos-unisex': 'unisex para niños',
 };
 
+// Las descriptions se mantienen por debajo de 160 caracteres: mas largas,
+// Google las corta con puntos suspensivos y el remate comercial (el "descarga
+// inmediata") se pierde justo donde tiene que estar. scripts/seo-check.mjs
+// falla si alguna pasa de 165.
 export const CATEGORY_SEO: Record<string, { title: string; description: string }> = {
   dama: {
     title: 'Moldes de ropa para dama',
     description:
-      'Más de 1.400 moldes de ropa de dama: vestidos, blusas, tops, shorts, calzas, buzos, camperas, abrigos y blazers. Curva XS a 4XL incluida, en PDF A4, plotter y CAD. Descarga inmediata.',
+      'Más de 1.400 moldes de ropa de dama: vestidos, blusas, tops, calzas, buzos y camperas. Curva XS a 4XL, en PDF A4, plotter y CAD. Descarga inmediata.',
   },
   hombre: {
     title: 'Moldes de ropa para hombre',
     description:
-      'Moldes de ropa de hombre: remeras, chombas, buzos, joggers, shorts, camisas, camperas y pantalones. Talles XS a 4XL incluidos, en PDF A4, plotter y formatos CAD. Descarga inmediata.',
+      'Moldes de ropa de hombre: remeras, chombas, buzos, joggers, camisas y pantalones. Talles XS a 4XL, en PDF A4, plotter y CAD. Descarga inmediata.',
   },
   nina: {
     title: 'Moldes de ropa para niña',

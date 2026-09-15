@@ -481,7 +481,7 @@ export default function CatalogPage() {
       ? categorySeo.description
       : category
         ? `Moldes de ${currentCategoryLabel.toLowerCase()}: molderia digital y en carton en PDF A4, plotter, DXF, CDR y PLT. Escalado completo y descarga inmediata.`
-        : 'Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Curva de talles completa, en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces). Descarga inmediata.',
+        : 'Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Curva de talles completa, en PDF A4, plotter y CAD. Descarga inmediata.',
     path: category ? `/catalogo?categoria=${category}` : '/catalogo',
   });
 

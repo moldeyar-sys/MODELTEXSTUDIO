@@ -38,6 +38,19 @@ import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, getRelatedGuias, type Guia } fro
 import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent.js';
 import { SLUG_REDIRECTS } from './src/lib/slugRedirects.js';
 import { getArticleAuthor, SITE } from './src/lib/siteConfig.js';
+import {
+  MD_CATEGORIAS,
+  MD_DESCRIPTION,
+  MD_FAQS,
+  MD_FORMATOS,
+  MD_GUIAS,
+  MD_H1,
+  MD_INTRO,
+  MD_LINKS,
+  MD_PATH,
+  MD_SECTIONS,
+  MD_TITLE,
+} from './src/lib/molderiaDigital.js';
 
 export const config = {
   matcher: [
@@ -696,7 +709,7 @@ async function catalogoPage(html: string, origin: string, filtered = false) {
   html = setHeadSeo(
     html,
     `Catálogo de moldes digitales: ${CATALOGO_TXT} | ${SITE_NAME}`,
-    `Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Curva de talles completa, en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces). Descarga inmediata.`,
+    `Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Curva de talles completa, en PDF A4, plotter y CAD. Descarga inmediata.`,
     pageUrl,
   );
   // Vistas filtradas (?formato=, ?busqueda=, ?temporada=, ?orden=): canonical
@@ -716,7 +729,7 @@ const STATIC_PAGES: Record<
   '/': {
     title: 'Modeltex | Moldes PDF, moldes para imprimir y moldería digital',
     description:
-      'Moldería digital profesional para producción textil: más de 2.000 moldes de ropa con curva de talles completa, en PDF A4, plotter, DXF/AAMA, Optitex y Audaces. Descarga inmediata.',
+      'Moldería digital para producir: más de 2.000 moldes de ropa en PDF A4, plotter, DXF/AAMA, Optitex y Audaces, con curva de talles y descarga inmediata.',
     body: (o) => `
 <h1>Modeltex — Moldería digital profesional para producir ropa</h1>
 <p>Vendemos moldes de ropa digitales listos para producción: ${CATALOGO_TXT} aprobados con muestra real, con curva de talles industrial completa disponible en cada molde (los talles se eligen en la ficha). Más de 18 años en la industria textil argentina. Entrega por descarga digital a todo el mundo.</p>
@@ -732,6 +745,69 @@ const STATIC_PAGES: Record<
 <li><a href="${o}/guias">Guías para producción</a>: formatos de moldería, telas por prenda, curva de talles, tizadas, consumo de tela, costeo, plotter, uniformes y sublimación.</li>
 </ul>
 <p>Precios en pesos argentinos y en dólares para el exterior. Pagos con Mercado Pago, transferencia, PayPal y cripto. Se puede comprar con o sin cuenta. Más info en <a href="${o}/preguntas-frecuentes">preguntas frecuentes</a>, <a href="${o}/como-funciona">cómo funciona</a> y <a href="${o}/contacto">contacto</a> (WhatsApp ${WHATSAPP_DISPLAY}).</p>`,
+  },
+  // Pagina pilar de "molderia digital". Todo el texto sale del mismo modulo
+  // que usa src/pages/MolderiaDigitalPage.tsx: no hay una version para robots
+  // y otra para usuarios, hay una sola.
+  [MD_PATH]: {
+    title: `${MD_TITLE} | ${SITE_NAME}`,
+    description: MD_DESCRIPTION,
+    body: (o) =>
+      [
+        breadcrumbHtml([{ name: 'Inicio', url: `${o}/` }, { name: 'Moldería digital', url: `${o}${MD_PATH}` }]),
+        `<h1>${escapeHtml(MD_H1)}</h1>`,
+        `<p>${escapeHtml(MD_INTRO)}</p>`,
+        ...MD_SECTIONS.map((s) =>
+          [
+            `<h2>${escapeHtml(s.h2)}</h2>`,
+            ...s.paragraphs.map((p) => `<p>${escapeHtml(p)}</p>`),
+            s.bullets?.length ? `<ul>${s.bullets.map((b) => `<li>${escapeHtml(b)}</li>`).join('')}</ul>` : '',
+            // La tabla de formatos va dentro de su H2, igual que en React.
+            s.h2 === MD_SECTIONS[2].h2
+              ? `<table><thead><tr><th>Formato</th><th>Para quién</th><th>Cómo se usa</th><th>A tener en cuenta</th></tr></thead><tbody>${MD_FORMATOS.map(
+                  (f) =>
+                    `<tr><td>${escapeHtml(f.formato)}</td><td>${escapeHtml(f.paraQuien)}</td><td>${escapeHtml(f.comoSeUsa)}</td><td>${escapeHtml(f.ojo)}</td></tr>`,
+                ).join('')}</tbody></table>`
+              : '',
+          ]
+            .filter(Boolean)
+            .join('\n'),
+        ),
+        `<h2>Preguntas frecuentes sobre moldería digital</h2>`,
+        ...MD_FAQS.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`),
+        `<h2>Seguir por acá</h2><ul>${MD_LINKS.map(
+          (l) => `<li><a href="${o}${l.to}">${escapeHtml(l.label)}</a>: ${escapeHtml(l.hint)}</li>`,
+        ).join('')}</ul>`,
+        `<h2>Moldes digitales por categoría</h2><ul>${MD_CATEGORIAS.map(
+          (c) => `<li><a href="${o}${c.to}">${escapeHtml(c.label)}</a></li>`,
+        ).join('')}</ul>`,
+        `<h2>Guías relacionadas</h2><ul>${MD_GUIAS.map((g) => `<li><a href="${o}${g.to}">${escapeHtml(g.label)}</a></li>`).join('')}</ul>`,
+        `<p>Si la prenda es estándar está en el <a href="${o}/catalogo">catálogo</a> y se descarga hoy (${CATALOGO_TXT}). Si necesitás tu propia tabla de medidas o un detalle de diseño particular, lo desarrollamos a medida: <a href="${o}/diseno-a-pedido">moldería a pedido</a> o WhatsApp <a href="${WHATSAPP_LINK}">${WHATSAPP_DISPLAY}</a>.</p>`,
+      ].join('\n'),
+    schemas: (o) => [
+      {
+        id: 'schema-webpage',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: MD_TITLE,
+          url: `${o}${MD_PATH}`,
+          description: MD_DESCRIPTION,
+          inLanguage: 'es-AR',
+          about: { '@id': 'https://modeltex.com.ar/#organization' },
+          isPartOf: { '@type': 'WebSite', url: `${o}/` },
+        },
+      },
+      { id: 'schema-breadcrumb', data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Moldería digital', url: `${o}${MD_PATH}` }]) },
+      {
+        id: 'schema-faq',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'FAQPage',
+          mainEntity: MD_FAQS.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+        },
+      },
+    ],
   },
   '/moldes-pdf': {
     title: 'Moldes PDF para imprimir: listos para producir | Modeltex',
@@ -1131,7 +1207,7 @@ const STATIC_PAGES: Record<
   '/contacto': {
     title: 'Contacto — WhatsApp, Telegram y email | Modeltex',
     description:
-      'Contactá a Modeltex por WhatsApp (+54 9 11 6653 1086), Telegram o email. Consultas sobre moldes digitales, diseño a pedido y producción textil. Atención las 24 horas, los 7 días.',
+      'Contactá a Modeltex por WhatsApp (+54 9 11 6653 1086), Telegram o email. Consultas sobre moldes digitales y moldería a pedido, las 24 horas, los 7 días.',
     body: (o) => `
 <h1>Contacto — hablá con Modeltex</h1>
 <p>Consultas sobre moldes, formatos, diseño a pedido o producción textil. Respondemos a la brevedad.</p>
@@ -1166,7 +1242,8 @@ const STATIC_PAGES: Record<
   },
   '/quienes-somos': {
     title: 'Quiénes somos | Modeltex',
-    description: `${SITE.description} Conocé quiénes hacemos Modeltex y cómo contactarnos.`,
+    description:
+      'Quiénes hacemos Modeltex: más de 18 años de moldería para fabricantes, talleres y marcas de indumentaria en Argentina, y cómo contactarnos.',
     body: (o) =>
       breadcrumbHtml([{ name: 'Inicio', url: `${o}/` }, { name: 'Quiénes somos', url: `${o}/quienes-somos` }]) +
       `\n<h1>Quiénes somos</h1>\n<p>${escapeHtml(SITE.description)}</p>\n` +
@@ -1402,7 +1479,7 @@ interface LabGlossaryRow {
 
 const LAB_TITLE = 'MODELTEX LAB — Curso Gratis de Moldería Textil';
 const LAB_DESCRIPTION =
-  'Aprendé moldería textil gratis, desde cero hasta producción profesional: clases gratuitas, moldes para practicar y una IA especializada que te acompaña durante todo el curso.';
+  'Curso gratis de moldería textil, de cero a producción profesional: clases gratuitas, moldes para practicar y una IA que te acompaña durante todo el curso.';
 
 async function labIndexPage(html: string, origin: string) {
   const pageUrl = `${origin}/lab`;
