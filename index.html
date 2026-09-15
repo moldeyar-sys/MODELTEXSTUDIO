@@ -6,6 +6,36 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0048AD" />
 
+    <!-- middleware.ts inyecta <main data-bot-content> con el contenido real de
+         cada pagina (H1, texto, enlaces internos) en el HTML inicial, igual
+         para usuarios y robots. Con JavaScript no se ve nunca: se oculta por
+         CSS antes del primer pintado y src/main.tsx lo borra al montar React,
+         asi el usuario no ve un destello de texto sin estilos. Sin JavaScript
+         (navegador con JS deshabilitado, GPTBot, ClaudeBot, PerplexityBot,
+         Bingbot) es lo unico que hay, y por eso el <noscript> lo muestra con
+         un estilo minimo legible. -->
+    <style>
+      [data-bot-content] { display: none; }
+    </style>
+    <noscript>
+      <style>
+        [data-bot-content] {
+          display: block;
+          max-width: 46rem;
+          margin: 0 auto;
+          padding: 1.5rem 1rem 3rem;
+          font-family: Inter, system-ui, -apple-system, sans-serif;
+          line-height: 1.65;
+          color: #1f2937;
+        }
+        [data-bot-content] h1 { font-size: 1.6rem; line-height: 1.25; margin: 0 0 .75rem; color: #0b2545; }
+        [data-bot-content] h2 { font-size: 1.2rem; margin: 1.75rem 0 .5rem; color: #0b2545; }
+        [data-bot-content] h3 { font-size: 1rem; margin: 1.25rem 0 .25rem; color: #0b2545; }
+        [data-bot-content] a { color: #0048AD; }
+        [data-bot-content] nav[aria-label="Ruta"] { font-size: .85rem; color: #6b7280; margin-bottom: 1rem; }
+      </style>
+    </noscript>
+
     <title>Modeltex | Moldes PDF, moldes para imprimir y molderia digital</title>
     <meta name="description" content="Modeltex: moldes PDF, moldes para imprimir y molderia digital para producir. Moldes de ropa en PDF A4, plotter, DXF, CDR y PLT, con escalado completo y descarga inmediata." />
     <meta name="keywords" content="moldes pdf, moldes para imprimir, moldes de ropa pdf, moldes pdf a4, moldes para plotter, molderia digital, moldes de ropa, patrones para imprimir" />

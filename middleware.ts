@@ -1,14 +1,25 @@
-// Sirve HTML con contenido REAL a los robots (redes sociales, buscadores y
-// asistentes de IA como ChatGPT/Claude/Perplexity). Los usuarios reales nunca
-// pasan por aca: siguen de largo hacia la SPA de siempre. Esto existe porque
-// el sitio es una SPA (Vite/React) y la mayoria de esos robots no ejecutan
-// JavaScript: sin esto verian un <body> vacio en TODAS las paginas y las IA
-// no podrian leer (ni recomendar) ni un solo producto.
+// Sirve el HTML inicial de TODAS las paginas publicas: title, description,
+// canonical, robots, H1, contenido legible, enlaces internos, JSON-LD y el
+// codigo de estado correcto. Esto existe porque el sitio es una SPA
+// (Vite/React): sin esto el HTML inicial seria un <body> vacio con el
+// title/canonical de la HOME en cualquier URL, y ni los robots sin JavaScript
+// (GPTBot, ClaudeBot, PerplexityBot, Bingbot) ni un navegador con JS
+// deshabilitado podrian leer una sola pagina.
+//
+// IMPORTANTE — el mismo HTML para todos. Antes este archivo empezaba con
+// `if (!BOT_UA.test(ua)) return next()`: los robots recibian contenido real y
+// los navegadores el shell vacio. Eso hacia que la MISMA URL respondiera
+// distinto segun el User-Agent (una ruta inexistente daba 404+noindex a
+// Googlebot y 200+index a un navegador), que es justo la definicion tecnica
+// de cloaking aunque la intencion fuera buena. Ahora la respuesta no depende
+// del User-Agent: mismo estado HTTP, mismo canonical, mismo robots y el mismo
+// contenido para todo el mundo. Los navegadores con JavaScript no ven el
+// bloque estatico (index.html lo oculta por CSS y src/main.tsx lo borra antes
+// de montar React); los que no tienen JavaScript si lo ven, via <noscript>.
 //
 // Los schemas JSON-LD que se inyectan llevan el mismo data-seo-schema que usa
-// la app (src/lib/seo.ts): si Google renderiza la pagina con JavaScript, la
-// app reemplaza el schema en vez de duplicarlo. El bloque de texto para robots
-// lo saca src/main.tsx antes de montar la app.
+// la app (src/lib/seo.ts): al hidratar, la app reemplaza el schema en vez de
+// duplicarlo. El bloque de texto lo saca src/main.tsx antes de montar la app.
 //
 // IMPORTANTE — convencion de ids de schema: los strings 'schema-breadcrumb',
 // 'schema-faq', 'schema-collection', 'schema-article', 'schema-course',
@@ -45,6 +56,7 @@ export const config = {
     '/guias/:path*',
     '/lab',
     '/lab/:path*',
+    '/molderia-digital',
     '/diseno-a-pedido',
     '/contacto',
     '/quienes-somos',
@@ -65,11 +77,10 @@ export const config = {
   ],
 };
 
-// Sociales + buscadores + crawlers de IA (AEO) + herramientas SEO: si no estan
-// aca, ven la SPA vacia. Google-InspectionTool es lo que usa Search Console
-// al "probar URL publicada".
-const BOT_UA =
-  /facebookexternalhit|Facebot|WhatsApp|Twitterbot|LinkedInBot|Slackbot|TelegramBot|Discordbot|Pinterest|vkShare|redditbot|Applebot|SkypeUriPreview|Snapchat|W3C_Validator|GPTBot|ChatGPT-User|OAI-SearchBot|ClaudeBot|Claude-User|Claude-SearchBot|anthropic-ai|PerplexityBot|Perplexity-User|CCBot|Bingbot|bingbot|BingPreview|msnbot|Googlebot|Google-InspectionTool|Storebot-Google|AdsBot-Google|Mediapartners-Google|APIs-Google|Google-Extended|GoogleOther|Amazonbot|meta-externalagent|Meta-ExternalFetcher|Bytespider|DuckAssistBot|DuckDuckBot|YouBot|cohere-ai|MistralAI-User|Yandex|Baiduspider|PetalBot|SeznamBot|Qwantify|AhrefsBot|SemrushBot|Screaming Frog|Diffbot|ImagesiftBot|archive\.org_bot|ia_archiver/i;
+// Archivos estaticos sueltos que el matcher no llega a excluir (favicon del
+// navegador, manifest, /.well-known/...): pasan derecho al origen en vez de
+// recibir una pagina HTML de 404.
+const STATIC_FILE = /\.(ico|png|jpe?g|webp|avif|gif|svg|txt|xml|json|webmanifest|js|mjs|css|map|woff2?|ttf|otf|eot|pdf|zip|mp4|webm)$/i;
 
 // Mismas claves publicas que src/lib/supabase.ts (la "anon key" esta pensada
 // para vivir en el cliente; la seguridad la dan las policies RLS de la tabla).
@@ -201,13 +212,38 @@ function injectBody(html: string, inner: string, schemas?: Schema[]) {
 }
 
 function respond(html: string, status = 200) {
-  return new Response(html, {
-    status,
-    headers: {
-      'content-type': 'text/html; charset=utf-8',
-      'cache-control': status === 200 ? 'public, max-age=300, s-maxage=300' : 'public, max-age=60',
-    },
-  });
+  const headers: Record<string, string> = {
+    'content-type': 'text/html; charset=utf-8',
+    'cache-control': status === 200 ? 'public, max-age=300, s-maxage=300' : 'public, max-age=60',
+  };
+  // Refuerzo por cabecera del <meta name="robots"> del HTML: si un bot solo
+  // mira las cabeceras (o el HTML se trunca), el noindex igual llega.
+  if (status !== 200) headers['x-robots-tag'] = 'noindex, follow';
+  return new Response(html, { status, headers });
+}
+
+/**
+ * 404 real, identico para navegadores y robots. El canonical apunta a la
+ * propia URL pedida, nunca a la home: canonicalizar un 404 hacia "/" le dice
+ * a Google que esa URL inventada es un duplicado de la home (y la home ya
+ * estaba recibiendo señales de miles de URLs basura).
+ */
+function notFound(html: string, requestedUrl: string, opts: { title: string; description: string; body: string }) {
+  html = setHeadSeo(html, `${opts.title} | ${SITE_NAME}`, opts.description, requestedUrl);
+  html = setRobots(html, 'noindex, follow');
+  html = injectBody(html, opts.body);
+  return respond(html, 404);
+}
+
+/**
+ * Lee ?pagina= con criterio estricto. Solo "2", "3", "15"... son validos:
+ * "0", "-1", "abc", "1.5" y "007" son basura que antes devolvia 200 indexable.
+ * `null` (sin parametro) es la pagina 1.
+ */
+function parsePagina(raw: string | null): { ok: boolean; value: number; explicit: boolean } {
+  if (raw === null) return { ok: true, value: 1, explicit: false };
+  if (!/^[1-9]\d{0,4}$/.test(raw)) return { ok: false, value: 0, explicit: true };
+  return { ok: true, value: parseInt(raw, 10), explicit: true };
 }
 
 function num(v: unknown): number | null {
@@ -405,29 +441,45 @@ async function productBody(p: ProductRow, pageUrl: string, origin: string): Prom
     .filter(Boolean)
     .join('\n');
 
-  const offers: Array<Record<string, unknown>> = [];
-  for (const f of productFormats(p)) {
-    const base = {
-      '@type': 'Offer',
-      name: f.nombre,
-      availability: 'https://schema.org/InStock',
-      itemCondition: 'https://schema.org/NewCondition',
-      url: pageUrl,
-      seller: { '@type': 'Organization', name: SITE_NAME },
-      // Refleja la politica real (FAQ "¿Hacen reembolsos si me arrepiento?"):
-      // por ser producto digital, sin reembolso automatico una vez habilitada
-      // o descargada la compra (casos de error tecnico verificable se
-      // resuelven aparte, fuera de esta politica estandar). Sin este campo,
-      // Google puede optar por no mostrar precio/disponibilidad en el
-      // resultado enriquecido de producto.
-      hasMerchantReturnPolicy: {
-        '@type': 'MerchantReturnPolicy',
-        returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
-      },
-    };
-    if (f.ars) offers.push({ ...base, price: f.ars, priceCurrency: 'ARS' });
-    if (f.usd) offers.push({ ...base, name: `${f.nombre} (internacional)`, price: f.usd, priceCurrency: 'USD' });
-  }
+  // UNA sola oferta, en ARS, con el precio mas bajo real de la ficha (el
+  // mismo "desde $X" que ve el comprador y el mismo que arma
+  // src/pages/ProductDetailPage.tsx al hidratar).
+  //
+  // Antes se emitia una Offer por formato Y por moneda: la misma URL
+  // declaraba precios en ARS y en USD a la vez. Google toma eso como ofertas
+  // contradictorias para un mismo producto (no hay forma de saber cual es el
+  // precio de esta pagina) y puede descartar el resultado enriquecido entero.
+  // El precio en dolares sigue existiendo para el comprador del exterior, pero
+  // no se marca acá: modeltex.com.ar es el sitio argentino y su precio es ARS.
+  // Solo los tres formatos de venta directa (cartón, PDF A4, PDF plotter),
+  // los mismos que usa ProductDetailPage.tsx para calcular el "desde": los
+  // formatos CAD son a pedido y no deben fijar el precio publicado.
+  const preciosArs = [num(p.precio_carton), num(p.precio_pdf_a4) ?? num(p.price), num(p.precio_pdf_ploter)].filter(
+    (v): v is number => v !== null,
+  );
+  const offers: Array<Record<string, unknown>> = preciosArs.length
+    ? [
+        {
+          '@type': 'Offer',
+          price: Math.min(...preciosArs),
+          priceCurrency: 'ARS',
+          availability: 'https://schema.org/InStock',
+          itemCondition: 'https://schema.org/NewCondition',
+          url: pageUrl,
+          seller: { '@type': 'Organization', name: SITE_NAME },
+          // Refleja la politica real (FAQ "¿Hacen reembolsos si me arrepiento?"):
+          // por ser producto digital, sin reembolso automatico una vez habilitada
+          // o descargada la compra (casos de error tecnico verificable se
+          // resuelven aparte, fuera de esta politica estandar). Sin este campo,
+          // Google puede optar por no mostrar precio/disponibilidad en el
+          // resultado enriquecido de producto.
+          hasMerchantReturnPolicy: {
+            '@type': 'MerchantReturnPolicy',
+            returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+          },
+        },
+      ]
+    : [];
   const imagenes = [p.main_image_url, ...(p.gallery || [])].filter(Boolean);
   const propiedades = [
     { name: 'Talles incluidos', value: sizes.join(', ') },
@@ -506,7 +558,7 @@ function otrasCategoriasHtml(origin: string, actual: string) {
 
 const CATEGORIA_PAGE_SIZE = 100;
 
-async function categoriaPage(html: string, origin: string, cat: string, pagina: number) {
+async function categoriaPage(html: string, origin: string, cat: string, pagina: number, requestedUrl: string) {
   const c = CATEGORIAS[cat];
   const baseUrl = `${origin}/catalogo?categoria=${cat}`;
   const offset = (pagina - 1) * CATEGORIA_PAGE_SIZE;
@@ -515,6 +567,21 @@ async function categoriaPage(html: string, origin: string, cat: string, pagina: 
     true,
   );
   const totalPaginas = total ? Math.max(1, Math.ceil(total / CATEGORIA_PAGE_SIZE)) : 1;
+
+  // Paginacion fuera de rango = 404 real. Antes ?pagina=99 sobre una
+  // categoria de 15 paginas devolvia 200, index, canonical propio y un H1
+  // "página 99 de 1" con cero productos: basura indexable infinita (cualquier
+  // numero generaba una URL "valida" distinta).
+  if (pagina > totalPaginas) {
+    return notFound(html, requestedUrl, {
+      title: 'Página no encontrada',
+      description: `La categoría ${c.label} tiene ${totalPaginas} ${totalPaginas === 1 ? 'página' : 'páginas'} de moldes.`,
+      body:
+        `<h1>Página no encontrada</h1>\n<p>Esta categoría tiene ${totalPaginas} ${totalPaginas === 1 ? 'página' : 'páginas'} de moldes. ` +
+        `<a href="${baseUrl}">Ver moldes ${escapeHtml(c.sufijo)}</a> o el <a href="${origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}).</p>`,
+    });
+  }
+
   const pageUrl = pagina > 1 ? `${baseUrl}&pagina=${pagina}` : baseUrl;
   const migas = [
     { name: 'Inicio', url: `${origin}/` },
@@ -562,13 +629,18 @@ async function categoriaPage(html: string, origin: string, cat: string, pagina: 
       },
     },
   ];
-  html = setHeadSeo(html, pagina > 1 ? `${c.title.replace(` | ${SITE_NAME}`, '')} — página ${pagina} | ${SITE_NAME}` : c.title, c.description, pageUrl);
+  html = setHeadSeo(
+    html,
+    pagina > 1 ? `${c.title.replace(` | ${SITE_NAME}`, '')} — página ${pagina} de ${totalPaginas} | ${SITE_NAME}` : c.title,
+    pagina > 1 ? `${c.description} Página ${pagina} de ${totalPaginas}.`.slice(0, 300) : c.description,
+    pageUrl,
+  );
   if (pagina > 1) html = html.replace('</head>', `<link rel="prev" href="${escapeHtml(pagina === 2 ? baseUrl : `${baseUrl}&pagina=${pagina - 1}`)}" />\n</head>`);
   if (pagina < totalPaginas) html = html.replace('</head>', `<link rel="next" href="${escapeHtml(`${baseUrl}&pagina=${pagina + 1}`)}" />\n</head>`);
-  return injectBody(html, inner, schemas);
+  return respond(injectBody(html, inner, schemas));
 }
 
-async function catalogoPage(html: string, origin: string) {
+async function catalogoPage(html: string, origin: string, filtered = false) {
   const pageUrl = `${origin}/catalogo`;
   const keys = Object.keys(CATEGORIAS);
   const porCategoria = await Promise.all(
@@ -627,7 +699,12 @@ async function catalogoPage(html: string, origin: string) {
     `Más de 2.000 moldes de ropa digitales para dama, hombre, niños y bebés. Curva de talles completa, en PDF A4, plotter y formatos CAD (DXF/AAMA, Optitex, Audaces). Descarga inmediata.`,
     pageUrl,
   );
-  return injectBody(html, inner, schemas);
+  // Vistas filtradas (?formato=, ?busqueda=, ?temporada=, ?orden=): canonical
+  // al catalogo limpio + noindex. Son combinaciones infinitas de la misma
+  // grilla; indexarlas solo genera duplicados y gasta presupuesto de rastreo.
+  // `follow` a proposito: los enlaces a productos de esas vistas si valen.
+  if (filtered) html = setRobots(html, 'noindex, follow');
+  return respond(injectBody(html, inner, schemas));
 }
 
 // ---------- Home, landings, guias y legales ----------
@@ -1284,6 +1361,8 @@ interface LabCourseRow {
   description?: string | null;
   objectives?: string[] | null;
   order_index?: number | null;
+  /** Duración estimada del curso (courseWorkload del schema Course). */
+  estimated_duration?: string | null;
 }
 interface LabModuleRow {
   id: string;
@@ -1627,14 +1706,52 @@ async function labGlossaryTermPage(html: string, origin: string, term: LabGlossa
   return injectBody(html, inner, schemas);
 }
 
-export default async function middleware(request: Request) {
-  const ua = request.headers.get('user-agent') || '';
-  if (!BOT_UA.test(ua)) return next();
+// Rutas que existen en la SPA (src/App.tsx) pero NO son contenido publico:
+// cuenta, compra, panel y demas. Ahora que el middleware responde para todo el
+// mundo, sin esta lista caerian en el catch-all y devolverian un 404 a un
+// usuario logueado. Se sirve el shell de la SPA (la pagina funciona igual al
+// hidratar) pero con el <title>/canonical propios y noindex en el HTML inicial
+// y en la cabecera, que es lo que antes faltaba.
+const NOINDEX_APP_PAGES: Record<string, { title: string; description: string }> = {
+  '/login': { title: 'Iniciar sesión', description: 'Ingresá a tu cuenta de Modeltex para ver tus compras y descargas.' },
+  '/registro': { title: 'Crear cuenta', description: 'Creá tu cuenta gratuita de Modeltex para gestionar compras y descargas.' },
+  '/recuperar-contrasena': { title: 'Recuperar contraseña', description: 'Recuperá el acceso a tu cuenta de Modeltex.' },
+  '/carrito': { title: 'Carrito de compras', description: 'Revisá los moldes que agregaste antes de comprar.' },
+  '/checkout': { title: 'Finalizar compra', description: 'Completá tu compra de moldes digitales Modeltex.' },
+  '/mi-pedido': { title: 'Mi pedido', description: 'Seguimiento y descarga de una compra hecha sin cuenta.' },
+  '/mi-cuenta': { title: 'Mi cuenta', description: 'Datos de tu cuenta Modeltex.' },
+  '/mis-compras': { title: 'Mis compras', description: 'Historial de compras de tu cuenta Modeltex.' },
+  '/descargas': { title: 'Mis descargas', description: 'Archivos de moldes disponibles para descargar.' },
+  '/admin': { title: 'Panel de administración', description: 'Área privada de Modeltex.' },
+  '/legal/respaldo-drive-denis': { title: 'Respaldo legal', description: 'Documento interno de Modeltex.' },
+};
 
+export default async function middleware(request: Request) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/$/, '') || '/';
 
+  // Archivos estaticos sueltos (favicon, manifest, .well-known): al origen.
+  if (STATIC_FILE.test(path)) return next();
+
   try {
+    // ---------- Rutas privadas / de aplicacion ----------
+    const appPage = NOINDEX_APP_PAGES[path];
+    if (appPage) {
+      const htmlResApp = await fetch(`${url.origin}/index.html`);
+      let htmlApp = await htmlResApp.text();
+      htmlApp = setHeadSeo(htmlApp, `${appPage.title} | ${SITE_NAME}`, appPage.description, `${url.origin}${path}`);
+      htmlApp = setRobots(htmlApp, 'noindex, follow');
+      return new Response(htmlApp, {
+        status: 200,
+        headers: {
+          'content-type': 'text/html; charset=utf-8',
+          // Paginas de sesion: nunca cacheadas por el CDN.
+          'cache-control': 'private, no-store',
+          'x-robots-tag': 'noindex, follow',
+        },
+      });
+    }
+
     // ---------- Paginas de producto ----------
     if (path.startsWith('/producto/')) {
       const slug = decodeURIComponent(path.replace(/^\/producto\//, ''));
@@ -1661,18 +1778,13 @@ export default async function middleware(request: Request) {
       if (!product) {
         // 404 real: sin esto Google indexaba como pagina valida cualquier slug
         // inventado o de producto dado de baja (soft 404).
-        html = setHeadSeo(
-          html,
-          `Producto no encontrado | ${SITE_NAME}`,
-          'Este molde ya no está disponible. Encontrá moldes similares en el catálogo de Modeltex.',
-          `${url.origin}/catalogo`,
-        );
-        html = setRobots(html, 'noindex, follow');
-        html = injectBody(
-          html,
-          `<h1>Producto no encontrado</h1>\n<p>Este molde ya no está disponible. <a href="${url.origin}/catalogo">Ver el catálogo completo</a> (${CATALOGO_TXT}).</p>`,
-        );
-        return respond(html, 404);
+        return notFound(html, `${url.origin}${path}`, {
+          title: 'Producto no encontrado',
+          description: 'Este molde ya no está disponible. Encontrá moldes similares en el catálogo de Modeltex.',
+          body:
+            `<h1>Producto no encontrado</h1>\n<p>Este molde ya no está disponible. <a href="${url.origin}/catalogo">Ver el catálogo completo</a> (${CATALOGO_TXT}), ` +
+            `los <a href="${url.origin}/moldes-gratis">moldes gratis</a> o pedir una <a href="${url.origin}/diseno-a-pedido">moldería a medida</a>.</p>`,
+        });
       }
 
       const pageUrl = `${url.origin}/producto/${slug}`;
@@ -1694,10 +1806,11 @@ export default async function middleware(request: Request) {
       const slug = decodeURIComponent(path.replace(/^\/guias\//, ''));
       const g = GUIAS.find((x) => x.slug === slug);
       if (!g) {
-        html = setHeadSeo(html, `Guía no encontrada | ${SITE_NAME}`, GUIAS_DESCRIPTION, `${url.origin}/guias`);
-        html = setRobots(html, 'noindex, follow');
-        html = injectBody(html, `<h1>Guía no encontrada</h1>\n<p><a href="${url.origin}/guias">Ver todas las guías para producción</a>.</p>`);
-        return respond(html, 404);
+        return notFound(html, `${url.origin}${path}`, {
+          title: 'Guía no encontrada',
+          description: GUIAS_DESCRIPTION,
+          body: `<h1>Guía no encontrada</h1>\n<p><a href="${url.origin}/guias">Ver todas las guías para producción</a> o el <a href="${url.origin}/catalogo">catálogo de moldes</a>.</p>`,
+        });
       }
       return respond(guiaPage(html, url.origin, g));
     }
@@ -1711,12 +1824,39 @@ export default async function middleware(request: Request) {
 
       if (segments.length === 0) return respond(await labIndexPage(html, url.origin));
 
-      // /lab/ia no se prerenderiza: es un chat interactivo, cada conversación
-      // es distinta y no hay una respuesta canónica que valga la pena indexar
-      // en esta URL (a diferencia de /ia-textil, que sí tiene contenido
-      // estático propio en STATIC_PAGES). El .tsx (src/pages/LabAiPage.tsx)
-      // ademas pone noindex explicito por si un bot ejecuta JavaScript.
-      if (segments[0] === 'ia') return next();
+      // /lab/ia es un chat interactivo: cada conversación es distinta y no hay
+      // una respuesta canónica que valga la pena indexar (a diferencia de
+      // /ia-textil, que sí tiene contenido estático propio en STATIC_PAGES).
+      //
+      // Antes esto hacia `next()` y el HTML inicial salia con el canonical de
+      // la HOME y robots "index, follow": el noindex solo aparecia despues de
+      // que React hidratara (src/pages/LabAiPage.tsx). Un bot que no ejecuta
+      // JavaScript veia una URL indexable apuntando a la home. Ahora el
+      // noindex y el canonical propio viajan en el HTML inicial y en la
+      // cabecera X-Robots-Tag, sin depender de JavaScript.
+      if (segments[0] === 'ia' && segments.length === 1) {
+        const iaUrl = `${url.origin}/lab/ia`;
+        html = setHeadSeo(
+          html,
+          `IA Modeltex Lab — Consultá tus dudas de moldería | ${SITE_NAME}`,
+          'Preguntale a la IA de MODELTEX LAB cualquier duda sobre moldería textil, producción o el curso gratis de Modeltex.',
+          iaUrl,
+        );
+        html = setRobots(html, 'noindex, follow');
+        html = injectBody(
+          html,
+          `<h1>IA Modeltex Lab</h1>\n<p>Herramienta interactiva de consulta sobre moldería textil. El contenido del curso está en ` +
+            `<a href="${url.origin}/lab">Modeltex Lab</a> y las respuestas escritas en las <a href="${url.origin}/guias">guías para producción</a>.</p>`,
+        );
+        return new Response(html, {
+          status: 200,
+          headers: {
+            'content-type': 'text/html; charset=utf-8',
+            'cache-control': 'public, max-age=300, s-maxage=300',
+            'x-robots-tag': 'noindex, follow',
+          },
+        });
+      }
 
       if (segments[0] === 'glosario') {
         if (segments.length === 1) return respond(await labGlossaryIndexPage(html, url.origin));
@@ -1726,10 +1866,11 @@ export default async function middleware(request: Request) {
           `select=slug,term,short_definition,explanation,example&slug=eq.${encodeURIComponent(slug)}&status=eq.published&limit=1`,
         );
         if (!term) {
-          html = setHeadSeo(html, `Término no encontrado | ${SITE_NAME}`, LAB_DESCRIPTION, `${url.origin}/lab/glosario`);
-          html = setRobots(html, 'noindex, follow');
-          html = injectBody(html, `<h1>Término no encontrado</h1>\n<p><a href="${url.origin}/lab/glosario">Ver el glosario completo</a>.</p>`);
-          return respond(html, 404);
+          return notFound(html, `${url.origin}${path}`, {
+            title: 'Término no encontrado',
+            description: LAB_DESCRIPTION,
+            body: `<h1>Término no encontrado</h1>\n<p><a href="${url.origin}/lab/glosario">Ver el glosario completo</a> o el <a href="${url.origin}/lab">curso gratis de moldería</a>.</p>`,
+          });
         }
         return respond(await labGlossaryTermPage(html, url.origin, term));
       }
@@ -1740,10 +1881,11 @@ export default async function middleware(request: Request) {
         `select=id,slug,title,subtitle,description,objectives&slug=eq.${encodeURIComponent(cursoSlug)}&status=eq.published&limit=1`,
       );
       if (!course) {
-        html = setHeadSeo(html, `Curso no encontrado | ${SITE_NAME}`, LAB_DESCRIPTION, `${url.origin}/lab`);
-        html = setRobots(html, 'noindex, follow');
-        html = injectBody(html, `<h1>Curso no encontrado</h1>\n<p><a href="${url.origin}/lab">Ver Modeltex Lab</a>.</p>`);
-        return respond(html, 404);
+        return notFound(html, `${url.origin}${path}`, {
+          title: 'Curso no encontrado',
+          description: LAB_DESCRIPTION,
+          body: `<h1>Curso no encontrado</h1>\n<p><a href="${url.origin}/lab">Ver Modeltex Lab</a>, el curso gratis de moldería textil.</p>`,
+        });
       }
 
       if (segments.length === 1) return respond(await labCoursePage(html, url.origin, course));
@@ -1762,10 +1904,11 @@ export default async function middleware(request: Request) {
             )
           : [];
         if (!moduleItem || !lesson) {
-          html = setHeadSeo(html, `Clase no encontrada | ${SITE_NAME}`, LAB_DESCRIPTION, `${url.origin}/lab/${course.slug}`);
-          html = setRobots(html, 'noindex, follow');
-          html = injectBody(html, `<h1>Clase no encontrada</h1>\n<p><a href="${url.origin}/lab/${course.slug}">Ver el curso completo</a>.</p>`);
-          return respond(html, 404);
+          return notFound(html, `${url.origin}${path}`, {
+            title: 'Clase no encontrada',
+            description: LAB_DESCRIPTION,
+            body: `<h1>Clase no encontrada</h1>\n<p><a href="${url.origin}/lab/${course.slug}">Ver el curso completo</a> o <a href="${url.origin}/lab">Modeltex Lab</a>.</p>`,
+          });
         }
         return respond(await labLessonPage(html, url.origin, course, moduleItem, lesson));
       }
@@ -1773,10 +1916,11 @@ export default async function middleware(request: Request) {
       // Ruta del Lab mal formada (ej. /lab/curso/modulo sin la clase): antes
       // esto caia en next() y un bot sin JS recibia el shell crudo de la SPA,
       // con el robots/canonical de la HOME como si esta URL fuera valida.
-      html = setHeadSeo(html, `Página no encontrada | ${SITE_NAME}`, LAB_DESCRIPTION, `${url.origin}/lab`);
-      html = setRobots(html, 'noindex, follow');
-      html = injectBody(html, `<h1>Página no encontrada</h1>\n<p><a href="${url.origin}/lab">Ver Modeltex Lab</a>.</p>`);
-      return respond(html, 404);
+      return notFound(html, `${url.origin}${path}`, {
+        title: 'Página no encontrada',
+        description: LAB_DESCRIPTION,
+        body: `<h1>Página no encontrada</h1>\n<p><a href="${url.origin}/lab">Ver Modeltex Lab</a>, el curso gratis de moldería textil.</p>`,
+      });
     }
 
     // ---------- Home, catalogo, landings, guias y legales ----------
@@ -1789,14 +1933,15 @@ export default async function middleware(request: Request) {
       // next() y el bot recibia el index.html crudo (200, robots=index,
       // canonical=home), como si esa URL inventada fuera la home duplicada.
       const htmlRes404 = await fetch(`${url.origin}/index.html`);
-      let html404 = await htmlRes404.text();
-      html404 = setHeadSeo(html404, `Página no encontrada | ${SITE_NAME}`, 'Esta página no existe en Modeltex.', `${url.origin}/`);
-      html404 = setRobots(html404, 'noindex, follow');
-      html404 = injectBody(
-        html404,
-        `<h1>Página no encontrada</h1>\n<p><a href="${url.origin}/">Ir al inicio</a> o ver el <a href="${url.origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}).</p>`,
-      );
-      return respond(html404, 404);
+      const html404 = await htmlRes404.text();
+      return notFound(html404, `${url.origin}${path}`, {
+        title: 'Página no encontrada',
+        description: 'Esta página no existe en Modeltex.',
+        body:
+          `<h1>Página no encontrada</h1>\n<p>La dirección que pediste no existe. ` +
+          `<a href="${url.origin}/">Ir al inicio</a>, ver el <a href="${url.origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}), ` +
+          `los <a href="${url.origin}/moldes-gratis">moldes gratis</a> o las <a href="${url.origin}/guias">guías para producción</a>.</p>`,
+      });
     }
 
     const htmlRes = await fetch(`${url.origin}/index.html`);
@@ -1804,10 +1949,62 @@ export default async function middleware(request: Request) {
 
     if (isCatalog) {
       const cat = url.searchParams.get('categoria') || '';
-      if (!CATEGORIAS[cat]) return respond(await catalogoPage(html, url.origin));
-      const paginaNum = parseInt(url.searchParams.get('pagina') || '1', 10);
-      const pagina = Number.isFinite(paginaNum) && paginaNum > 1 ? paginaNum : 1;
-      return respond(await categoriaPage(html, url.origin, cat, pagina));
+      const pagina = parsePagina(url.searchParams.get('pagina'));
+
+      // ?pagina= basura ("0", "-3", "abc", "1.5"): 404 real.
+      if (!pagina.ok) {
+        return notFound(html, `${url.origin}${path}${url.search}`, {
+          title: 'Página no encontrada',
+          description: 'El número de página no es válido.',
+          body: `<h1>Página no encontrada</h1>\n<p>Ese número de página no existe. <a href="${url.origin}/catalogo">Ver el catálogo completo</a> (${CATALOGO_TXT}).</p>`,
+        });
+      }
+
+      // ?categoria= que no existe: 404 en vez de devolver el catalogo entero
+      // bajo una URL inventada.
+      if (cat && !CATEGORIAS[cat]) {
+        return notFound(html, `${url.origin}${path}${url.search}`, {
+          title: 'Categoría no encontrada',
+          description: 'Esa categoría no existe en el catálogo de Modeltex.',
+          body:
+            `<h1>Categoría no encontrada</h1>\n<p>Esa categoría no existe. Categorías disponibles:</p>\n${otrasCategoriasHtml(url.origin, '')}` +
+            `\n<p><a href="${url.origin}/catalogo">Ver el catálogo completo</a> (${CATALOGO_TXT}).</p>`,
+        });
+      }
+
+      // ?pagina=1 explicito: redirige a la URL sin el parametro, para no tener
+      // dos URLs con exactamente el mismo contenido.
+      if (pagina.explicit && pagina.value === 1) {
+        const limpia = new URL(url.toString());
+        limpia.searchParams.delete('pagina');
+        return Response.redirect(limpia.toString(), 301);
+      }
+
+      // Paginado solo tiene sentido dentro de una categoria.
+      if (!cat && pagina.explicit) {
+        return notFound(html, `${url.origin}${path}${url.search}`, {
+          title: 'Página no encontrada',
+          description: 'El catálogo completo no se pagina por número.',
+          body: `<h1>Página no encontrada</h1>\n<p><a href="${url.origin}/catalogo">Ver el catálogo completo</a> (${CATALOGO_TXT}) o elegir una categoría:</p>\n${otrasCategoriasHtml(url.origin, '')}`,
+        });
+      }
+
+      if (!cat) {
+        // Cualquier otro parametro (?formato=, ?busqueda=, ?temporada=,
+        // ?orden=) es una vista filtrada: se sirve, pero con canonical al
+        // catalogo limpio y noindex.
+        const filtrado = [...url.searchParams.keys()].length > 0;
+        return await catalogoPage(html, url.origin, filtrado);
+      }
+
+      // Categoria valida + otros filtros encima (?categoria=dama&formato=...):
+      // tambien es una vista filtrada, canonical a la categoria limpia.
+      const extras = [...url.searchParams.keys()].filter((k) => k !== 'categoria' && k !== 'pagina');
+      const res = await categoriaPage(html, url.origin, cat, pagina.value, `${url.origin}${path}${url.search}`);
+      if (extras.length && res.status === 200) {
+        return respond(setRobots(await res.text(), 'noindex, follow'));
+      }
+      return res;
     }
 
     const pageUrl = `${url.origin}${path === '/' ? '/' : path}`;

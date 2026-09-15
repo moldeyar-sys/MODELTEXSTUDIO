@@ -196,6 +196,9 @@ export default function ProductDetailPage() {
     if (imagenes.length) schema.image = imagenes;
 
     if (desde !== null) {
+      // Una sola oferta, en ARS, con el mismo "desde" que ve el comprador.
+      // Exactamente el mismo objeto que inyecta middleware.ts en el HTML
+      // inicial, para que el schema no cambie al hidratar.
       schema.offers = {
         '@type': 'Offer',
         price: desde,
@@ -204,6 +207,13 @@ export default function ProductDetailPage() {
         itemCondition: 'https://schema.org/NewCondition',
         url: productUrl(product.slug),
         seller: { '@type': 'Organization', name: 'Modeltex' },
+        // Politica real: producto digital, sin reembolso automatico una vez
+        // habilitada la descarga (ver FAQ). Sin este campo Google puede no
+        // mostrar precio ni disponibilidad en el resultado enriquecido.
+        hasMerchantReturnPolicy: {
+          '@type': 'MerchantReturnPolicy',
+          returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+        },
       };
     }
 
