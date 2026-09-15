@@ -7,7 +7,7 @@
 //
 // Sale con codigo != 0 si hay fallas, para poder usarlo en CI.
 
-import { readFile } from 'node:fs/promises';
+import { readFile, readdir } from 'node:fs/promises';
 import path from 'node:path';
 import {
   ROOT,
@@ -274,6 +274,22 @@ let sitemapStats = null;
   R.check(a, 'no incluye /lab/ia', !locs.some((u) => u.endsWith('/lab/ia')));
   R.check(a, 'no incluye rutas privadas', !locs.some((u) => PRIVADAS.some((p) => new URL(u).pathname === p)));
   R.check(a, 'no incluye URLs con ?pagina=', !locs.some((u) => u.includes('pagina=')));
+
+  // api/sitemap.ts duplica a mano slugs y fechas de las guias (Vercel no deja
+  // importar codigo de src/ desde api/). Este control es lo que hace segura
+  // esa duplicacion: si alguien edita una guia y no toca el sitemap, falla.
+  const srcSitemap = await readFile(path.join(ROOT, 'api', 'sitemap.ts'), 'utf8');
+  const enSitemap = Object.fromEntries([...srcSitemap.matchAll(/^\s*'([a-z0-9-]+)':\s*'(\d{4}-\d{2}-\d{2})',$/gm)].map((m) => [m[1], m[2]]));
+  const guiaFiles = (await readdir(path.join(ROOT, 'src', 'lib', 'guias'))).filter((f) => f.endsWith('.ts'));
+  const desincronizadas = [];
+  for (const file of guiaFiles) {
+    const slug = file.replace(/\.ts$/, '');
+    const src = await readFile(path.join(ROOT, 'src', 'lib', 'guias', file), 'utf8');
+    const real = (src.match(/updated:\s*'(\d{4}-\d{2}-\d{2})'/) || [])[1];
+    if (!enSitemap[slug]) desincronizadas.push(`${slug}: falta en api/sitemap.ts`);
+    else if (enSitemap[slug] !== real) desincronizadas.push(`${slug}: sitemap ${enSitemap[slug]} vs guía ${real}`);
+  }
+  R.check(a, `las ${guiaFiles.length} fechas de guías coinciden con src/lib/guias/`, desincronizadas.length === 0, desincronizadas.slice(0, 3).join(' | '));
 
   // Muestreo: cada URL del sitemap tiene que responder 200 e indexable.
   const muestra = [

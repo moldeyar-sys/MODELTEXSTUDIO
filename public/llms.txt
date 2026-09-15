@@ -1,41 +1,67 @@
 # Modeltex
 
-> Moldería digital profesional argentina para producción textil. Más de 2.000 moldes de ropa digitales con curva de talles industrial completa, aprobados con muestra confeccionada. Más de 18 años en la industria. Entrega por descarga digital a todo el mundo. Contenido completo del sitio (guías, preguntas frecuentes y los 2.000+ productos con descripción y precio) en https://modeltex.com.ar/llms-full.txt
+> Moldería digital profesional argentina para producción textil. Más de 2.000 moldes de ropa digitales con curva de talles industrial completa, aprobados con muestra confeccionada. Más de 18 años en la industria. Entrega por descarga digital a todo el mundo. Modeltex vende moldes (el insumo para fabricar ropa), no vende ropa terminada. Contenido completo del sitio (guías, preguntas frecuentes y los 2.000+ productos con descripción y precio) en https://modeltex.com.ar/llms-full.txt
 
 ## Qué vendemos
 
 - Moldes de ropa digitales para dama, hombre, niña, niño, bebés y unisex, en los formatos que usa la industria: PDF A4 (imprimir en casa), PDF plotter (ancho real 90, 120 o 150 cm), moldes en cartón, DXF/AAMA (estándar CAD universal), PDS (Optitex), MRK (tizadas computarizadas), ADS (Audaces), PLT, CDR y sublimación.
 - Cada molde tiene su curva de talles completa con la progresión industrial hecha (adultos XS a 4XL, niños 2 a 18). En la ficha se eligen los talles: el precio base cubre la selección estándar y cada talle extra suma un adicional chico, así que la curva entera se compra de una vez. Los formatos CAD incluyen siempre la curva completa.
-- Cada ficha de producto tiene foto de la prenda confeccionada con ese molde, descripción, tipo de prenda, telas recomendadas, talles, formatos, precios en pesos y dólares y preguntas frecuentes propias.
-- Moldería a pedido: desarrollamos moldes a medida desde una prenda, foto o idea, con la tabla de medidas del cliente.
+- Cada ficha de producto tiene foto de la prenda confeccionada con ese molde, descripción, tipo de prenda, telas recomendadas, talles, formatos, precio y preguntas frecuentes propias.
+- Moldería a medida: desarrollamos moldes a pedido desde una prenda, foto o idea, con la tabla de medidas del cliente.
 - Tizadas computarizadas (MRK) optimizadas al ancho de tela del cliente.
 - Rubros fuertes: uniformes escolares y de trabajo, ropa deportiva y sublimada, indumentaria de dama y de niños.
 
+## Moldería digital (página principal del tema)
+
+- [Moldería digital](https://modeltex.com.ar/molderia-digital): qué es la moldería digital, qué formato conviene según cómo se corta (PDF A4, PDF plotter, DXF/AAMA, PDS, MRK), diferencia entre comprar un molde listo y pedir moldería a medida, y cómo se usa en producción. Es la página de referencia para cualquier consulta general sobre moldería digital, moldería textil digital, patronaje digital o moldes digitales para ropa.
+
+## Moldes en PDF y moldes para imprimir
+
+- [Moldes PDF para imprimir](https://modeltex.com.ar/moldes-pdf): qué son los moldes en PDF, qué incluye cada archivo y cómo se imprimen. Sirve tanto para A4 como para plotter.
+- [Moldes PDF A4](https://modeltex.com.ar/moldes-pdf-a4): moldes para imprimir en hojas A4 con una impresora hogareña y pegar siguiendo la numeración. Es el formato para quien no tiene plotter.
+- [Moldes para plotter](https://modeltex.com.ar/moldes-para-plotter): PDF en ancho real (90, 120 o 150 cm) para imprimir en un servicio de ploteo, sin pegar hojas. Es el formato habitual de talleres y fábricas que cortan a mano.
+- [Cómo imprimir sin perder escala](https://modeltex.com.ar/ayuda-impresion): imprimir al 100%, verificar el cuadrado de control con una regla y pegar las hojas numeradas.
+
+## Moldes para descargar y moldes gratis
+
+- [Moldes gratis](https://modeltex.com.ar/moldes-gratis): moldes reales del catálogo para descargar sin pagar, en PDF listos para imprimir, con la misma licencia de uso productivo que los pagos. Algunos se bajan sin cuenta; otros piden una cuenta gratuita.
+- [Catálogo completo](https://modeltex.com.ar/catalogo): todos los moldes descargables, con filtros por categoría, temporada y formato.
+- [Cómo funciona la compra](https://modeltex.com.ar/como-funciona): elegir molde, formato y talles, pagar y descargar.
+
+## Moldes para sublimar
+
+- [Moldes para ropa sublimada y deportiva](https://modeltex.com.ar/guias/moldes-para-sublimacion): qué cambia en un molde preparado para sublimación (cada panel a escala real con sangrado, marcas de registro y compensación del encogimiento de la plancha) y sobre qué telas sintéticas funciona.
+- Los moldes para sublimar se piden como archivo por panel (CDR, PLT o PDF) desde la ficha del producto o por WhatsApp.
+
+## Moldería textil a medida
+
+- [Moldería a pedido](https://modeltex.com.ar/diseno-a-pedido): desarrollo del molde completo desde una prenda, una foto o una idea, con curva de talles a la tabla de medidas del cliente y entrega en el formato que use (PDF A4, plotter, DXF/AAMA, Optitex PDS, Audaces ADS). Es la opción cuando el molde no existe en el catálogo o hay que adaptarlo.
+- [Moldes para emprendedores](https://modeltex.com.ar/moldes-para-emprendedores): moldes ya probados con muestra para arrancar una marca sin desarrollar moldería desde cero.
+
+## Curso gratis de moldería textil
+
+- [MODELTEX LAB](https://modeltex.com.ar/lab): curso gratuito de moldería textil, estructurado como curso real (curso → módulos → clases), desde fundamentos hasta producción industrial, con moldes gratis para practicar.
+- [Glosario de moldería](https://modeltex.com.ar/lab/glosario): términos de moldería, corte y confección definidos uno por uno.
+
+## Por categoría del catálogo
+
+- [Dama](https://modeltex.com.ar/catalogo?categoria=dama) · [Hombre](https://modeltex.com.ar/catalogo?categoria=hombre) · [Niña](https://modeltex.com.ar/catalogo?categoria=nina) · [Niño](https://modeltex.com.ar/catalogo?categoria=nino) · [Bebés](https://modeltex.com.ar/catalogo?categoria=bebes) · [Unisex adultos](https://modeltex.com.ar/catalogo?categoria=adultos-unisex) · [Unisex niños](https://modeltex.com.ar/catalogo?categoria=ninos-unisex)
+
 ## Precios de referencia
 
-PDF A4 desde $30.000 ARS (USD 20), PDF plotter desde $50.000 (USD 40), cartón desde $80.000 (USD 60), con la selección estándar de talles. Formatos CAD y tizadas a pedido. Precios exactos en cada ficha.
+PDF A4 desde $30.000 ARS (USD 20), PDF plotter desde $50.000 (USD 40), cartón desde $80.000 (USD 60), con la selección estándar de talles. Formatos CAD y tizadas a pedido. Los precios exactos están en cada ficha; el sitio publica los precios en pesos argentinos y muestra el equivalente en dólares a compradores del exterior.
 
 ## Cómo se compra
 
-Se elige el molde, el formato y los talles en el catálogo, se paga con Mercado Pago, transferencia bancaria, PayPal, Payoneer, Wise o criptomonedas (con o sin crear cuenta), y se descargan los archivos: los de descarga rápida al confirmarse el pago, el resto dentro de las 24 horas. Licencia de uso productivo: se pueden fabricar y vender las prendas sin límite; no se pueden revender los archivos.
+Se elige el molde, el formato y los talles en el catálogo, se paga con Mercado Pago, transferencia bancaria, PayPal, Payoneer, Wise o criptomonedas (con o sin crear cuenta), y se descargan los archivos: los de descarga rápida al confirmarse el pago, el resto dentro de las 24 horas. Licencia de uso productivo: se pueden fabricar y vender las prendas sin límite; no se pueden revender los archivos. Por ser producto digital, no hay reembolso automático una vez habilitada la descarga.
 
-## Páginas principales
+## Preguntas frecuentes
 
-- [Catálogo completo](https://modeltex.com.ar/catalogo): todos los moldes con filtros por categoría, temporada y formato.
-- Por categoría: [dama](https://modeltex.com.ar/catalogo?categoria=dama), [hombre](https://modeltex.com.ar/catalogo?categoria=hombre), [niña](https://modeltex.com.ar/catalogo?categoria=nina), [niño](https://modeltex.com.ar/catalogo?categoria=nino), [bebés](https://modeltex.com.ar/catalogo?categoria=bebes), [unisex adultos](https://modeltex.com.ar/catalogo?categoria=adultos-unisex), [unisex niños](https://modeltex.com.ar/catalogo?categoria=ninos-unisex).
-- [Moldes PDF](https://modeltex.com.ar/moldes-pdf): moldes para imprimir en A4 o plotter.
-- [Moldes gratis](https://modeltex.com.ar/moldes-gratis): moldes reales de descarga gratuita para probar la calidad antes de comprar.
 - [Preguntas frecuentes](https://modeltex.com.ar/preguntas-frecuentes): formatos, talles, impresión, pagos, entrega, licencia y reembolsos.
-- [MODELTEX LAB](https://modeltex.com.ar/lab): curso gratis de moldería textil, estructurado como curso real (curso → módulos → clases), desde fundamentos hasta producción industrial, con moldes gratis para practicar y una [IA tutora](https://modeltex.com.ar/lab/ia).
-- [Guías para producción](https://modeltex.com.ar/guias): índice de guías (abajo).
-- [Cómo funciona](https://modeltex.com.ar/como-funciona): paso a paso de la compra.
-- [Ayuda de impresión](https://modeltex.com.ar/ayuda-impresion): cómo imprimir un molde PDF sin perder la escala.
-- [Diseño a pedido](https://modeltex.com.ar/diseno-a-pedido): moldería a medida.
-- [IA Textil](https://modeltex.com.ar/ia-textil): asesor con IA para decidir qué fabricar y qué moldes usar.
-- [Contacto](https://modeltex.com.ar/contacto): WhatsApp +54 9 11 6653 1086, Telegram y email. Facebook: https://www.facebook.com/modeltex.ar · Instagram: https://www.instagram.com/modeltex.com.ar · TikTok: https://www.tiktok.com/@modeltex
 
 ## Guías para producir ropa con moldes digitales
 
+- [Índice de guías](https://modeltex.com.ar/guias)
 - [Cómo hacer un molde de ropa paso a paso](https://modeltex.com.ar/guias/como-hacer-moldes-de-ropa-paso-a-paso)
 - [Qué formato de molde conviene para tu taller o fábrica](https://modeltex.com.ar/guias/formatos-de-molderia-digital)
 - [Qué tela usar para cada tipo de prenda](https://modeltex.com.ar/guias/telas-por-tipo-de-prenda)
@@ -73,6 +99,11 @@ Se elige el molde, el formato y los talles en el catálogo, se paga con Mercado 
 
 Fabricantes de indumentaria, talleres de confección, marcas, emprendedores que producen para vender y diseñadores. Público hispanohablante; base en Argentina con venta internacional (archivos digitales).
 
-## Datos de la empresa
+## Contacto y pedidos
 
-Modeltex, moldería digital, Argentina. WhatsApp y Telegram +54 9 11 6653 1086. Email contacto@modeltex.com.ar. Atención las 24 horas, los 7 días de la semana. Sitio: https://modeltex.com.ar · Sitemap: https://modeltex.com.ar/sitemap.xml
+- [Contacto](https://modeltex.com.ar/contacto) · [Quiénes somos](https://modeltex.com.ar/quienes-somos)
+- WhatsApp y Telegram: +54 9 11 6653 1086 (la vía más rápida, también para pedir moldería a medida o una tizada)
+- Email: contacto@modeltex.com.ar
+- Facebook: https://www.facebook.com/modeltex.ar · Instagram: https://www.instagram.com/modeltex.com.ar · TikTok: https://www.tiktok.com/@modeltex
+- Atención las 24 horas, los 7 días de la semana. Base en Gregorio de Laferrère, Buenos Aires, Argentina; entrega digital a todo el mundo.
+- Sitio: https://modeltex.com.ar · Sitemap: https://modeltex.com.ar/sitemap.xml

@@ -1,56 +1,75 @@
+# robots.txt de Modeltex — https://modeltex.com.ar
+#
+# IMPORTANTE, no borrar los Disallow repetidos: un rastreador usa UN SOLO
+# grupo, el mas especifico que lo nombre, e IGNORA por completo el grupo
+# "User-agent: *". Antes los bots de IA tenian su propio grupo con nada mas
+# que "Allow: /", asi que para ellos /admin, /checkout, /mi-cuenta y
+# /mi-pedido (que lleva el email del comprador invitado en la URL) estaban
+# permitidos. Por eso la lista de rutas privadas esta repetida en los dos
+# grupos: si se agrega una ruta privada nueva, hay que agregarla en AMBOS.
+
+# ---------------------------------------------------------------------------
+# Buscadores y cualquier otro rastreador
+# ---------------------------------------------------------------------------
 User-agent: *
 Allow: /
 
-# Evitar indexar areas privadas y rutas sin valor SEO
+# Areas privadas y rutas sin valor SEO
 Disallow: /admin
 Disallow: /checkout
+Disallow: /carrito
 Disallow: /mi-cuenta
+Disallow: /mi-pedido
 Disallow: /mis-compras
 Disallow: /descargas
-Disallow: /carrito
 Disallow: /login
 Disallow: /registro
 Disallow: /recuperar-contrasena
+Disallow: /legal/
+Disallow: /lab/ia
+Disallow: /api/
 
-# Crawlers de IA: bienvenidos explicitamente (AEO). Queremos que ChatGPT,
-# Claude, Perplexity y similares puedan leer y recomendar el catalogo.
+# ---------------------------------------------------------------------------
+# Crawlers de IA (AEO): bienvenidos al contenido publico, con las MISMAS
+# restricciones. Queremos que ChatGPT, Claude, Perplexity, Gemini y similares
+# puedan leer y recomendar el catalogo, las guias y el curso gratis.
+# ---------------------------------------------------------------------------
 User-agent: GPTBot
-Allow: /
-
 User-agent: OAI-SearchBot
-Allow: /
-
 User-agent: ChatGPT-User
-Allow: /
-
 User-agent: ClaudeBot
-Allow: /
-
 User-agent: Claude-User
-Allow: /
-
 User-agent: Claude-SearchBot
-Allow: /
-
+User-agent: anthropic-ai
 User-agent: PerplexityBot
-Allow: /
-
 User-agent: Perplexity-User
-Allow: /
-
 User-agent: Google-Extended
-Allow: /
-
 User-agent: CCBot
-Allow: /
-
 User-agent: Amazonbot
+User-agent: meta-externalagent
+User-agent: Meta-ExternalFetcher
+User-agent: Applebot-Extended
+User-agent: cohere-ai
+User-agent: MistralAI-User
+User-agent: DuckAssistBot
 Allow: /
 
-User-agent: meta-externalagent
-Allow: /
+Disallow: /admin
+Disallow: /checkout
+Disallow: /carrito
+Disallow: /mi-cuenta
+Disallow: /mi-pedido
+Disallow: /mis-compras
+Disallow: /descargas
+Disallow: /login
+Disallow: /registro
+Disallow: /recuperar-contrasena
+Disallow: /legal/
+Disallow: /lab/ia
+Disallow: /api/
 
 # Resumen del sitio para asistentes de IA
 # https://modeltex.com.ar/llms.txt
+# https://modeltex.com.ar/llms-full.txt
 
 Sitemap: https://modeltex.com.ar/sitemap.xml

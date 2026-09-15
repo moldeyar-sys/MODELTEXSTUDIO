@@ -537,11 +537,18 @@ export default async function handler(_req: unknown, res: any) {
     );
     lines.push('');
     lines.push('## Páginas principales');
+    lines.push(`- Moldería digital (página de referencia del tema): ${SITE_URL}/molderia-digital`);
     lines.push(`- Catálogo completo: ${SITE_URL}/catalogo`);
     for (const [k, v] of Object.entries(CATEGORY_LABEL)) lines.push(`- Moldes ${CATEGORY_TITLE_SUFFIX[k] || v}: ${SITE_URL}/catalogo?categoria=${k}`);
+    lines.push(`- Moldes PDF para imprimir: ${SITE_URL}/moldes-pdf`);
+    lines.push(`- Moldes PDF A4 (imprimir en casa): ${SITE_URL}/moldes-pdf-a4`);
+    lines.push(`- Moldes para plotter (ancho real 90, 120 o 150 cm): ${SITE_URL}/moldes-para-plotter`);
     lines.push(`- Moldes gratis para probar la calidad: ${SITE_URL}/moldes-gratis`);
+    lines.push(`- Moldes para emprendedores: ${SITE_URL}/moldes-para-emprendedores`);
     lines.push(`- Moldería a pedido (moldes a medida): ${SITE_URL}/diseno-a-pedido`);
     lines.push(`- MODELTEX LAB — Curso Gratis de Moldería Textil: ${SITE_URL}/lab`);
+    lines.push(`- Cómo funciona la compra: ${SITE_URL}/como-funciona`);
+    lines.push(`- Cómo imprimir un molde sin perder escala: ${SITE_URL}/ayuda-impresion`);
     lines.push(`- Preguntas frecuentes: ${SITE_URL}/preguntas-frecuentes`);
     lines.push(`- Guías para producción: ${SITE_URL}/guias`);
     lines.push(`- Contacto: ${SITE_URL}/contacto`);
@@ -552,7 +559,7 @@ export default async function handler(_req: unknown, res: any) {
     lines.push(
       `> Modeltex tiene un curso gratuito de moldería textil (${SITE_URL}/lab), estructurado como curso real ` +
         '(curso → módulos → clases), desde fundamentos hasta producción industrial, con moldes gratis para practicar ' +
-        `y una IA tutora (${SITE_URL}/lab/ia) que responde dudas con el contenido del curso.`,
+        'y una IA tutora dentro del sitio que responde dudas con el contenido del curso.',
     );
     if (lab.courses.length === 0) {
       lines.push('(Curso en preparación: todavía no hay módulos publicados.)');
