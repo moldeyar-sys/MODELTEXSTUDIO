@@ -1737,6 +1737,31 @@ const NOINDEX_APP_PAGES: Record<string, { title: string; description: string }> 
   '/legal/respaldo-drive-denis': { title: 'Respaldo legal', description: 'Documento interno de Modeltex.' },
 };
 
+/**
+ * Shell de la SPA con el <head> correcto para ESTA URL. Se usa en los dos
+ * casos donde no hay contenido que prerenderizar: las rutas de aplicacion
+ * (cuenta, compra, panel) y los caminos de error, cuando Supabase no responde.
+ *
+ * Existe para que ni siquiera en esos casos el navegador reciba el canonical y
+ * el robots de la HOME, que es lo que pasaba antes en CUALQUIER ruta.
+ */
+async function appShell(
+  origin: string,
+  path: string,
+  opts: { title: string; description: string; noindex?: boolean; privada?: boolean },
+) {
+  const res = await fetch(`${origin}/index.html`);
+  let html = await res.text();
+  html = setHeadSeo(html, `${opts.title} | ${SITE_NAME}`, opts.description, `${origin}${path}`);
+  if (opts.noindex) html = setRobots(html, 'noindex, follow');
+  const headers: Record<string, string> = {
+    'content-type': 'text/html; charset=utf-8',
+    'cache-control': opts.privada ? 'private, no-store' : 'public, max-age=60',
+  };
+  if (opts.noindex) headers['x-robots-tag'] = 'noindex, follow';
+  return new Response(html, { status: 200, headers });
+}
+
 export default async function middleware(request: Request) {
   const url = new URL(request.url);
   const path = url.pathname.replace(/\/$/, '') || '/';
@@ -1748,19 +1773,7 @@ export default async function middleware(request: Request) {
     // ---------- Rutas privadas / de aplicacion ----------
     const appPage = NOINDEX_APP_PAGES[path];
     if (appPage) {
-      const htmlResApp = await fetch(`${url.origin}/index.html`);
-      let htmlApp = await htmlResApp.text();
-      htmlApp = setHeadSeo(htmlApp, `${appPage.title} | ${SITE_NAME}`, appPage.description, `${url.origin}${path}`);
-      htmlApp = setRobots(htmlApp, 'noindex, follow');
-      return new Response(htmlApp, {
-        status: 200,
-        headers: {
-          'content-type': 'text/html; charset=utf-8',
-          // Paginas de sesion: nunca cacheadas por el CDN.
-          'cache-control': 'private, no-store',
-          'x-robots-tag': 'noindex, follow',
-        },
-      });
+      return await appShell(url.origin, path, { ...appPage, noindex: true, privada: true });
     }
 
     // ---------- Paginas de producto ----------
@@ -1779,8 +1792,15 @@ export default async function middleware(request: Request) {
         fetch(`${url.origin}/index.html`),
       ]);
 
-      // Si Supabase falla, mejor la SPA de siempre que un 404 falso.
-      if (!productRes.ok) return next();
+      // Si Supabase falla, la SPA (que vuelve a pedir el producto desde el
+      // navegador) es mejor que un 404 falso sobre una ficha que si existe.
+      // Pero con el canonical de ESTA ficha, no el de la home.
+      if (!productRes.ok) {
+        return appShell(url.origin, path, {
+          title: 'Molde digital',
+          description: 'Ficha de molde digital de Modeltex: talles, formatos, telas recomendadas y precio.',
+        });
+      }
 
       let html = await htmlRes.text();
       const products = (await productRes.json()) as ProductRow[];
