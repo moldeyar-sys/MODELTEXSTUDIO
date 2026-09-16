@@ -34,11 +34,18 @@ export function HeroCarousel({ fallbackSrc, fallbackAlt = 'Modeltex', intervalMs
     <div className="relative w-full rounded-3xl shadow-2xl border border-white/20 overflow-hidden">
       <div className="relative aspect-square">
         {slides.map((s, i) => (
+          // La primera imagen del carrusel es el elemento LCP de la home:
+          // fetchPriority alto le dice al navegador que la baje antes que el
+          // resto de los recursos, sin esperar a que el CSS descubra que es
+          // visible. El contenedor ya tiene aspect-square, asi que no hace
+          // falta width/height para evitar el salto de layout.
           <img
             key={s.src + i}
             src={s.src}
             alt={s.alt}
             loading={i === 0 ? 'eager' : 'lazy'}
+            fetchPriority={i === 0 ? 'high' : 'auto'}
+            decoding={i === 0 ? 'sync' : 'async'}
             className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-300 ${i === idx ? 'opacity-100' : 'opacity-0'}`}
           />
         ))}

@@ -42,7 +42,12 @@ export default async function handler(req: any, res: any) {
     const buf = Buffer.from(await origin.arrayBuffer());
     res.setHeader('Content-Type', origin.headers.get('content-type') || 'application/octet-stream');
     // s-maxage: cache del CDN de Vercel (la clave de todo el ahorro).
-    res.setHeader('Cache-Control', 'public, max-age=86400, s-maxage=31536000, immutable');
+    // max-age: cache del NAVEGADOR. Estaba en 86400 (un dia) mientras el del
+    // CDN ya era de un año, asi que un visitante que volvia al dia siguiente
+    // volvia a bajar todas las fotos del catalogo. Los nombres de archivo
+    // llevan timestamp y nunca se reescriben (por eso `immutable`), asi que un
+    // año en el navegador es seguro y es lo que pide Lighthouse.
+    res.setHeader('Cache-Control', 'public, max-age=31536000, s-maxage=31536000, immutable');
     res.status(200).send(buf);
   } catch {
     res.status(502).json({ error: 'Error trayendo la imagen' });

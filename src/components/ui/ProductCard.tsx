@@ -12,9 +12,16 @@ import { productImageAlt } from '../../lib/productContent';
 
 interface ProductCardProps {
   product: Product;
+  /**
+   * Para las primeras tarjetas de una grilla (las que se ven sin hacer
+   * scroll). Antes TODAS las fotos del catálogo iban con loading="lazy",
+   * incluidas las de arriba: el navegador las dejaba para el final y el LCP
+   * del catálogo esperaba una imagen que ya estaba en pantalla.
+   */
+  priority?: boolean;
 }
 
-export function ProductCard({ product }: ProductCardProps) {
+export function ProductCard({ product, priority = false }: ProductCardProps) {
   const { formatPrice, t } = useLocale();
   const { isArgentina } = useCountry();
   const [showOptions, setShowOptions] = useState(false);
@@ -44,7 +51,9 @@ export function ProductCard({ product }: ProductCardProps) {
               <img
                 src={product.main_image_url}
                 alt={productImageAlt(product)}
-                loading="lazy"
+                loading={priority ? 'eager' : 'lazy'}
+                fetchPriority={priority ? 'high' : 'auto'}
+                decoding="async"
                 className="w-full h-full object-contain group-hover:scale-[1.03] transition-transform duration-500"
               />
             ) : (

@@ -3,7 +3,7 @@
 Generado el 2026-09-16 con `node scripts/seo-check.mjs`.
 Origen de las pruebas: **middleware local sobre `dist/`**.
 
-**433 de 433 controles OK.** Sin fallas.
+**452 de 452 controles OK.** Sin fallas.
 
 Sitemap: 2146 URLs (2044 fichas de producto), 38 verificadas una por una.
 
@@ -23,7 +23,7 @@ Sitemap: 2146 URLs (2044 fichas de producto), 38 verificadas una por una.
 
 ## Resultados
 
-### HTML inicial — 230/230
+### HTML inicial — 232/232
 
 Sin fallas.
 
@@ -44,6 +44,10 @@ Sin fallas.
 Sin fallas.
 
 ### Ficha de producto — 45/45
+
+Sin fallas.
+
+### Lab como curso y datos de empresa — 17/17
 
 Sin fallas.
 

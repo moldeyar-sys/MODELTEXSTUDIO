@@ -329,9 +329,13 @@ export default function ProductDetailPage() {
             <div className="bg-white border border-gray-100 rounded-2xl overflow-hidden shadow-sm">
               <div className="aspect-square bg-gray-50 relative">
                 {allImages[activeImage] ? (
+                  // Es el elemento LCP de la ficha: prioridad alta para que el
+                  // navegador no la ponga en la cola detras del resto.
                   <img
                     src={allImages[activeImage]}
                     alt={productImageAlt(product)}
+                    fetchPriority="high"
+                    decoding="async"
                     className="w-full h-full object-contain p-3 sm:p-5"
                   />
                 ) : (

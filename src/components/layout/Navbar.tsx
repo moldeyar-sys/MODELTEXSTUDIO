@@ -31,9 +31,17 @@ export function Navbar() {
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group flex-shrink-0 mr-2" onClick={() => setIsOpen(false)} aria-label="Modeltex - Inicio">
+            {/* width/height = medidas reales del archivo (367x179). El alto
+                visible lo fija el CSS, pero sin las medidas el navegador no
+                sabe cuanto ancho reservar hasta que baja la imagen y la barra
+                superior se corre sola en el primer pintado (CLS) en TODAS las
+                paginas del sitio. */}
             <img
               src="/brand/modeltex-mark-buzo.png?v=1"
               alt="Modeltex"
+              width={367}
+              height={179}
+              decoding="async"
               draggable={false}
               className="h-7 sm:h-9 w-auto select-none transition-transform group-hover:scale-[1.03]"
             />

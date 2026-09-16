@@ -946,8 +946,10 @@ export default function CatalogPage() {
           )
         ) : (
           <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-6 items-stretch">
-            {visibleProducts.map((product) => (
-              <ProductCard key={product.id} product={product} />
+            {/* Las primeras 4 van con prioridad: son las que se ven sin
+                scrollear y de ahí sale el LCP del catálogo. */}
+            {visibleProducts.map((product, i) => (
+              <ProductCard key={product.id} product={product} priority={i < 4} />
             ))}
           </div>
         )}
