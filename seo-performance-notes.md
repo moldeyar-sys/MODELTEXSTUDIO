@@ -193,6 +193,38 @@ Ordenados por relación entre lo que mejoran y lo que arriesgan.
   puede estar verificado por DNS, que es el método más robusto. Hay que confirmarlo
   entrando a la cuenta (está en `search-console-checklist.md`).
 
+## Medición después del deploy (2026-09-16, ya en producción)
+
+Esto ya no es una predicción: son los números reales del sitio publicado, en caliente (3
+corridas por ruta, descartando el arranque en frío).
+
+| Ruta | TTFB antes | TTFB ahora | Diferencia |
+| --- | --: | --: | --: |
+| `/` | ~0,20 s | ~0,21 s | sin cambio |
+| `/moldes-pdf` | ~0,19 s | ~0,22 s | sin cambio |
+| `/guias/<slug>` | ~0,20 s | ~0,23 s | sin cambio |
+| `/producto/<slug>` | ~0,42 s | ~0,52 s | +0,10 s |
+| `/catalogo` | ~0,21 s | ~0,63 s | **+0,42 s** |
+| `/lab` | ~0,20 s | ~0,53 s | **+0,33 s** |
+
+Las dos rutas que suben de verdad:
+
+- **`/catalogo` (+0,42 s):** era el costo previsto y medido de antemano. Son las 7 consultas
+  con `count=exact`, una por categoría.
+- **`/lab` (+0,33 s):** este NO estaba previsto. Lo agregó el `syllabusSections` del schema
+  `Course`: antes la página hacía una sola consulta (los cursos) y ahora hace dos (cursos y
+  módulos). Es el precio de que Google entienda el Lab como un curso con programa, y por
+  ahora vale la pena. Si molesta, se arregla con una sola consulta a `lab_modules` filtrando
+  por los cursos publicados, que es lo que ya hace, o subiendo el `s-maxage` de `/lab`: el
+  programa del curso cambia cuando se publica una clase nueva, no cada 5 minutos.
+
+En arranque en frío (la primera visita después de un rato sin tráfico) `/lab` llegó a
+medir 1,76 s. Es la latencia de arranque de la función del edge, no del código, y desaparece
+en cuanto hay tráfico.
+
+Lo que **no** se puede medir con `curl` y hay que mirar en PageSpeed: LCP y CLS. Ahí es donde
+deberían verse las mejoras de las imágenes (prioridad de carga y el logo con medidas).
+
 ## Cómo medir después de desplegar
 
 1. Desplegar (`vercel --prod`) y esperar unos minutos a que el CDN se caliente.

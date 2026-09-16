@@ -1,6 +1,12 @@
 # Reporte final — SEO técnico, AEO y GEO de Modeltex
 
-Rama `seo-aeo-max-optimization` · 11 commits · 52 archivos · 2026-09-16
+Rama `seo-aeo-max-optimization`, mergeada a `main` · 12 commits · 52 archivos · 2026-09-16
+
+> **PUBLICADO.** Los cambios están en vivo en https://modeltex.com.ar desde el 2026-09-16.
+> Verificado contra el sitio real: `npm run seo:live` → 464/464, en tres corridas seguidas.
+> Las 28 rutas de la app responden 200 (ninguna da 404 a un usuario), el sitemap publica
+> 2.146 URLs sin `priority` ni `changefreq`, y las cuatro fallas originales dan el mismo
+> resultado para navegador, Googlebot y ClaudeBot.
 
 Documentos que acompañan a este:
 
@@ -336,25 +342,42 @@ relación con este trabajo. Uno merece atención:
    que `npm run seo` **falla si esa copia se desincroniza**.
 4. **Los 1.548 slugs sin palabras clave siguen ahí, a propósito.** Cambiarlos en masa es la
    mejora con más potencial y también la más riesgosa.
-5. **Nada de esto está desplegado.** La rama está commiteada pero sin publicar.
+5. **`/lab` tardó 0,33 s más de lo previsto.** Lo agregó el `syllabusSections` del schema
+   `Course`: la página pasó de una consulta a dos. No estaba en la estimación previa. La
+   salida está en `seo-performance-notes.md`.
 
 ---
 
 ## Qué hacer ahora, en orden
 
-1. **Desplegar a un preview de Vercel** y mirar con los ojos el sitio: la home, el catálogo,
-   una ficha, `/molderia-digital` y una compra de punta a punta. Esta parte no la pude
-   verificar visualmente: el preview del navegador de mi sesión quedó enganchado al servidor
-   de desarrollo de Moldey de otra sesión y no llegaba al de Modeltex. El código compila,
-   pasa tipos, pasa lint y pasa los 464 controles, pero **el clic humano sobre el preview
-   no lo reemplaza nada**.
-2. Con el preview arriba, correr `npm run seo:live https://<url-del-preview>`.
-3. Si está todo bien, `vercel --prod`.
-4. Pegar el SQL de la migración 041 en Supabase.
-5. Cargar `VITE_GA_MEASUREMENT_ID` en Vercel y volver a desplegar.
-6. Hacer el `search-console-checklist.md` completo, anotando los números.
-7. Repetir el checklist a los 30 días y comparar. Sin la comparación, los números sueltos no
-   dicen nada.
+Ya está publicado y verificado por máquina. Lo que queda:
+
+1. **Mirar el sitio con los ojos.** Es lo único que no pude hacer: el preview del navegador
+   de mi sesión quedó enganchado al servidor de desarrollo de Moldey de otra sesión y no
+   llegaba al de Modeltex. Entrá a modeltex.com.ar y probá la home, el catálogo, una ficha,
+   `/molderia-digital`, y sobre todo **una compra de punta a punta** (agregar al carrito,
+   checkout, pago). Los 464 controles cubren el HTML, el estado HTTP y los datos
+   estructurados; no cubren que un botón se vea bien ni que el pago funcione.
+2. **Pegar el SQL de la migración 041 en Supabase.** Hasta que se corra, el `lastmod` de las
+   fichas sigue siendo la fecha de alta. Paso a paso en `search-console-checklist.md`.
+3. **Cargar `VITE_GA_MEASUREMENT_ID` en Vercel** y volver a desplegar. Sin eso no hay ni una
+   visita medida.
+4. **Hacer el `search-console-checklist.md` completo**, anotando los números. Volver a enviar
+   el sitemap y pedir indexación a mano de `/molderia-digital`, que es nueva.
+5. **Medir en PageSpeed Insights** las cuatro URLs que indica `seo-performance-notes.md`,
+   móvil y escritorio, para tener la línea de base de después del deploy.
+6. **Repetir el checklist a los 30 días** y comparar. Sin la comparación, los números sueltos
+   no dicen nada.
 
 Y con calma, cuando haya tiempo: las 11 frases de prenda, los 6 pares de fichas duplicadas y
 los 31 formatos faltantes de `seo-audit-products-report.md`.
+
+### Si algo sale mal
+
+El deploy anterior sigue disponible. Dos caminos:
+
+- **Rápido, desde el navegador:** entrar a Vercel → proyecto → Deployments → buscar el deploy
+  anterior a este (`bfdf8bc`) → botón **Promote to Production**. Tarda segundos y no toca el
+  código.
+- **Desde git:** `git revert --no-commit 0b7ec72..bfdf8bc` seguido de un commit y un push. Al
+  hacer push, Vercel publica solo.
