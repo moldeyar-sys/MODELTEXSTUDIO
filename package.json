@@ -8,7 +8,10 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "typecheck": "tsc --noEmit -p tsconfig.app.json"
+    "typecheck": "tsc --noEmit -p tsconfig.app.json",
+    "seo": "vite build && node scripts/seo-check.mjs",
+    "seo:live": "node scripts/seo-check.mjs --live",
+    "seo:productos": "node scripts/seo-audit-products.mjs"
   },
   "dependencies": {
     "@capacitor/android": "^8.4.2",

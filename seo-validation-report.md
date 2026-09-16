@@ -3,7 +3,7 @@
 Generado el 2026-09-16 con `node scripts/seo-check.mjs`.
 Origen de las pruebas: **middleware local sobre `dist/`**.
 
-**452 de 452 controles OK.** Sin fallas.
+**464 de 464 controles OK.** Sin fallas.
 
 Sitemap: 2146 URLs (2044 fichas de producto), 38 verificadas una por una.
 
@@ -44,6 +44,10 @@ Sin fallas.
 Sin fallas.
 
 ### Ficha de producto — 45/45
+
+Sin fallas.
+
+### Rutas de la app — 12/12
 
 Sin fallas.
 

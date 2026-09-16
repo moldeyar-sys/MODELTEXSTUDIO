@@ -234,6 +234,52 @@ for (const t of NO_INDEXABLES) {
 }
 
 // ---------------------------------------------------------------------------
+// 5 bis. Toda ruta real de la app responde 200 (el control anti-regresion mas
+// importante de todos)
+// ---------------------------------------------------------------------------
+//
+// Ahora que el middleware responde para TODOS los visitantes y no solo para
+// robots, una ruta que exista en src/App.tsx pero que el middleware no conozca
+// cae en el catch-all y le devuelve un 404 a un usuario de verdad. Este bloque
+// lee las rutas directo de App.tsx y verifica que ninguna de las estaticas
+// devuelva 404. Si manana alguien agrega una pagina a la SPA y se olvida del
+// middleware, esto falla antes de que lo note un cliente.
+{
+  const a = 'Rutas de la app';
+  const app = await readFile(path.join(ROOT, 'src', 'App.tsx'), 'utf8');
+  const rutas = [...app.matchAll(/<Route\s+path="([^"]+)"/g)].map((m) => m[1]);
+  const estaticas = rutas.filter((r) => r !== '*' && !r.includes(':'));
+  const dinamicas = rutas.filter((r) => r.includes(':'));
+
+  R.check(a, 'se leyeron las rutas de src/App.tsx', estaticas.length > 10, `${estaticas.length} estáticas, ${dinamicas.length} con parámetro`);
+
+  const roto = [];
+  for (const r of estaticas) {
+    const res = await get(r);
+    if (res.status === 404) roto.push(`${r} -> 404`);
+    else if (res.status >= 500) roto.push(`${r} -> ${res.status}`);
+  }
+  R.check(
+    a,
+    `las ${estaticas.length} rutas estáticas de la SPA no devuelven 404`,
+    roto.length === 0,
+    roto.length ? roto.join(' | ') : 'todas responden',
+  );
+
+  // Las rutas privadas no deben quedar cacheadas por el CDN.
+  for (const r of ['/mi-cuenta', '/mis-compras', '/descargas', '/checkout', '/carrito', '/admin', '/login']) {
+    const res = await get(r);
+    R.check(a, `${r} no se cachea en el CDN`, /no-store|private/.test(res.headers['cache-control'] || ''), res.headers['cache-control'] || '(sin cabecera)');
+  }
+
+  // /mi-pedido lleva el email del comprador invitado en la query string.
+  const pedido = await get('/mi-pedido?pedido=123&email=alguien%40ejemplo.com');
+  R.check(a, '/mi-pedido con query responde 200', pedido.status === 200, `status ${pedido.status}`);
+  R.check(a, '/mi-pedido con query lleva noindex', /noindex/i.test(seoOf(pedido.html).robots), seoOf(pedido.html).robots);
+  R.check(a, '/mi-pedido no filtra el email en el canonical', !(seoOf(pedido.html).canonical || '').includes('email'), seoOf(pedido.html).canonical);
+}
+
+// ---------------------------------------------------------------------------
 // 6 ter. MODELTEX LAB como curso (schema Course) y Organization global
 // ---------------------------------------------------------------------------
 {
