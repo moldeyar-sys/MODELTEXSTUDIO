@@ -26,3 +26,8 @@ dist-ssr
 # Carpeta APK: releases y credenciales de firma (nunca subir esto)
 apk/releases/
 apk/KEYSTORE-INFO.txt
+
+# Notas de trabajo de Denis (investigacion de keywords, borradores). Estaban
+# sin trackear a proposito, pero cualquier `git add -A` las volvia a meter en
+# el repo. Los archivos siguen en el disco; solo quedan fuera de git.
+MODELTEX LAB/
