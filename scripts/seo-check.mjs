@@ -48,10 +48,10 @@ const PAGINAS = [
   { path: '/catalogo?categoria=dama', schema: ['ItemList', 'BreadcrumbList'] },
   { path: '/guias', schema: ['CollectionPage', 'BreadcrumbList'] },
   { path: '/guias/formatos-de-molderia-digital', schema: ['Article', 'BreadcrumbList'] },
-  { path: '/lab', schema: ['CollectionPage', 'BreadcrumbList'] },
+  { path: '/lab', schema: ['CollectionPage', 'BreadcrumbList', 'ItemList'] },
   { path: '/preguntas-frecuentes', schema: ['FAQPage', 'BreadcrumbList'] },
   { path: '/contacto', schema: ['ContactPage', 'BreadcrumbList'] },
-  { path: '/quienes-somos', schema: ['AboutPage', 'BreadcrumbList'] },
+  { path: '/quienes-somos', schema: ['AboutPage', 'BreadcrumbList', 'Person'] },
 ];
 
 // --- Rutas que NO deben ser indexables --------------------------------------
@@ -231,6 +231,98 @@ for (const t of NO_INDEXABLES) {
     R.check(a, `${p} sin JSON-LD duplicado`, duplicateSchemaIds(blocks).length === 0, duplicateSchemaIds(blocks).join(', '));
     R.check(a, `${p} canonical propio`, s.canonical === `${ORIGIN}${p}`, s.canonical);
   }
+}
+
+// ---------------------------------------------------------------------------
+// 6 ter. MODELTEX LAB como curso (schema Course) y Organization global
+// ---------------------------------------------------------------------------
+{
+  const a = 'Lab como curso y datos de empresa';
+
+  // /lab: ItemList cuyos items son Course (formato de "course list page").
+  const lab = await get('/lab');
+  const blocksLab = jsonLdOf(lab.html);
+  const lista = blocksLab.find((b) => b.types.includes('ItemList'))?.data;
+  const items = lista ? [].concat(lista.itemListElement || []) : [];
+  const cursos = items.map((it) => it.item).filter((x) => x && [].concat(x['@type']).includes('Course'));
+  R.check(a, '/lab declara un ItemList', !!lista, lista ? `${items.length} items` : 'sin ItemList');
+  R.check(a, '/lab: los items del ItemList son Course', cursos.length > 0 && cursos.length === items.length, `${cursos.length}/${items.length} son Course`);
+  R.check(
+    a,
+    '/lab: cada Course es gratis (isAccessibleForFree + Offer en 0)',
+    cursos.length > 0 && cursos.every((c) => c.isAccessibleForFree === true && String(c.offers?.price) === '0'),
+  );
+  R.check(a, '/lab: cada Course tiene provider y url', cursos.every((c) => c.provider?.name && c.url));
+
+  // Página de un curso: Course completo.
+  const slugCurso = cursos[0]?.url ? new URL(cursos[0].url).pathname : null;
+  if (slugCurso) {
+    const cur = await get(slugCurso);
+    const c = jsonLdOf(cur.html).find((b) => b.types.includes('Course'))?.data;
+    R.check(a, `${slugCurso}: tiene Course`, !!c);
+    if (c) {
+      R.check(a, `${slugCurso}: Course con name, url y description`, !!(c.name && c.url && c.description));
+      R.check(a, `${slugCurso}: hasCourseInstance con courseMode`, c.hasCourseInstance?.courseMode === 'online');
+      R.check(a, `${slugCurso}: declara la duración (courseWorkload)`, !!c.hasCourseInstance?.courseWorkload, c.hasCourseInstance?.courseWorkload || '');
+      R.check(a, `${slugCurso}: declara el programa (syllabusSections)`, [].concat(c.syllabusSections || []).length > 0, `${[].concat(c.syllabusSections || []).length} módulos`);
+      R.check(a, `${slugCurso}: declara qué enseña (teaches)`, [].concat(c.teaches || []).length > 0);
+    }
+  } else {
+    R.check(a, 'hay al menos un curso publicado para verificar', false, 'ningún Course en /lab');
+  }
+
+  // Glosario: DefinedTerm.
+  const term = await get('/lab/glosario');
+  const listaTerm = jsonLdOf(term.html).find((b) => b.types.includes('CollectionPage'))?.data;
+  const primer = [].concat(listaTerm?.mainEntity?.itemListElement || [])[0];
+  if (primer?.url) {
+    const t = await get(new URL(primer.url).pathname);
+    R.check(a, 'término del glosario tiene DefinedTerm', hasType(jsonLdOf(t.html), 'DefinedTerm'));
+  }
+
+  // Organization de index.html contra buildOrganizationSchema(): el modulo
+  // src/lib/siteConfig.ts dice ser la fuente unica de los datos
+  // institucionales, pero el JSON-LD de index.html es una copia escrita a
+  // mano. Este control es lo que impide que se separen sin que nadie lo note.
+  const orgIndex = jsonLdOf(await readFile(path.join(ROOT, 'index.html'), 'utf8')).find((b) => b.types.includes('Organization'))?.data;
+  const esbuild = await import('esbuild');
+  const outOrg = path.join(ROOT, 'node_modules', '.seo-check', 'siteConfig.mjs');
+  await esbuild.build({
+    entryPoints: [path.join(ROOT, 'src', 'lib', 'siteConfig.ts')],
+    outfile: outOrg, bundle: true, format: 'esm', platform: 'neutral', target: 'es2022', logLevel: 'silent',
+  });
+  const sc = await import(`${new URL(`file:///${outOrg.replace(/\\/g, '/')}`).href}?t=${Date.now()}`);
+  const orgEsperado = sc.buildOrganizationSchema();
+  R.check(a, 'index.html trae el Organization', !!orgIndex);
+  if (orgIndex) {
+    const difs = ['name', 'alternateName', 'url', 'logo', 'description', 'telephone', '@id'].filter(
+      (k) => JSON.stringify(orgIndex[k]) !== JSON.stringify(orgEsperado[k]),
+    );
+    R.check(a, 'el Organization de index.html coincide con siteConfig.ts', difs.length === 0, difs.join(', '));
+    // Comparacion sin depender del orden de las claves del objeto.
+    const norm = (o) => JSON.stringify(Object.fromEntries(Object.entries(o || {}).sort()));
+    R.check(
+      a,
+      'la dirección del Organization coincide con siteConfig.ts',
+      norm(orgIndex.address) === norm(orgEsperado.address),
+      norm(orgIndex.address) === norm(orgEsperado.address) ? '' : `index: ${norm(orgIndex.address)} vs siteConfig: ${norm(orgEsperado.address)}`,
+    );
+    R.check(
+      a,
+      'el contactPoint del Organization coincide con siteConfig.ts',
+      norm(orgIndex.contactPoint) === norm(orgEsperado.contactPoint),
+      norm(orgIndex.contactPoint) === norm(orgEsperado.contactPoint) ? '' : 'difieren',
+    );
+    R.check(
+      a,
+      'los perfiles sociales (sameAs) coinciden con siteConfig.ts',
+      JSON.stringify([...(orgIndex.sameAs || [])].sort()) === JSON.stringify([...orgEsperado.sameAs].sort()),
+    );
+  }
+  R.check(a, 'index.html trae el WebSite con SearchAction', (() => {
+    const w = jsonLdOf(lab.html).find((b) => b.types.includes('WebSite'))?.data;
+    return !!w?.potentialAction?.target;
+  })());
 }
 
 // ---------------------------------------------------------------------------

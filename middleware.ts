@@ -37,9 +37,10 @@ import { CATEGORY_SEO, CATEGORY_TITLE_SUFFIX } from './src/lib/categorySeo.js';
 import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, getRelatedGuias, type Guia } from './src/lib/guiasData.js';
 import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent.js';
 import { SLUG_REDIRECTS } from './src/lib/slugRedirects.js';
-import { getArticleAuthor, SITE } from './src/lib/siteConfig.js';
+import { buildPersonSchema, getArticleAuthor, personSchemaId, SITE } from './src/lib/siteConfig.js';
 import { CATEGORIA_LINKS, relatedFor } from './src/lib/internalLinks.js';
 import { faqsFor } from './src/lib/landingFaqs.js';
+import { labCourseListSchema, labCourseSchema } from './src/lib/labSchema.js';
 import {
   MD_CATEGORIAS,
   MD_DESCRIPTION,
@@ -1188,8 +1189,12 @@ const STATIC_PAGES: Record<
           name: 'Quiénes somos | Modeltex',
           url: `${o}/quienes-somos`,
           about: { '@id': 'https://modeltex.com.ar/#organization' },
+          ...(buildPersonSchema() ? { mainEntity: { '@id': personSchemaId() } } : {}),
         },
       },
+      // Person del fundador (E-E-A-T), desde src/lib/siteConfig.ts: el mismo
+      // objeto que declara AboutPage.tsx al hidratar.
+      ...(buildPersonSchema() ? [{ id: 'schema-person', data: buildPersonSchema()! }] : []),
       {
         id: 'schema-breadcrumb',
         data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Quiénes somos', url: `${o}/quienes-somos` }]),
@@ -1419,8 +1424,18 @@ async function labIndexPage(html: string, origin: string) {
   ];
   const courses = await sb<LabCourseRow>(
     'lab_courses',
-    'select=slug,title,subtitle,description&status=eq.published&order=order_index.asc',
+    'select=id,slug,title,subtitle,description,objectives,estimated_duration&status=eq.published&order=order_index.asc',
   );
+  // Modulos de todos los cursos de una sola consulta, para poder armar el
+  // syllabusSections de cada Course del listado.
+  const modulos = courses.length
+    ? await sb<LabModuleRow>(
+        'lab_modules',
+        `select=course_id,slug,level_label,title,description&course_id=in.(${courses.map((c) => c.id).join(',')})&status=eq.published&order=level_order.asc,order_index.asc`,
+      )
+    : [];
+  const modulosPorCurso = new Map<string, LabModuleRow[]>();
+  for (const m of modulos) modulosPorCurso.set(m.course_id, [...(modulosPorCurso.get(m.course_id) || []), m]);
   const inner = [
     breadcrumbHtml(migas),
     `<h1>${escapeHtml(LAB_TITLE)}</h1>`,
@@ -1439,6 +1454,10 @@ async function labIndexPage(html: string, origin: string) {
     `<p>Los moldes de ${SITE_NAME} para practicar están en <a href="${origin}/moldes-gratis">Moldes Gratis</a>.</p>`,
     relatedHtml(origin, '/lab'),
   ].join('\n');
+  const listado = labCourseListSchema(
+    courses.map((c) => ({ ...c, modules: modulosPorCurso.get(c.id) || [] })),
+    origin,
+  );
   const schemas: Schema[] = [
     { id: 'schema-breadcrumb', data: breadcrumb(migas) },
     {
@@ -1449,17 +1468,12 @@ async function labIndexPage(html: string, origin: string) {
         name: LAB_TITLE,
         description: LAB_DESCRIPTION,
         url: pageUrl,
-        mainEntity: {
-          '@type': 'ItemList',
-          itemListElement: courses.map((c, i) => ({
-            '@type': 'ListItem',
-            position: i + 1,
-            name: c.title,
-            url: `${origin}/lab/${c.slug}`,
-          })),
-        },
       },
     },
+    // ItemList de Course: el formato que Google espera en una pagina que LISTA
+    // cursos. Antes era un ItemList de ListItem sueltos dentro del
+    // CollectionPage, que Google no lee como cursos.
+    ...(listado ? [{ id: 'schema-course', data: listado }] : []),
   ];
   html = setHeadSeo(html, `${LAB_TITLE} | ${SITE_NAME}`, LAB_DESCRIPTION, pageUrl);
   return injectBody(html, inner, schemas);
@@ -1512,21 +1526,10 @@ async function labCoursePage(html: string, origin: string, course: LabCourseRow)
 
   const schemas: Schema[] = [
     { id: 'schema-breadcrumb', data: breadcrumb(migas) },
-    {
-      id: 'schema-course',
-      data: {
-        '@context': 'https://schema.org',
-        '@type': 'Course',
-        name: course.title,
-        description,
-        url: pageUrl,
-        isAccessibleForFree: true,
-        inLanguage: 'es-AR',
-        provider: { '@type': 'Organization', name: SITE_NAME, url: `${origin}/`, sameAs: ['https://www.facebook.com/modeltex.ar', 'https://t.me/+5491166531086', 'https://www.instagram.com/modeltex.com.ar', 'https://www.tiktok.com/@modeltex'] },
-        offers: { '@type': 'Offer', price: '0', priceCurrency: 'ARS', category: 'Free' },
-        hasCourseInstance: { '@type': 'CourseInstance', courseMode: 'online', courseWorkload: course.estimated_duration || undefined },
-      },
-    },
+    // Desde src/lib/labSchema.ts, el mismo modulo que usa LabCoursePage.tsx:
+    // antes cada lado armaba su propio Course con diferencias (este tenia
+    // `url`, el de React no) y al hidratar React lo pisaba con otra version.
+    { id: 'schema-course', data: labCourseSchema({ ...course, modules }, origin) },
   ];
   html = setHeadSeo(html, `${course.title} — Curso gratis | ${SITE_NAME}`, cortar(description, 160), pageUrl);
   html = html.replace(/(<meta property="og:type" content=")[^"]*(")/, `$1article$2`);
@@ -1886,7 +1889,7 @@ export default async function middleware(request: Request) {
       const cursoSlug = decodeURIComponent(segments[0]);
       const [course] = await sb<LabCourseRow>(
         'lab_courses',
-        `select=id,slug,title,subtitle,description,objectives&slug=eq.${encodeURIComponent(cursoSlug)}&status=eq.published&limit=1`,
+        `select=id,slug,title,subtitle,description,objectives,estimated_duration&slug=eq.${encodeURIComponent(cursoSlug)}&status=eq.published&limit=1`,
       );
       if (!course) {
         return notFound(html, `${url.origin}${path}`, {

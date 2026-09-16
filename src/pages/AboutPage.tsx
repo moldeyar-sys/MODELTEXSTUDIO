@@ -1,7 +1,17 @@
 import { MessageCircle, Send, Facebook, ShieldCheck, Layers, Sparkles } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
 import { SCHEMA_IDS } from '../lib/schemaIds';
-import { SITE, CONTACT, WHATSAPP_LINK, TELEGRAM_LINK, FACEBOOK_LINK, organizationSchemaId, factOrUndefined } from '../lib/siteConfig';
+import {
+  SITE,
+  CONTACT,
+  WHATSAPP_LINK,
+  TELEGRAM_LINK,
+  FACEBOOK_LINK,
+  organizationSchemaId,
+  personSchemaId,
+  buildPersonSchema,
+  factOrUndefined,
+} from '../lib/siteConfig';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 import { RelatedLinks } from '../components/ui/RelatedLinks';
 
@@ -25,9 +35,15 @@ export default function AboutPage() {
       name: 'Quiénes somos | Modeltex',
       url: `${SITE_URL}/quienes-somos`,
       about: { '@id': organizationSchemaId() },
+      ...(buildPersonSchema() ? { mainEntity: { '@id': personSchemaId() } } : {}),
     },
     SCHEMA_IDS.aboutPage,
   );
+  // Person del fundador (E-E-A-T): le dice a Google y a los asistentes de IA
+  // que detrás de las guías y del curso hay una persona real con un rol
+  // concreto, no un sitio anónimo. Solo acá, que es la página que habla de esa
+  // persona; el Article de cada guía ya la nombra vía getArticleAuthor().
+  useStructuredData(buildPersonSchema(), SCHEMA_IDS.person);
   useStructuredData(
     {
       '@context': 'https://schema.org',

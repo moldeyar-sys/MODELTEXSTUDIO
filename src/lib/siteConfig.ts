@@ -82,6 +82,15 @@ export const CONTACT = {
   streetAddress: confirmed('Olmos 1838'),
 } as const;
 
+/**
+ * El telefono como se muestra y como se declara en schema.org: un solo
+ * formato. Antes index.html ponia "+54 9 11 6653 1086" en `telephone` y
+ * "+54-9-11-6653-1086" en `contactPoint.telephone`, dos formas del mismo
+ * numero en el mismo JSON-LD. scripts/seo-check.mjs compara el Organization de
+ * index.html contra buildOrganizationSchema() y falla si se vuelven a separar.
+ */
+export const PHONE_DISPLAY = '+54 9 11 6653 1086';
+
 export const WHATSAPP_LINK = `https://wa.me/${CONTACT.whatsappNumber.value}`;
 export const TELEGRAM_LINK = `https://t.me/+${CONTACT.telegramNumber.value}`;
 export const FACEBOOK_LINK = `https://www.facebook.com/${CONTACT.facebookHandle.value}`;
@@ -124,6 +133,38 @@ export function organizationSchemaId(): string {
   return `${SITE_URL}/#organization`;
 }
 
+export function personSchemaId(): string {
+  return `${SITE_URL}/quienes-somos#fundador`;
+}
+
+/**
+ * Person del autor del contenido, para E-E-A-T: le dice a Google y a los
+ * asistentes de IA que detras de las guias y del curso hay una persona real
+ * con un rol concreto en la empresa, no un sitio anonimo. Devuelve null si
+ * CONTENT_AUTHOR no esta confirmado: antes que inventar un autor, no hay
+ * ninguno.
+ *
+ * Se declara SOLO en /quienes-somos (que es la pagina que habla de esa
+ * persona) con un @id estable, y el Article de cada guia lo referencia por
+ * nombre via getArticleAuthor(). Repetir el Person completo en cada guia no
+ * agrega nada y multiplica el ruido.
+ */
+export function buildPersonSchema(): Record<string, unknown> | null {
+  if (!CONTENT_AUTHOR.confirmed || !CONTENT_AUTHOR.value) return null;
+  const a = CONTENT_AUTHOR.value;
+  return {
+    '@context': 'https://schema.org',
+    '@type': 'Person',
+    '@id': personSchemaId(),
+    name: a.name,
+    jobTitle: a.jobTitle,
+    url: a.url || `${SITE_URL}/quienes-somos`,
+    worksFor: { '@id': organizationSchemaId() },
+    knowsAbout: SITE.knowsAbout,
+    knowsLanguage: 'es',
+  };
+}
+
 /**
  * Arma el JSON-LD de Organization completo a partir de datos reales
  * únicamente. Los campos pendientes (email, ciudad) se omiten en vez de
@@ -142,7 +183,7 @@ export function buildOrganizationSchema(): Record<string, unknown> {
   const contactPoint: Record<string, unknown> = {
     '@type': 'ContactPoint',
     contactType: 'sales',
-    telephone: `+${CONTACT.whatsappNumber.value.replace(/^54/, '54-')}`,
+    telephone: PHONE_DISPLAY,
     url: `${SITE_URL}/contacto`,
     // Solo 'es': el selector de idioma ingles de src/lib/locale.tsx existe en
     // el codigo pero no esta conectado a ningun control, asi que ninguna
@@ -159,11 +200,14 @@ export function buildOrganizationSchema(): Record<string, unknown> {
     '@id': organizationSchemaId(),
     name: SITE.name,
     alternateName: SITE.alternateName,
-    url: SITE.url,
+    // Con barra final: es la URL canonica de la home (index.html declara
+    // <link rel="canonical" href="https://modeltex.com.ar/">), y el `url` del
+    // Organization tiene que apuntar exactamente ahi.
+    url: `${SITE.url}/`,
     logo: SITE.logo,
     image: SITE.ogImage,
     description: SITE.description,
-    telephone: `+${CONTACT.whatsappNumber.value.replace(/^54/, '54-')}`,
+    telephone: PHONE_DISPLAY,
     contactPoint,
     address,
     sameAs: SAME_AS,

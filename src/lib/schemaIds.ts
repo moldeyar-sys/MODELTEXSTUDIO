@@ -28,6 +28,7 @@ export const SCHEMA_IDS = {
   howTo: 'schema-howto',
   aboutPage: 'schema-aboutpage',
   webPage: 'schema-webpage',
+  person: 'schema-person',
 } as const;
 
 export type SchemaIdKey = keyof typeof SCHEMA_IDS;

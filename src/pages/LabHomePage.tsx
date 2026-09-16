@@ -22,6 +22,7 @@ import { FreeMoldCard } from '../components/ui/FreeMoldCard';
 import type { LabCourseWithContent, LabGlossaryTerm } from '../lib/labTypes';
 import type { FreeMold } from '../lib/types';
 import { RelatedLinks } from '../components/ui/RelatedLinks';
+import { labCourseListSchema } from '../lib/labSchema';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -46,19 +47,22 @@ export default function LabHomePage() {
       name: 'Curso Gratis de Moldería Textil — MODELTEX LAB',
       description: 'Curso gratuito de moldería textil de Modeltex, desde fundamentos hasta producción industrial.',
       url: `${SITE_URL}/lab`,
-      mainEntity: {
-        '@type': 'ItemList',
-        itemListElement: courses.map((c, i) => ({
-          '@type': 'ListItem',
-          position: i + 1,
-          name: c.title,
-          url: `${SITE_URL}/lab/${c.slug}`,
-        })),
-      },
     }),
-    [courses],
+    [],
   );
   useStructuredData(courses.length ? collectionSchema : null, SCHEMA_IDS.collectionPage);
+
+  // ItemList de Course, que es el formato que Google espera en una pagina que
+  // LISTA cursos. Antes esta pagina declaraba un ItemList de ListItem sueltos
+  // dentro del CollectionPage: Google no lo lee como cursos, asi que se perdia
+  // el resultado enriquecido de curso justo en la pagina que resume el curso
+  // gratis. Sale de src/lib/labSchema.ts, el mismo modulo que usa el
+  // middleware para el HTML inicial.
+  const courseListSchema = useMemo(
+    () => labCourseListSchema(courses.map((c) => ({ ...c, modules: c.modules })), SITE_URL),
+    [courses],
+  );
+  useStructuredData(courseListSchema, SCHEMA_IDS.course);
 
   const breadcrumbSchema = useMemo(
     () => ({

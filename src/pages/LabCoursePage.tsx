@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { useSeo, useStructuredData } from '../lib/seo';
 import { SCHEMA_IDS } from '../lib/schemaIds';
-import { SITE, SAME_AS } from '../lib/siteConfig';
+import { labCourseSchema } from '../lib/labSchema';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
 import { fetchCourseWithContent, fetchFreeMoldsForCourse } from '../lib/labData';
 import { useLabProgress } from '../lib/labProgress';
@@ -53,27 +53,12 @@ export default function LabCoursePage() {
   const lessonIds = useMemo(() => course?.modules.flatMap((m) => m.lessons.map((l) => l.id)) || [], [course]);
   const progress = courseProgress(cursoSlug, lessonIds);
 
-  const courseSchema = useMemo(() => {
-    if (!course) return null;
-    return {
-      '@context': 'https://schema.org',
-      '@type': 'Course',
-      name: course.title,
-      description: course.description || course.subtitle,
-      provider: { '@type': 'Organization', name: SITE.name, url: SITE.url, sameAs: SAME_AS },
-      isAccessibleForFree: true,
-      inLanguage: 'es-AR',
-      // Es real: el curso no tiene costo (no es un dato inventado, es el precio
-      // real de $0). Declarar el Offer explícito refuerza "gratis" para rich
-      // results, ademas de isAccessibleForFree.
-      offers: { '@type': 'Offer', price: '0', priceCurrency: 'ARS', category: 'Free' },
-      hasCourseInstance: {
-        '@type': 'CourseInstance',
-        courseMode: 'online',
-        courseWorkload: course.estimated_duration || undefined,
-      },
-    };
-  }, [course]);
+  // El Course sale de src/lib/labSchema.ts: el mismo modulo que usa
+  // middleware.ts para el HTML inicial, asi el schema no cambia al hidratar.
+  const courseSchema = useMemo(
+    () => (course ? labCourseSchema({ ...course, modules: course.modules }, SITE_URL) : null),
+    [course],
+  );
   useStructuredData(courseSchema, SCHEMA_IDS.course);
 
   const breadcrumbSchema = useMemo(() => {
