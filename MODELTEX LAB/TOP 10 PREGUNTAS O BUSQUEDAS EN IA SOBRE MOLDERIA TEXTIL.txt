@@ -1,0 +1,22 @@
+Las 10 estructuras de Prompts (Consultas) más usadas en IA (ChatGPT, Gemini, Claude)
+Los usuarios de la industria textil que usan IA ya no buscan tutoriales; buscan ahorrar tiempo, calcular y redactar. Estos son los comandos reales que introducen los profesionales y estudiantes:
+
+1: "Genera una tabla de medidas industriales para mujer [o niños/hombres] en centímetros, del talle S al XL."
+
+2: "Redacta una ficha técnica de diseño para enviar a un taller de confección para una [tipo de prenda]."
+
+3: "Cuáles son las reglas matemáticas para el escalado de una sisa y el escote." (Consultas técnicas muy específicas para armar curvas de talles completas sin errores).
+
+4: "Calcula el consumo de tela para [X] prendas si el rinde de la tela es [Y]."
+
+5: "Cómo exportar o convertir archivos DXF entre Optitex y Audaces." (Los usuarios de moldería digital usan la IA para resolver problemas de compatibilidad de software y flujos de trabajo).
+
+6: "Genera [X] ideas para nombres de una marca de patrones digitales."
+
+7: "Traduce esta tabla de medidas e instrucciones de costura del inglés al español."
+
+8: "Escribe el texto publicitario (copy) para lanzar un paquete promocional de moldes digitales en Instagram."
+
+9: "Por qué se hacen arrugas en el tiro del pantalón y cómo corregirlo en el molde." (Uso de la IA como solucionador de defectos de calce).
+
+10: "Diferencias en centímetros entre el sistema métrico y las pulgadas fraccionales para moldería."

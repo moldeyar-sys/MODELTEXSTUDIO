@@ -64,11 +64,85 @@ export function garmentPhrase(p: ProductContentInput): string | null {
   return g;
 }
 
-/** "SHORT 09 — short deportivo con bolsillos, molde digital para hombre" */
+function capitalizar(s: string): string {
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+// Palabras que no pueden quedar al final de un titulo recortado: sin esto
+// salian cosas como "Buzo canguro con capucha y — molde PDF...".
+const COLGADAS = /\s+(y|e|o|u|de|del|con|sin|al|a|en|para|por|la|el|los|las|un|una|unos|unas|que|su|sus|tipo)$/i;
+
+/** Recorta en el ultimo espacio para no cortar una palabra (ni dejarla colgada). */
+function recortar(texto: string, max: number): string {
+  if (texto.length <= max) return texto;
+  const corte = texto.slice(0, max);
+  const esp = corte.lastIndexOf(' ');
+  let out = (esp > max * 0.55 ? corte.slice(0, esp) : corte).replace(/[,;:\s]+$/, '');
+  while (COLGADAS.test(out)) out = out.replace(COLGADAS, '');
+  return out;
+}
+
+/**
+ * Referencia de modelo que distingue dos fichas con la misma frase de prenda:
+ * el codigo interno si existe, o los tokens con numero del nombre ("TOP DAMA
+ * 79" -> "79") que no esten ya en la frase. Es lo que evita que el titulo se
+ * repita entre fichas cuando la frase descriptiva coincide.
+ */
+function modelRef(p: ProductContentInput, phrase: string): string {
+  const codigo = (p.codigo || '').trim();
+  if (codigo && codigo.length <= 14) return codigo;
+  const f = phrase.toLowerCase();
+  return (p.name || '')
+    .split(/\s+/)
+    .filter((w) => /\d/.test(w) && w.length <= 12 && !f.includes(w.toLowerCase()))
+    .slice(0, 2)
+    .join(' ');
+}
+
+/** True si el molde se vende en PDF (A4, plotter o el precio general). */
+function tienePdf(p: ProductContentInput): boolean {
+  return !!(num(p.precio_pdf_a4) || num(p.precio_pdf_ploter) || num(p.price));
+}
+
+/**
+ * <title> de la ficha: "Top deportivo con espalda de tiras — molde PDF para
+ * dama (79)".
+ *
+ * Antes era "TOP DAMA 79 — top deportivo con espalda de tiras, molde digital
+ * para dama": el promedio daba 85 caracteres y 1.552 de las 2.044 fichas
+ * pasaban los 80, asi que Google cortaba el titulo justo ANTES de "molde
+ * digital para dama", que es la parte que la gente busca. Encima arrancaba con
+ * el nombre interno ("TOP DAMA", repetido en 43 fichas, y en algunos casos un
+ * identificador de importacion ilegible), no con lo que distingue al molde.
+ *
+ * Ahora arranca por la frase real de la prenda (lo distintivo y lo buscado),
+ * sigue con la palabra clave comercial y termina con la referencia de modelo
+ * entre parentesis, que es lo unico descartable si se corta. El promedio baja
+ * a 74 y la cantidad de titulos unicos queda igual (2.038 de 2.044: los 6 que
+ * se repiten son fichas duplicadas de verdad en el catalogo, listadas en
+ * seo-audit-products-report.md).
+ *
+ * El H1 visible (productH1) sigue mostrando el nombre interno primero: ahi el
+ * largo no molesta y a Denis le sirve para reconocer la ficha.
+ */
 export function productTitle(p: ProductContentInput): string {
   const phrase = garmentPhrase(p);
   const sufijo = categorySuffix(p.category);
-  return `${p.name} — ${phrase ? `${phrase}, ` : ''}molde digital${sufijo ? ` ${sufijo}` : ''}`;
+  const cola = `— ${tienePdf(p) ? 'molde PDF' : 'molde digital'}${sufijo ? ` ${sufijo}` : ''}`;
+  const ref = phrase ? modelRef(p, phrase) : '';
+  const cierre = ref ? ` (${ref})` : '';
+  const base = phrase ? capitalizar(phrase) : (p.name || '').trim();
+  // Techo de 95 caracteres para el titulo completo (el " | Modeltex" que
+  // agrega cada pagina suma 11 mas), y se recorta la frase, nunca la cola: la
+  // cola es donde esta la palabra clave.
+  //
+  // El techo es holgado a proposito. Una primera version apretaba a 75 y
+  // bajaba el promedio a 69, pero al cortar la frase dos moldes distintos
+  // ("campera aviador con cuello de piel" y "...de pelo") terminaban con el
+  // MISMO titulo: cambiaba un problema real por otro peor. Google igual
+  // muestra unos 60 caracteres; lo que importaba era el orden, no el largo.
+  const disponible = 95 - 11 - cola.length - cierre.length - 1;
+  return `${recortar(base, Math.max(40, disponible))} ${cola}${cierre}`;
 }
 
 /**
