@@ -4,6 +4,7 @@ import { useSeo, useStructuredData } from '../lib/seo';
 import { FAQ_ITEMS } from '../lib/faqData';
 import { SCHEMA_IDS } from '../lib/schemaIds';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
 
 export default function FaqPage() {
   useSeo({
@@ -89,6 +90,8 @@ export default function FaqPage() {
             </Link>
           </div>
         </div>
+
+        <RelatedLinks path="/preguntas-frecuentes" />
       </div>
     </div>
   );

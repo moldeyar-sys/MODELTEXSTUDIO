@@ -108,6 +108,17 @@ export async function loadSitemap() {
 
 export const pick = (html, re) => (html.match(re) || [])[1] || '';
 
+/**
+ * El bloque que inyecta middleware.ts. Se busca a partir de `<body`, no en
+ * todo el documento: la etiqueta puede aparecer mencionada dentro de un
+ * comentario del <head> y ahi el match arrancaba en el comentario, tragandose
+ * la cabecera entera (y contando como "enlaces internos" los <link> del head).
+ */
+export function botBlock(html) {
+  const body = html.slice(Math.max(0, html.search(/<body[\s>]/i)));
+  return (body.match(/<main data-bot-content>([\s\S]*?)<\/main>/) || [])[1] || '';
+}
+
 export const seoOf = (html) => ({
   title: pick(html, /<title>([\s\S]*?)<\/title>/),
   description: pick(html, /<meta name="description" content="([^"]*)"/),
@@ -116,10 +127,23 @@ export const seoOf = (html) => ({
   ogTitle: pick(html, /<meta property="og:title" content="([^"]*)"/),
   ogUrl: pick(html, /<meta property="og:url" content="([^"]*)"/),
   twitterTitle: pick(html, /<meta name="twitter:title" content="([^"]*)"/),
-  h1: (html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/g) || []).map((h) => h.replace(/<[^>]+>/g, '').trim()),
-  links: [...new Set((html.match(/<main data-bot-content>[\s\S]*?<\/main>/) || [''])[0].match(/href="([^"]+)"/g) || [])],
-  bodyText: ((html.match(/<main data-bot-content>([\s\S]*?)<\/main>/) || [])[1] || '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(),
+  h1: (botBlock(html).match(/<h1[^>]*>([\s\S]*?)<\/h1>/g) || []).map((h) => h.replace(/<[^>]+>/g, '').trim()),
+  links: [...new Set([...botBlock(html).matchAll(/href="([^"]+)"/g)].map((m) => m[1]))],
+  bodyText: unescapeHtml(botBlock(html).replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim(),
 });
+
+/** Deshace el escapado de middleware.ts, para poder comparar contra el texto original. */
+export const unescapeHtml = (s) =>
+  s
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+
+/** Enlaces internos del bloque (descarta WhatsApp, email y redes sociales). */
+export const internalLinks = (html) =>
+  seoOf(html).links.filter((l) => !/^(mailto:|tel:)/.test(l) && !/wa\.me|t\.me|facebook\.com|instagram\.com|tiktok\.com/.test(l));
 
 /** Todos los JSON-LD del documento, con su data-seo-schema y el objeto parseado. */
 export function jsonLdOf(html) {

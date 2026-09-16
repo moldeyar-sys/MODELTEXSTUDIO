@@ -21,6 +21,7 @@ import { LabProgressBar } from '../components/lab/LabProgressBar';
 import { FreeMoldCard } from '../components/ui/FreeMoldCard';
 import type { LabCourseWithContent, LabGlossaryTerm } from '../lib/labTypes';
 import type { FreeMold } from '../lib/types';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -280,6 +281,8 @@ export default function LabHomePage() {
             </Link>
           </div>
         </section>
+
+        <RelatedLinks path="/lab" />
       </div>
     </div>
   );

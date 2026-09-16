@@ -16,6 +16,7 @@ import {
   loadMiddleware,
   loadSitemap,
   seoOf,
+  internalLinks,
   jsonLdOf,
   hasType,
   duplicateSchemaIds,
@@ -115,8 +116,10 @@ for (const p of PAGINAS) {
   R.check(a, 'canonical propio y absoluto', s.canonical.startsWith('http') && s.canonical.includes(p.path.split('?')[0]), s.canonical);
   R.check(a, 'es indexable', isIndexable(s.robots), s.robots);
   R.check(a, 'tiene exactamente un H1', s.h1.length === 1, s.h1.length ? s.h1[0].slice(0, 60) : 'sin H1');
-  R.check(a, 'contenido legible sin JavaScript (>400 car.)', s.bodyText.length > 400, `${s.bodyText.length} caracteres`);
-  R.check(a, 'al menos 4 enlaces internos en el HTML inicial', s.links.length >= 4, `${s.links.length} enlaces`);
+  R.check(a, 'contenido legible sin JavaScript (>1.200 car.)', s.bodyText.length > 1200, `${s.bodyText.length} caracteres`);
+  // 8 es el minimo para que una pagina no sea un callejon sin salida: al menos
+  // el catalogo, una categoria, un formato hermano, una guia y un CTA.
+  R.check(a, 'al menos 8 enlaces internos en el HTML inicial', internalLinks(res.html).length >= 8, `${internalLinks(res.html).length} enlaces`);
   R.check(a, 'Open Graph coherente con el title', s.ogTitle === s.title, s.ogTitle.slice(0, 50));
   R.check(a, 'og:url coincide con el canonical', s.ogUrl === s.canonical, s.ogUrl);
 
@@ -228,6 +231,55 @@ for (const t of NO_INDEXABLES) {
     R.check(a, `${p} sin JSON-LD duplicado`, duplicateSchemaIds(blocks).length === 0, duplicateSchemaIds(blocks).join(', '));
     R.check(a, `${p} canonical propio`, s.canonical === `${ORIGIN}${p}`, s.canonical);
   }
+}
+
+// ---------------------------------------------------------------------------
+// 6 bis. FAQ visible y coherente con el FAQPage marcado
+// ---------------------------------------------------------------------------
+{
+  const a = 'FAQ visible y coherente';
+  // Se lee el modulo compartido como texto (es TypeScript): alcanza para sacar
+  // las rutas y las preguntas, sin compilar nada.
+  const src = await readFile(path.join(ROOT, 'src', 'lib', 'landingFaqs.ts'), 'utf8');
+  const cuerpo = src.slice(src.indexOf('LANDING_FAQS'));
+  const rutas = [...cuerpo.matchAll(/^ {2}'(\/[^']*)': \[$/gm)].map((m) => m[1]);
+  R.check(a, 'landingFaqs.ts define rutas', rutas.length > 0, rutas.join(' '));
+
+  const preguntasDe = (ruta) => {
+    const ini = cuerpo.indexOf(`  '${ruta}': [`);
+    const fin = cuerpo.indexOf('\n  ],', ini);
+    return [...cuerpo.slice(ini, fin).matchAll(/q: '((?:[^'\\]|\\.)*)'/g)].map((m) => m[1].replace(/\\'/g, "'"));
+  };
+
+  for (const ruta of rutas) {
+    const esperadas = preguntasDe(ruta);
+    const res = await get(ruta);
+    const blocks = jsonLdOf(res.html);
+    const faqBlock = blocks.find((b) => b.types.includes('FAQPage'));
+    const marcadas = faqBlock ? [].concat(faqBlock.data.mainEntity || []).map((q) => q.name) : [];
+    const texto = seoOf(res.html).bodyText;
+
+    R.check(a, `${ruta}: tiene FAQPage`, !!faqBlock, faqBlock ? `${marcadas.length} preguntas` : 'sin FAQPage');
+    R.check(
+      a,
+      `${ruta}: las ${esperadas.length} preguntas marcadas son las de landingFaqs.ts`,
+      marcadas.length === esperadas.length && esperadas.every((q) => marcadas.includes(q)),
+      `marcadas ${marcadas.length} / definidas ${esperadas.length}`,
+    );
+    const invisibles = esperadas.filter((q) => !texto.includes(q));
+    R.check(
+      a,
+      `${ruta}: toda respuesta marcada está visible en la página`,
+      invisibles.length === 0,
+      invisibles.length ? `no aparecen: ${invisibles.slice(0, 2).join(' | ')}` : '',
+    );
+  }
+
+  // Ninguna pregunta repetida en muchas URLs distintas (FAQ copiada y pegada).
+  const porPregunta = new Map();
+  for (const ruta of rutas) for (const q of preguntasDe(ruta)) porPregunta.set(q, (porPregunta.get(q) || 0) + 1);
+  const repetidas = [...porPregunta.entries()].filter(([, n]) => n > 1);
+  R.check(a, 'ninguna pregunta repetida entre páginas', repetidas.length === 0, repetidas.map(([q, n]) => `${q.slice(0, 40)} (${n})`).join(' | '));
 }
 
 // ---------------------------------------------------------------------------

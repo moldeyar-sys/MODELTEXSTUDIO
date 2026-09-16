@@ -16,6 +16,8 @@ import {
 } from 'lucide-react';
 import { useSeo } from '../lib/seo';
 import { useLocale } from '../lib/locale';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
+import { FaqSection } from '../components/ui/FaqSection';
 
 export type TrustPageVariant = 'como-funciona' | 'ayuda-impresion' | 'politica-descargas' | 'terminos' | 'privacidad';
 
@@ -412,6 +414,11 @@ export default function TrustPage({ variant }: TrustPageProps) {
             </div>
           </aside>
         </div>
+
+        {/* Enlaces internos editoriales (src/lib/internalLinks.ts): sin esto
+            estas paginas solo enlazaban entre si, sin bajada al catalogo. */}
+        <FaqSection path={page.path} />
+        <RelatedLinks path={page.path} />
       </div>
     </div>
   );

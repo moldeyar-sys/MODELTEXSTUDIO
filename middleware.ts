@@ -38,6 +38,8 @@ import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION, getRelatedGuias, type Guia } fro
 import { buildProductFaq, descriptionParagraphs, garmentPhrase, productTitle, PRODUCT_GUIDE_LINKS } from './src/lib/productContent.js';
 import { SLUG_REDIRECTS } from './src/lib/slugRedirects.js';
 import { getArticleAuthor, SITE } from './src/lib/siteConfig.js';
+import { CATEGORIA_LINKS, relatedFor } from './src/lib/internalLinks.js';
+import { faqsFor } from './src/lib/landingFaqs.js';
 import {
   MD_CATEGORIAS,
   MD_DESCRIPTION,
@@ -569,6 +571,61 @@ function otrasCategoriasHtml(origin: string, actual: string) {
     .join('')}</ul>`;
 }
 
+/**
+ * FAQ de una pagina comercial, desde src/lib/landingFaqs.ts (la MISMA lista
+ * que muestra el .tsx). Antes cada pagina tenia dos juegos de preguntas, uno
+ * aca y otro en React, y ya se habian desincronizado; un FAQPage cuya
+ * respuesta el visitante no ve es justo lo que Google marca como invalido.
+ */
+function faqHtml(path: string, titulo: string) {
+  const faqs = faqsFor(path);
+  if (!faqs.length) return '';
+  return `<h2>${escapeHtml(titulo)}</h2>` + faqs.map((f) => `<h3>${escapeHtml(f.q)}</h3><p>${escapeHtml(f.a)}</p>`).join('');
+}
+
+function faqSchema(path: string): Schema[] {
+  const faqs = faqsFor(path);
+  if (!faqs.length) return [];
+  return [
+    {
+      id: 'schema-faq',
+      data: {
+        '@context': 'https://schema.org',
+        '@type': 'FAQPage',
+        mainEntity: faqs.map((f) => ({ '@type': 'Question', name: f.q, acceptedAnswer: { '@type': 'Answer', text: f.a } })),
+      },
+    },
+  ];
+}
+
+/**
+ * Bloque de enlaces internos editoriales al pie del HTML inicial, con el
+ * mismo contenido que renderiza src/components/ui/RelatedLinks.tsx del lado
+ * de React. Sin esto, /moldes-para-plotter salia con UN solo enlace interno y
+ * /preguntas-frecuentes con uno, pese a tener 21.000 caracteres de contenido:
+ * callejones sin salida para un rastreador.
+ */
+function relatedHtml(origin: string, path: string) {
+  const block = relatedFor(path);
+  if (!block) return '';
+  return [
+    `<h2>${escapeHtml(block.title)}</h2>`,
+    `<ul>${block.links.map((l) => `<li><a href="${origin}${l.to}">${escapeHtml(l.label)}</a>: ${escapeHtml(l.hint)}</li>`).join('')}</ul>`,
+    block.categorias
+      ? `<h2>Moldes por categoría</h2><ul>${CATEGORIA_LINKS.map(
+          (c) => `<li><a href="${origin}${c.to}">${escapeHtml(c.label)}</a>: ${escapeHtml(c.hint)}</li>`,
+        ).join('')}</ul>`
+      : '',
+    block.guias?.length
+      ? `<h2>Guías relacionadas</h2><ul>${block.guias
+          .map((g) => `<li><a href="${origin}/guias/${g.slug}">${escapeHtml(g.label)}</a></li>`)
+          .join('')}</ul>`
+      : '',
+  ]
+    .filter(Boolean)
+    .join('\n');
+}
+
 const CATEGORIA_PAGE_SIZE = 100;
 
 async function categoriaPage(html: string, origin: string, cat: string, pagina: number, requestedUrl: string) {
@@ -724,7 +781,14 @@ async function catalogoPage(html: string, origin: string, filtered = false) {
 
 const STATIC_PAGES: Record<
   string,
-  { title: string; description: string; body: (origin: string) => string; schemas?: (origin: string) => Schema[] }
+  {
+    title: string;
+    description: string;
+    body: (origin: string) => string;
+    schemas?: (origin: string) => Schema[];
+    /** Encabezado del bloque de FAQ (las preguntas salen de landingFaqs.ts). */
+    faqTitle?: string;
+  }
 > = {
   '/': {
     title: 'Modeltex | Moldes PDF, moldes para imprimir y moldería digital',
@@ -811,28 +875,25 @@ const STATIC_PAGES: Record<
   },
   '/moldes-pdf': {
     title: 'Moldes PDF para imprimir: listos para producir | Modeltex',
-    description: 'Moldes de ropa en PDF para imprimir en A4 o plotter, listos para producir, con todos los talles y descarga inmediata. Para emprendedores, talleres y fabricantes.',
+    description: 'Moldes de ropa en PDF para imprimir en A4 o plotter, listos para producir, con todos los talles y descarga inmediata. Para talleres y fabricantes.',
+    faqTitle: 'Preguntas frecuentes sobre moldes PDF',
     body: (o) => `
 <h1>Moldes PDF para imprimir, cortar y producir</h1>
-<p>Moldes de ropa en PDF listos para imprimir: en hojas A4 (imprimís en casa y pegás siguiendo la guía numerada) o en PDF plotter (imprimís en ancho real en cualquier servicio de ploteo). Todos incluyen la curva completa de talles y control de medida para verificar la escala.</p>
+<p>Moldes de ropa en PDF listos para imprimir: en hojas A4 (imprimís en casa y pegás siguiendo la guía numerada) o en PDF plotter (imprimís en ancho real en cualquier servicio de ploteo). Todos incluyen la curva completa de talles y un cuadrado de control de medida para verificar la escala.</p>
 <p><a href="${o}/catalogo">Ver el catálogo completo</a> (${CATALOGO_TXT}) — también disponibles en ${FORMATOS_TXT}.</p>
-<h2>Moldes listos para imprimir: qué incluye cada archivo</h2>
-<p>Un molde listo para imprimir no necesita ningún ajuste antes de usarse: las piezas ya vienen ordenadas a escala real, numeradas si es PDF A4, y con un cuadrado de control de medida para verificar con una regla que la impresión no perdió escala. Guías relacionadas: <a href="${o}/ayuda-impresion">ayuda para imprimir</a> y <a href="${o}/guias/impresion-de-moldes-en-plotter">cómo imprimir moldes en plotter para un taller</a>.</p>
-<h2>Preguntas frecuentes sobre moldes PDF</h2>
-<h3>¿Qué son los moldes en PDF?</h3>
-<p>Son moldes de ropa digitales entregados en un archivo PDF, listos para imprimir y cortar: incluyen todas las piezas de la prenda a escala real, la curva de talles completa y un cuadrado de control para verificar que la impresión no perdió medida.</p>
-<h3>¿Los moldes PDF ya están listos para imprimir?</h3>
-<p>Sí: cada archivo se descarga, se imprime al 100% de escala y se corta, sin ningún paso de edición previo. En PDF A4 se pegan las hojas numeradas; en PDF plotter sale en una sola lámina de ancho real.</p>
-<h3>¿Qué diferencia hay entre un molde PDF A4 y uno para plotter?</h3>
-<p>El PDF A4 viene partido en hojas carta u oficio para imprimir en cualquier impresora casera y pegar siguiendo la numeración. El PDF plotter es la misma pieza completa en una sola lámina de 90, 120 o 150 cm de ancho, pensada para una gráfica de ploteo.</p>
-<h3>¿Los moldes PDF incluyen todos los talles?</h3>
-<p>Sí, cada molde PDF incluye la curva de talles completa (XS a 4XL en adultos, 2 a 18 en niños) ya escalada y aprobada con una muestra confeccionada.</p>
-<h3>¿Puedo usar los moldes PDF para producir y vender ropa?</h3>
-<p>Sí, la licencia es de uso productivo: podés confeccionar y vender las prendas hechas con el molde sin límite de unidades.</p>
-<h3>¿Qué significa que un molde esté "listo para imprimir"?</h3>
-<p>Que no hace falta ningún paso de edición ni ajuste antes de imprimirlo: el archivo ya viene con las piezas ordenadas, a escala real y con un cuadrado de control de medida. Solo hay que abrirlo, imprimirlo al 100% de escala y cortar.</p>
-<h3>¿Dónde consigo moldes listos en PDF para imprimir hoy mismo?</h3>
-<p>En el catálogo de Modeltex: elegís el molde, lo comprás y lo tenés disponible para descargar al momento (los marcados como "descarga rápida" se habilitan apenas se confirma el pago).</p>`,
+<h2>Qué incluye cada archivo PDF</h2>
+<p>Un molde listo para imprimir no necesita ningún ajuste antes de usarse: las piezas ya vienen ordenadas a escala real, numeradas si es PDF A4, y con un cuadrado de control de medida para verificar con una regla que la impresión no perdió escala. Es la diferencia entre un molde y un dibujo de una prenda: acá cada línea está pensada para cortar tela.</p>
+<ul>
+<li>Todas las piezas de la prenda, a escala real.</li>
+<li>Curva de talles completa: XS a 4XL en adultos, 2 a 18 en niños.</li>
+<li>Piquetes, sentido de hilo y márgenes de costura marcados.</li>
+<li>Cuadrado de control de medida para verificar la impresión.</li>
+<li>Numeración de hojas en PDF A4 para pegarlas en orden.</li>
+</ul>
+<h2>Qué formato PDF te conviene</h2>
+<p><a href="${o}/moldes-pdf-a4">PDF A4</a> si imprimís en casa o en la oficina y estás haciendo muestras o una tirada chica. <a href="${o}/moldes-para-plotter">PDF plotter</a> si cortás en cantidad y no querés pegar hojas. Si cortás con sistema CAD, el mismo molde existe en DXF/AAMA, PDS de Optitex y ADS de Audaces: la comparación completa está en <a href="${o}/molderia-digital">moldería digital</a>.</p>
+<h2>Cómo comprar y descargar</h2>
+<p>Elegís el molde en el <a href="${o}/catalogo">catálogo</a>, el formato y los talles, pagás con Mercado Pago, transferencia, PayPal, Payoneer, Wise o cripto (con o sin cuenta) y descargás: los marcados como descarga rápida se habilitan al confirmarse el pago y el resto dentro de las 24 horas. Antes de comprar podés probar un <a href="${o}/moldes-gratis">molde gratis</a> para ver el nivel de terminación, o escribirnos por WhatsApp al <a href="${WHATSAPP_LINK}">${WHATSAPP_DISPLAY}</a>.</p>`,
     schemas: (o) => [
       {
         id: 'schema-collection',
@@ -845,91 +906,37 @@ const STATIC_PAGES: Record<
         },
       },
       {
-        id: 'schema-faq',
-        data: {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: [
-            {
-              '@type': 'Question',
-              name: '¿Qué son los moldes en PDF?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Son moldes de ropa digitales entregados en un archivo PDF, listos para imprimir y cortar: incluyen todas las piezas de la prenda a escala real, la curva de talles completa y un cuadrado de control para verificar que la impresión no perdió medida.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Los moldes PDF ya están listos para imprimir?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Sí: cada archivo se descarga, se imprime al 100% de escala y se corta, sin ningún paso de edición previo. En PDF A4 se pegan las hojas numeradas; en PDF plotter sale en una sola lámina de ancho real.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Qué diferencia hay entre un molde PDF A4 y uno para plotter?',
-              acceptedAnswer: { '@type': 'Answer', text: 'El PDF A4 viene partido en hojas carta u oficio para imprimir en cualquier impresora casera y pegar siguiendo la numeración. El PDF plotter es la misma pieza completa en una sola lámina de 90, 120 o 150 cm de ancho, pensada para una gráfica de ploteo.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Los moldes PDF incluyen todos los talles?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Sí, cada molde PDF incluye la curva de talles completa (XS a 4XL en adultos, 2 a 18 en niños) ya escalada y aprobada con una muestra confeccionada.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Puedo usar los moldes PDF para producir y vender ropa?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Sí, la licencia es de uso productivo: podés confeccionar y vender las prendas hechas con el molde sin límite de unidades.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Qué significa que un molde esté "listo para imprimir"?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Que no hace falta ningún paso de edición ni ajuste antes de imprimirlo: el archivo ya viene con las piezas ordenadas, a escala real y con un cuadrado de control de medida. Solo hay que abrirlo, imprimirlo al 100% de escala y cortar.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Dónde consigo moldes listos en PDF para imprimir hoy mismo?',
-              acceptedAnswer: { '@type': 'Answer', text: 'En el catálogo de Modeltex: elegís el molde, lo comprás y lo tenés disponible para descargar al momento (los marcados como "descarga rápida" se habilitan apenas se confirma el pago).' },
-            },
-          ],
-        },
-      },
-      {
         id: 'schema-breadcrumb',
-        data: {
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` },
-            { '@type': 'ListItem', position: 2, name: 'Moldes PDF', item: `${o}/moldes-pdf` },
-          ],
-        },
+        data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Moldes PDF', url: `${o}/moldes-pdf` }]),
       },
     ],
   },
   '/moldes-pdf-a4': {
     title: 'Moldes PDF A4 para imprimir en casa | Modeltex',
-    description: 'Moldes de ropa en PDF A4: imprimí en tu impresora hogareña, pegá las hojas numeradas y cortá. Curva de talles completa.',
+    description: 'Moldes de ropa en PDF A4: imprimí en tu impresora hogareña, pegá las hojas numeradas y cortá. Curva de talles completa y descarga inmediata.',
     body: (o) => `
 <h1>Moldes PDF A4 — imprimí tus moldes en casa</h1>
-<p>El formato ideal para emprendedores: imprimís el molde en hojas A4 comunes al 100% de escala, pegás siguiendo la numeración y obtenés el molde en tamaño real con todos sus talles. Cada archivo incluye cuadrado de control de medida.</p>
-<p><a href="${o}/catalogo?formato=PDF%20A4">Ver moldes PDF A4 disponibles</a> · <a href="${o}/ayuda-impresion">Guía para imprimir sin perder escala</a></p>
-<h2>Preguntas frecuentes</h2>
-<h3>¿Qué necesito para imprimir un molde PDF A4?</h3>
-<p>Solo una impresora casera u de oficina común, configurada al 100% de escala, y hojas A4 u oficio.</p>
-<h3>¿Cómo se arma el molde después de imprimirlo?</h3>
-<p>Cada hoja sale numerada: se pegan en orden hasta formar la pieza completa a tamaño real, verificando el cuadrado de control con una regla.</p>
-<h3>¿El PDF A4 incluye todos los talles?</h3>
-<p>Sí, la curva completa (XS a 4XL en adultos, 2 a 18 en niños) viene incluida en el archivo.</p>`,
+<p>El formato más simple para pasar de la pantalla a la tela: imprimís el molde en hojas A4 comunes al 100% de escala, pegás siguiendo la numeración y obtenés el molde en tamaño real con todos sus talles. No hace falta plotter ni gráfica, solo una impresora.</p>
+<p><a href="${o}/catalogo?formato=PDF%20A4">Ver moldes PDF A4 disponibles</a> · <a href="${o}/ayuda-impresion">Cómo imprimir sin perder escala</a></p>
+<h2>Para qué sirve el PDF A4</h2>
+<ul>
+<li>Probar un modelo nuevo y validar el calce antes de producir en serie.</li>
+<li>Producir un lote chico sin depender de una gráfica de ploteo.</li>
+<li>Arrancar una marca con la inversión mínima en equipo.</li>
+<li>Trabajar desde cualquier lugar: el archivo se imprime donde estés.</li>
+</ul>
+<h2>Cómo se imprime, paso a paso</h2>
+<ol>
+<li>Abrís el PDF y configurás la impresión al 100% o tamaño real (nunca "ajustar a la página").</li>
+<li>Imprimís primero la hoja del cuadrado de control y lo medís con una regla.</li>
+<li>Si la medida coincide, imprimís el resto del talle que vas a cortar.</li>
+<li>Pegás las hojas en el orden de la numeración hasta formar cada pieza.</li>
+</ol>
+<h2>Cuándo conviene pasar a plotter</h2>
+<p>Cuando pegar hojas empieza a atrasar la producción, el mismo molde existe en <a href="${o}/moldes-para-plotter">PDF plotter</a>: una sola lámina de 90, 120 o 150 cm de ancho, sin uniones. La comparación de todos los formatos está en <a href="${o}/molderia-digital">moldería digital</a>.</p>`,
     schemas: (o) => [
-      { id: 'schema-breadcrumb', data: { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` }, { '@type': 'ListItem', position: 2, name: 'Moldes PDF A4', item: `${o}/moldes-pdf-a4` }] } },
+      { id: 'schema-breadcrumb', data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Moldes PDF A4', url: `${o}/moldes-pdf-a4` }]) },
       { id: 'schema-collection', data: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Moldes PDF A4 para imprimir', url: `${o}/moldes-pdf-a4`, description: 'Moldes PDF A4 para imprimir en casa o en tu taller, con talles completos y descarga inmediata.' } },
-      {
-        id: 'schema-faq',
-        data: {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: [
-            { '@type': 'Question', name: '¿Qué necesito para imprimir un molde PDF A4?', acceptedAnswer: { '@type': 'Answer', text: 'Solo una impresora casera u de oficina común, configurada al 100% de escala, y hojas A4 u oficio.' } },
-            { '@type': 'Question', name: '¿Cómo se arma el molde después de imprimirlo?', acceptedAnswer: { '@type': 'Answer', text: 'Cada hoja sale numerada: se pegan en orden hasta formar la pieza completa a tamaño real, verificando el cuadrado de control con una regla.' } },
-            { '@type': 'Question', name: '¿El PDF A4 incluye todos los talles?', acceptedAnswer: { '@type': 'Answer', text: 'Sí, la curva completa (XS a 4XL en adultos, 2 a 18 en niños) viene incluida en el archivo.' } },
-          ],
-        },
-      },
     ],
   },
   '/moldes-para-plotter': {
@@ -937,30 +944,22 @@ const STATIC_PAGES: Record<
     description: 'Moldes de ropa en PDF plotter para imprimir en ancho real (90 a 150 cm). Curva de talles completa, listos para taller y producción.',
     body: (o) => `
 <h1>Moldes para plotter — impresión en ancho real</h1>
-<p>PDF preparados para plotter textil en anchos de 90, 120 o 150 cm según el molde: llevás el archivo a cualquier servicio de ploteo e imprimís el molde completo sin pegar hojas. La opción más usada por talleres y fábricas que cortan a mano.</p>
-<p><a href="${o}/catalogo?formato=PDF%20Plotter">Ver moldes para plotter</a> — ¿cortás en CAD? Pedilos en DXF/AAMA, Optitex o Audaces.</p>
-<h2>Preguntas frecuentes</h2>
-<h3>¿En qué anchos vienen los moldes para plotter?</h3>
-<p>En 90, 120 o 150 cm según el molde — la ficha de cada producto indica el ancho exacto.</p>
-<h3>¿Dónde imprimo un molde PDF plotter?</h3>
-<p>En cualquier gráfica o servicio de ploteo textil, al 100% de escala, en una sola lámina.</p>
-<h3>¿Puedo pedir el mismo molde en DXF/AAMA?</h3>
-<p>Sí, si cortás con un sistema CAD el molde también está disponible en DXF/AAMA con la curva completa.</p>`,
+<p>PDF preparados para plotter textil en anchos de 90, 120 o 150 cm según el molde: llevás el archivo a cualquier servicio de ploteo e imprimís el molde completo sin pegar hojas. Es la opción más usada por talleres y fábricas que cortan a mano o por encimado.</p>
+<p><a href="${o}/catalogo?formato=PDF%20Plotter">Ver moldes para plotter</a> · ¿cortás en CAD? El mismo molde está en DXF/AAMA, Optitex o Audaces.</p>
+<h2>Por qué un taller elige plotter</h2>
+<ul>
+<li>Cada pieza sale entera: no hay uniones que corran la medida.</li>
+<li>Se imprime en minutos y se reimprime cuando el papel se gasta.</li>
+<li>El papel se puede pasar a cartón para los modelos que más se repiten.</li>
+<li>Trae la curva de talles completa superpuesta y diferenciada por línea.</li>
+</ul>
+<h2>Qué pedirle a la gráfica</h2>
+<p>Impresión al 100% de escala, sin ajustar al ancho del rollo, sobre el ancho que indica la ficha del molde. Es el error más común: muchas gráficas reescalan por defecto para aprovechar el papel y el molde sale fuera de medida. Paso a paso en <a href="${o}/guias/impresion-de-moldes-en-plotter">cómo imprimir moldes en plotter para un taller</a>.</p>
+<h2>Plotter, tizada y CAD</h2>
+<p>El molde para plotter trae las piezas listas para cortar. Si cortás por encimado te conviene además una <a href="${o}/guias/tizada-computarizada-mrk">tizada (MRK)</a>: las mismas piezas ya acomodadas al ancho real de tu tela y a tu mezcla de talles, para gastar la menor cantidad de tela posible. Y si cortás con máquina, el <a href="${o}/guias/abrir-moldes-dxf-en-optitex-audaces-gerber-lectra">DXF/AAMA</a> se importa directo. Comparación completa en <a href="${o}/molderia-digital">moldería digital</a>.</p>`,
     schemas: (o) => [
-      { id: 'schema-breadcrumb', data: { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` }, { '@type': 'ListItem', position: 2, name: 'Moldes para plotter', item: `${o}/moldes-para-plotter` }] } },
+      { id: 'schema-breadcrumb', data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Moldes para plotter', url: `${o}/moldes-para-plotter` }]) },
       { id: 'schema-collection', data: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Moldes para plotter y producción textil', url: `${o}/moldes-para-plotter`, description: 'Moldes para plotter en PDF listos para imprimir en rollo, para talleres, gráficas y producción textil.' } },
-      {
-        id: 'schema-faq',
-        data: {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: [
-            { '@type': 'Question', name: '¿En qué anchos vienen los moldes para plotter?', acceptedAnswer: { '@type': 'Answer', text: 'En 90, 120 o 150 cm según el molde — la ficha de cada producto indica el ancho exacto.' } },
-            { '@type': 'Question', name: '¿Dónde imprimo un molde PDF plotter?', acceptedAnswer: { '@type': 'Answer', text: 'En cualquier gráfica o servicio de ploteo textil, al 100% de escala, en una sola lámina.' } },
-            { '@type': 'Question', name: '¿Puedo pedir el mismo molde en DXF/AAMA?', acceptedAnswer: { '@type': 'Answer', text: 'Sí, si cortás con un sistema CAD el molde también está disponible en DXF/AAMA con la curva completa.' } },
-          ],
-        },
-      },
     ],
   },
   '/moldes-para-emprendedores': {
@@ -970,51 +969,37 @@ const STATIC_PAGES: Record<
 <h1>Moldes de ropa para emprendedores</h1>
 <p>Moldes digitales ya probados con muestra confeccionada, con la curva de talles completa incluida: la base para producir tu primera tanda sin desarrollar moldería desde cero. Descargás, imprimís (A4 o plotter) y cortás. Soporte directo por WhatsApp si te trabás.</p>
 <p><a href="${o}/moldes-gratis">Probá primero un molde gratis</a> · <a href="${o}/catalogo">Ver catálogo</a></p>
-<h2>Preguntas frecuentes</h2>
-<h3>¿Qué moldes convienen para arrancar una marca de ropa?</h3>
-<p>Moldes ya aprobados con muestra confeccionada y con la curva de talles completa, para evitar el desarrollo desde cero.</p>
-<h3>¿Necesito plotter para empezar a producir?</h3>
-<p>No, para una primera tanda alcanza con PDF A4; el plotter conviene más adelante, cuando el volumen crece.</p>`,
+<h2>Cómo arrancar sin gastar de más</h2>
+<ul>
+<li>Empezá con pocos moldes base (una remera, un buzo, un jogger) y derivá variantes de tela y color sobre esos mismos moldes.</li>
+<li>Imprimí en <a href="${o}/moldes-pdf-a4">PDF A4</a> hasta que el volumen justifique una gráfica de ploteo.</li>
+<li>Cosé una muestra en la tela real antes de cortar la tanda: la holgura cambia según el gramaje.</li>
+<li>Costeá con la curva completa y a precio de reposición, no al precio al que compraste.</li>
+</ul>
+<h2>Qué te llevás de Modeltex</h2>
+<p>Moldes aprobados con muestra real (la foto de la ficha es la prenda cosida con ese molde), curva de talles industrial ya progresada, telas recomendadas por prenda y precios en pesos. Si el molde que necesitás no está, lo desarrollamos <a href="${o}/diseno-a-pedido">a medida</a>. Y si querés aprender el oficio, el <a href="${o}/lab">curso gratis de moldería textil</a> va de los fundamentos a la producción industrial.</p>`,
     schemas: (o) => [
-      { id: 'schema-breadcrumb', data: { '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [{ '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` }, { '@type': 'ListItem', position: 2, name: 'Moldes para emprendedores', item: `${o}/moldes-para-emprendedores` }] } },
+      { id: 'schema-breadcrumb', data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Moldes para emprendedores', url: `${o}/moldes-para-emprendedores` }]) },
       { id: 'schema-collection', data: { '@context': 'https://schema.org', '@type': 'CollectionPage', name: 'Moldes para emprendedores de indumentaria', url: `${o}/moldes-para-emprendedores`, description: 'Moldes para emprendedores que quieren lanzar o crecer una marca de ropa, con talles listos para producir.' } },
-      {
-        id: 'schema-faq',
-        data: {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: [
-            { '@type': 'Question', name: '¿Qué moldes convienen para arrancar una marca de ropa?', acceptedAnswer: { '@type': 'Answer', text: 'Moldes ya aprobados con muestra confeccionada y con la curva de talles completa, para evitar el desarrollo desde cero.' } },
-            { '@type': 'Question', name: '¿Necesito plotter para empezar a producir?', acceptedAnswer: { '@type': 'Answer', text: 'No, para una primera tanda alcanza con PDF A4; el plotter conviene más adelante, cuando el volumen crece.' } },
-          ],
-        },
-      },
     ],
   },
   '/moldes-gratis': {
     title: 'Moldes gratis en PDF para descargar e imprimir | Modeltex',
     description: 'Moldes de ropa gratis para descargar en PDF, listos para imprimir. Moldería gratis real, mismo nivel de calidad que el catálogo pago de Modeltex.',
+    faqTitle: 'Preguntas frecuentes sobre moldes gratis',
     body: (o) => `
 <h1>Moldes gratis — probá la calidad antes de comprar</h1>
 <p>Publicamos moldes reales de nuestro catálogo para descarga gratuita, en PDF listos para imprimir: el mismo nivel de terminación, talles y prolijidad que los moldes pagos. Descargalos, imprimilos y comprobá cómo trabajamos antes de hacer tu primera compra.</p>
-<p><a href="${o}/moldes-gratis">Entrá a la sección Moldes Gratis</a> (algunos se descargan sin cuenta; otros pidiendo una cuenta gratuita).</p>
-<h2>Preguntas frecuentes sobre moldes gratis</h2>
-<h3>¿Los moldes gratis son moldes reales o solo de muestra?</h3>
-<p>Son moldes reales de nuestro catálogo, no versiones recortadas ni de muestra: mismo nivel de terminación, talles y prolijidad que los moldes pagos.</p>
-<h3>¿Cómo descargo un molde gratis para imprimir?</h3>
-<p>Entrás a la sección Moldes Gratis, elegís el que te interesa y lo descargás: algunos se bajan sin necesidad de cuenta, otros piden crear una cuenta gratuita en Modeltex. En los dos casos la descarga es inmediata.</p>
-<h3>¿Los moldes gratis vienen en PDF listos para imprimir?</h3>
-<p>Sí, se entregan en PDF, listos para imprimir en A4 o plotter según el molde, con el mismo cuadrado de control de medida que traen los moldes pagos.</p>
-<h3>¿Cada cuánto suben moldes nuevos gratis para descargar?</h3>
-<p>Sumamos moldes gratuitos nuevos de forma periódica, en general cada semana.</p>
-<h3>¿Puedo usar un molde gratis para producir y vender ropa?</h3>
-<p>Sí, tiene la misma licencia de uso productivo que los moldes pagos: podés confeccionar y vender las prendas sin límite de unidades.</p>
-<h3>¿Qué diferencia hay entre los moldes gratis y los moldes pagos?</h3>
-<p>Ninguna en calidad: la diferencia es que el catálogo gratis es una selección chica y rotativa, mientras que el catálogo completo tiene más de 2.000 moldes con curva de talles completa.</p>
-<h3>¿Los moldes gratis en PDF son moldes completos o solo una parte?</h3>
-<p>Son el molde completo, con todas sus piezas y su curva de talles, igual que un molde pago: no es una versión parcial ni un recorte del archivo.</p>
-<h3>¿Cómo descargo moldes gratis para imprimir sin pagar nada?</h3>
-<p>Entrás a la sección Moldes Gratis, elegís uno de la selección gratuita y lo descargás: no se pide ningún dato de pago, algunos sin necesidad de cuenta y otros pidiendo una cuenta gratuita de Modeltex.</p>`,
+<p><a href="${o}/moldes-gratis">Entrá a la sección Moldes Gratis</a> (algunos se descargan sin cuenta; otros pidiendo una cuenta gratuita). Sumamos moldes nuevos de forma periódica, en general cada semana.</p>
+<h2>Qué incluye un molde gratis</h2>
+<ul>
+<li>El molde completo, con todas sus piezas: no es una versión parcial ni un recorte.</li>
+<li>Su curva de talles, igual que en un molde pago.</li>
+<li>Cuadrado de control de medida para verificar la impresión.</li>
+<li>Licencia de uso productivo: podés fabricar y vender las prendas sin límite de unidades.</li>
+</ul>
+<h2>Después de probar el molde gratis</h2>
+<p>Si te sirvió, el <a href="${o}/catalogo">catálogo completo</a> tiene ${CATALOGO_TXT} con búsqueda por prenda, categoría, temporada y formato. Para aprender el oficio desde cero está el <a href="${o}/lab">curso gratis de moldería textil</a>, y para entender qué formato conviene según cómo cortás, <a href="${o}/molderia-digital">moldería digital</a>.</p>`,
     schemas: (o) => [
       {
         id: 'schema-collection',
@@ -1027,64 +1012,8 @@ const STATIC_PAGES: Record<
         },
       },
       {
-        id: 'schema-faq',
-        data: {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: [
-            {
-              '@type': 'Question',
-              name: '¿Los moldes gratis son moldes reales o solo de muestra?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Son moldes reales de nuestro catálogo, no versiones recortadas ni de muestra: mismo nivel de terminación, talles y prolijidad que los moldes pagos.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Cómo descargo un molde gratis para imprimir?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Entrás a la sección Moldes Gratis, elegís el que te interesa y lo descargás: algunos se bajan sin necesidad de cuenta, otros piden crear una cuenta gratuita en Modeltex. En los dos casos la descarga es inmediata.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Los moldes gratis vienen en PDF listos para imprimir?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Sí, se entregan en PDF, listos para imprimir en A4 o plotter según el molde, con el mismo cuadrado de control de medida que traen los moldes pagos.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Cada cuánto suben moldes nuevos gratis para descargar?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Sumamos moldes gratuitos nuevos de forma periódica, en general cada semana.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Puedo usar un molde gratis para producir y vender ropa?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Sí, tiene la misma licencia de uso productivo que los moldes pagos: podés confeccionar y vender las prendas sin límite de unidades.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Qué diferencia hay entre los moldes gratis y los moldes pagos?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Ninguna en calidad: la diferencia es que el catálogo gratis es una selección chica y rotativa, mientras que el catálogo completo tiene más de 2.000 moldes con curva de talles completa.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Los moldes gratis en PDF son moldes completos o solo una parte?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Son el molde completo, con todas sus piezas y su curva de talles, igual que un molde pago: no es una versión parcial ni un recorte del archivo.' },
-            },
-            {
-              '@type': 'Question',
-              name: '¿Cómo descargo moldes gratis para imprimir sin pagar nada?',
-              acceptedAnswer: { '@type': 'Answer', text: 'Entrás a la sección Moldes Gratis, elegís uno de la selección gratuita y lo descargás: no se pide ningún dato de pago, algunos sin necesidad de cuenta y otros pidiendo una cuenta gratuita de Modeltex.' },
-            },
-          ],
-        },
-      },
-      {
         id: 'schema-breadcrumb',
-        data: {
-          '@context': 'https://schema.org',
-          '@type': 'BreadcrumbList',
-          itemListElement: [
-            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` },
-            { '@type': 'ListItem', position: 2, name: 'Moldes gratis', item: `${o}/moldes-gratis` },
-          ],
-        },
+        data: breadcrumb([{ name: 'Inicio', url: `${o}/` }, { name: 'Moldes gratis', url: `${o}/moldes-gratis` }]),
       },
     ],
   },
@@ -1316,6 +1245,7 @@ function guiasIndexPage(html: string, origin: string) {
       (g) => `<li><a href="${origin}/guias/${g.slug}">${escapeHtml(g.title)}</a>: ${escapeHtml(g.description)}</li>`,
     ).join('')}</ul>`,
     `<p>Los moldes de ${SITE_NAME} para aplicar estas guías están en el <a href="${origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}).</p>`,
+    relatedHtml(origin, '/guias'),
   ].join('\n');
   const schemas: Schema[] = [
     { id: 'schema-breadcrumb', data: breadcrumb(migas) },
@@ -1507,6 +1437,7 @@ async function labIndexPage(html: string, origin: string) {
       : '<p>Estamos preparando el contenido del curso.</p>',
     `<p>También disponible: <a href="${origin}/lab/glosario">glosario de moldería</a> y la <a href="${origin}/lab/ia">IA de Modeltex Lab</a>.</p>`,
     `<p>Los moldes de ${SITE_NAME} para practicar están en <a href="${origin}/moldes-gratis">Moldes Gratis</a>.</p>`,
+    relatedHtml(origin, '/lab'),
   ].join('\n');
   const schemas: Schema[] = [
     { id: 'schema-breadcrumb', data: breadcrumb(migas) },
@@ -2086,7 +2017,14 @@ export default async function middleware(request: Request) {
 
     const pageUrl = `${url.origin}${path === '/' ? '/' : path}`;
     html = setHeadSeo(html, page.title, page.description, pageUrl);
-    return respond(injectBody(html, page.body(url.origin), page.schemas?.(url.origin)));
+    const cuerpo = [
+      page.body(url.origin),
+      faqHtml(path, page.faqTitle || 'Preguntas frecuentes'),
+      relatedHtml(url.origin, path),
+    ]
+      .filter(Boolean)
+      .join('\n');
+    return respond(injectBody(html, cuerpo, [...(page.schemas?.(url.origin) || []), ...faqSchema(path)]));
   } catch {
     return next();
   }

@@ -5,6 +5,8 @@ import { FloatingPatterns } from '../components/ui/FloatingPatterns';
 import { useSeo, useStructuredData } from '../lib/seo';
 import { SCHEMA_IDS } from '../lib/schemaIds';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
+import { FaqSection } from '../components/ui/FaqSection';
 
 type LandingSection = {
   title: string;
@@ -13,8 +15,6 @@ type LandingSection = {
   cta: string;
   icon: LucideIcon;
 };
-
-type LandingFaq = { q: string; a: string };
 
 type LandingConfig = {
   path: string;
@@ -29,8 +29,6 @@ type LandingConfig = {
   benefits: string[];
   sections: LandingSection[];
   schemaName: string;
-  /** Preguntas reales sobre este formato/segmento: dan profundidad y agregan FAQPage. */
-  faqs?: LandingFaq[];
 };
 
 export function SeoLandingTemplate({
@@ -46,7 +44,6 @@ export function SeoLandingTemplate({
   benefits,
   sections,
   schemaName,
-  faqs = [],
 }: LandingConfig) {
   useSeo({ title, description, path });
 
@@ -71,21 +68,6 @@ export function SeoLandingTemplate({
     },
     SCHEMA_IDS.breadcrumb,
   );
-  useStructuredData(
-    faqs.length
-      ? {
-          '@context': 'https://schema.org',
-          '@type': 'FAQPage',
-          mainEntity: faqs.map((f) => ({
-            '@type': 'Question',
-            name: f.q,
-            acceptedAnswer: { '@type': 'Answer', text: f.a },
-          })),
-        }
-      : null,
-    SCHEMA_IDS.faq,
-  );
-
   return (
     <div className="min-h-screen bg-petroleum-50">
       <section className="relative overflow-hidden bg-white border-b border-gray-100">
@@ -152,19 +134,10 @@ export function SeoLandingTemplate({
           </div>
         </div>
 
-        {faqs.length > 0 && (
-          <div className="card p-6 sm:p-7 mt-6 max-w-3xl">
-            <h2 className="font-display text-2xl font-bold text-primary-900">Preguntas frecuentes</h2>
-            <div className="mt-4 divide-y divide-gray-100">
-              {faqs.map((item) => (
-                <div key={item.q} className="py-4 first:pt-0 last:pb-0">
-                  <h3 className="font-semibold text-primary-900">{item.q}</h3>
-                  <p className="text-gray-600 mt-2 leading-relaxed">{item.a}</p>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
+        {/* FAQ y enlaces internos: el mismo contenido que sirve middleware.ts
+            en el HTML inicial (src/lib/landingFaqs.ts y internalLinks.ts). */}
+        <FaqSection path={path} className="card p-6 sm:p-7 mt-6 max-w-3xl" />
+        <RelatedLinks path={path} />
       </div>
     </div>
   );

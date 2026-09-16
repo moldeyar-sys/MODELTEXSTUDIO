@@ -4,6 +4,7 @@ import { useSeo, useStructuredData } from '../lib/seo';
 import { GUIAS, GUIAS_TITLE, GUIAS_DESCRIPTION } from '../lib/guiasData';
 import { SCHEMA_IDS } from '../lib/schemaIds';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
 
 const SITE_URL = 'https://modeltex.com.ar';
 
@@ -86,6 +87,8 @@ export default function GuiasPage() {
             Ver catálogo <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
+
+        <RelatedLinks path="/guias" />
       </div>
     </div>
   );

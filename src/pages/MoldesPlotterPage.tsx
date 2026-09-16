@@ -43,24 +43,6 @@ export default function MoldesPlotterPage() {
         },
       ]}
       schemaName="Moldes para plotter"
-      faqs={[
-        {
-          q: '¿En qué anchos vienen los moldes para plotter?',
-          a: 'En 90, 120 o 150 cm según el molde — el ancho real que soporta la mayoría de las gráficas de ploteo textil. La ficha de cada producto indica el ancho exacto.',
-        },
-        {
-          q: '¿Dónde imprimo un molde PDF plotter?',
-          a: 'En cualquier gráfica o servicio de ploteo textil: se lleva el archivo y se imprime al 100% de escala, en una sola lámina, sin necesidad de pegar hojas.',
-        },
-        {
-          q: '¿El plotter incluye la curva de talles completa?',
-          a: 'Sí, igual que el resto de los formatos: XS a 4XL en adultos y 2 a 18 en niños, ya escalados y aprobados con una muestra confeccionada.',
-        },
-        {
-          q: '¿Puedo pedir el mismo molde en DXF/AAMA en vez de PDF?',
-          a: 'Sí, si cortás con un sistema CAD (Optitex, Audaces, Gerber, Lectra) el molde también está disponible en DXF/AAMA con la curva completa incluida.',
-        },
-      ]}
     />
   );
 }

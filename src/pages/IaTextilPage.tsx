@@ -6,6 +6,7 @@ import { useSeo } from '../lib/seo';
 import { WHATSAPP_NUMBER } from '../lib/whatsapp';
 import { IA_TEXTIL_CARDS, type IaTextilCard } from '../lib/iaTextil';
 import { IaTextilModal } from '../components/ia/IaTextilModal';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
 
 const WHATSAPP_TEXT = encodeURIComponent('Hola Modeltex, quiero asesoría textil con IA.');
 
@@ -127,6 +128,10 @@ export default function IaTextilPage() {
           </div>
         </div>
       </section>
+
+      <div className="container-custom pb-10">
+        <RelatedLinks path="/ia-textil" />
+      </div>
 
       {/* Modal de la card activa */}
       {activeCard && <IaTextilModal card={activeCard} onClose={() => setActiveCard(null)} />}

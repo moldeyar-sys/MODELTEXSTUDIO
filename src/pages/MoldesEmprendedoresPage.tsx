@@ -43,24 +43,6 @@ export default function MoldesEmprendedoresPage() {
         },
       ]}
       schemaName="Moldes para emprendedores"
-      faqs={[
-        {
-          q: '¿Qué moldes convienen para arrancar una marca de ropa?',
-          a: 'Moldes ya aprobados con muestra confeccionada y con la curva de talles completa: evitan el desarrollo desde cero y el riesgo de un calce que no funcionó. El catálogo de Modeltex tiene más de 2.000 opciones en esas condiciones.',
-        },
-        {
-          q: '¿Puedo probar la calidad antes de comprar el catálogo completo?',
-          a: 'Sí, en Moldes Gratis hay una selección rotativa con el mismo nivel de terminación que los moldes pagos, para validar antes de la primera compra.',
-        },
-        {
-          q: '¿Necesito plotter para empezar a producir?',
-          a: 'No: para una primera tanda alcanza con el formato PDF A4, que se imprime en cualquier impresora casera. El plotter conviene más adelante, cuando el volumen de corte crece.',
-        },
-        {
-          q: '¿Los moldes vienen con la curva de talles lista?',
-          a: 'Sí, cada molde incluye la curva completa (XS a 4XL en adultos, 2 a 18 en niños) ya escalada, para producir varios talles desde la primera tanda.',
-        },
-      ]}
     />
   );
 }

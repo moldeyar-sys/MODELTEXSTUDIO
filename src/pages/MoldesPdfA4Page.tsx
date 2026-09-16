@@ -43,24 +43,6 @@ export default function MoldesPdfA4Page() {
         },
       ]}
       schemaName="Moldes PDF A4"
-      faqs={[
-        {
-          q: '¿Qué necesito para imprimir un molde PDF A4?',
-          a: 'Solo una impresora casera u de oficina común, configurada al 100% de escala (nunca "ajustar a la página"), y hojas A4 u oficio. No hace falta ningún equipo especial.',
-        },
-        {
-          q: '¿Cómo se arma el molde después de imprimirlo?',
-          a: 'Cada hoja sale numerada: se pegan en orden siguiendo esa numeración hasta formar la pieza completa a tamaño real. Cada archivo trae además un cuadrado de control para verificar con una regla que la impresión no perdió escala.',
-        },
-        {
-          q: '¿El PDF A4 incluye todos los talles?',
-          a: 'Sí, la curva de talles completa viene incluida en el archivo (XS a 4XL en adultos, 2 a 18 en niños); en la ficha del producto se elige qué talles imprimir.',
-        },
-        {
-          q: '¿Cuándo conviene pasar de A4 a plotter?',
-          a: 'Cuando pegar hojas empieza a atrasar la producción o se necesita cortar en cantidad: el mismo molde existe en formato plotter, en una sola lámina de ancho real, sin uniones.',
-        },
-      ]}
     />
   );
 }

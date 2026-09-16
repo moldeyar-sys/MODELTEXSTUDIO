@@ -6,6 +6,7 @@ import { CONTACT_INFO, submitContactMessage, buildContactWhatsApp } from '../lib
 import { SCHEMA_IDS } from '../lib/schemaIds';
 import { organizationSchemaId } from '../lib/siteConfig';
 import { Breadcrumbs } from '../components/ui/Breadcrumbs';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
 
 export default function ContactPage() {
   const [form, setForm] = useState({ name: '', whatsapp: '', email: '', subject: '', message: '' });
@@ -225,6 +226,8 @@ export default function ContactPage() {
               </>
             )}
           </div>
+
+          <RelatedLinks path="/contacto" />
         </div>
       </section>
     </div>

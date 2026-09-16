@@ -5,6 +5,8 @@ import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
 import { useSeo } from '../lib/seo';
 import { FORMATS } from '../lib/types';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
+import { FaqSection } from '../components/ui/FaqSection';
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -278,6 +280,9 @@ export default function CustomDesignPage() {
             </button>
           </form>
         </div>
+
+        <FaqSection path="/diseno-a-pedido" title="Preguntas frecuentes sobre moldería a medida" />
+        <RelatedLinks path="/diseno-a-pedido" />
       </div>
     </div>
   );

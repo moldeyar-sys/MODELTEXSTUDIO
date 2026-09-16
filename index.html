@@ -6,8 +6,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0048AD" />
 
-    <!-- middleware.ts inyecta <main data-bot-content> con el contenido real de
-         cada pagina (H1, texto, enlaces internos) en el HTML inicial, igual
+    <!-- middleware.ts inyecta un main[data-bot-content] con el contenido real
+         de cada pagina (H1, texto, enlaces internos) en el HTML inicial, igual
          para usuarios y robots. Con JavaScript no se ve nunca: se oculta por
          CSS antes del primer pintado y src/main.tsx lo borra al montar React,
          asi el usuario no ve un destello de texto sin estilos. Sin JavaScript

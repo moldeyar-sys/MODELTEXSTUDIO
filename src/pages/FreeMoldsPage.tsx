@@ -10,41 +10,9 @@ import { FreeMoldCard } from '../components/ui/FreeMoldCard';
 import { FreePromoCard } from '../components/ui/FreePromoCard';
 import { NewsletterSignup } from '../components/ui/NewsletterSignup';
 import type { FreeMold } from '../lib/types';
+import { RelatedLinks } from '../components/ui/RelatedLinks';
+import { FaqSection } from '../components/ui/FaqSection';
 
-const freeFaqs = [
-  {
-    q: '¿Los moldes gratis son moldes reales o solo de muestra?',
-    a: 'Son moldes reales de nuestro catálogo, no versiones recortadas ni de muestra: mismo nivel de terminación, talles y prolijidad que los moldes pagos. Los publicamos gratis justamente para que compruebes esa calidad antes de tu primera compra.',
-  },
-  {
-    q: '¿Cómo descargo un molde gratis para imprimir?',
-    a: 'Entrás a la sección Moldes Gratis, elegís el que te interesa y lo descargás: algunos se bajan sin necesidad de cuenta, otros piden crear una cuenta gratuita en Modeltex. En los dos casos la descarga es inmediata.',
-  },
-  {
-    q: '¿Los moldes gratis vienen en PDF listos para imprimir?',
-    a: 'Sí, se entregan en PDF, listos para imprimir en A4 o plotter según el molde, con el mismo cuadrado de control de medida que traen los moldes pagos para verificar que la impresión no perdió escala.',
-  },
-  {
-    q: '¿Cada cuánto suben moldes nuevos gratis para descargar?',
-    a: 'Sumamos moldes gratuitos nuevos de forma periódica, en general cada semana. Si te suscribís con tu email en esta página te avisamos cuando hay novedades.',
-  },
-  {
-    q: '¿Puedo usar un molde gratis para producir y vender ropa?',
-    a: 'Sí, tiene la misma licencia de uso productivo que los moldes pagos: podés confeccionar y vender las prendas sin límite de unidades. Lo que no está permitido es revender o redistribuir el archivo del molde.',
-  },
-  {
-    q: '¿Qué diferencia hay entre los moldes gratis y los moldes pagos?',
-    a: 'Ninguna en calidad: la diferencia es que el catálogo gratis es una selección chica y rotativa, mientras que el catálogo completo tiene más de 2.000 moldes con curva de talles completa, para elegir por categoría, prenda y formato.',
-  },
-  {
-    q: '¿Los moldes gratis en PDF son moldes completos o solo una parte?',
-    a: 'Son el molde completo, con todas sus piezas y su curva de talles, igual que un molde pago: no es una versión parcial ni un recorte del archivo. Se entregan en PDF listo para imprimir en A4 o plotter según el molde.',
-  },
-  {
-    q: '¿Cómo descargo moldes gratis para imprimir sin pagar nada?',
-    a: 'Entrás a esta sección, elegís un molde de la selección gratuita y lo descargás: no se pide ningún dato de pago porque son moldes gratis, algunos sin necesidad de cuenta y otros pidiendo una cuenta gratuita de Modeltex.',
-  },
-];
 
 export default function FreeMoldsPage() {
   const [molds, setMolds] = useState<FreeMold[]>([]);
@@ -80,18 +48,6 @@ export default function FreeMoldsPage() {
       ],
     },
     SCHEMA_IDS.breadcrumb,
-  );
-  useStructuredData(
-    {
-      '@context': 'https://schema.org',
-      '@type': 'FAQPage',
-      mainEntity: freeFaqs.map((item) => ({
-        '@type': 'Question',
-        name: item.q,
-        acceptedAnswer: { '@type': 'Answer', text: item.a },
-      })),
-    },
-    SCHEMA_IDS.faq,
   );
 
   useEffect(() => {
@@ -256,17 +212,13 @@ export default function FreeMoldsPage() {
           </p>
         </div>
 
-        <div className="card p-6 sm:p-7 max-w-3xl mt-6">
-          <h2 className="font-display text-2xl font-bold text-primary-900">Preguntas frecuentes sobre moldes gratis</h2>
-          <div className="mt-4 divide-y divide-gray-100">
-            {freeFaqs.map((item) => (
-              <div key={item.q} className="py-4 first:pt-0 last:pb-0">
-                <h3 className="font-semibold text-primary-900">{item.q}</h3>
-                <p className="text-gray-600 mt-2 leading-relaxed">{item.a}</p>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* FAQ desde src/lib/landingFaqs.ts: la misma lista que sirve
+            middleware.ts en el HTML inicial y marca como FAQPage. */}
+        <FaqSection
+          path="/moldes-gratis"
+          title="Preguntas frecuentes sobre moldes gratis"
+          className="card p-6 sm:p-7 max-w-3xl mt-6"
+        />
       </section>
 
       {/* CTA final */}
@@ -289,6 +241,8 @@ export default function FreeMoldsPage() {
               Pedir diseño a medida
             </Link>
           </div>
+
+          <RelatedLinks path="/moldes-gratis" />
         </div>
       </section>
     </div>
