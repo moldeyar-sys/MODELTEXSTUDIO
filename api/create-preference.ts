@@ -26,39 +26,109 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
  *    email real del dueño del pedido (guest_email, o el email de la
  *    cuenta si el pedido es de un usuario logueado).
  */
+/** Precio real minimo de un producto entre todos sus formatos cargados (mismo criterio que api/mp-webhook.ts). */
+function precioMinimo(p: any): number {
+  const candidatos = [
+    p?.precio_carton, p?.precio_pdf_a4, p?.precio_pdf_ploter, p?.price,
+    p?.precio_dxf, p?.precio_pds, p?.precio_mrk, p?.precio_ads,
+  ]
+    .map(Number)
+    .filter((n) => Number.isFinite(n) && n > 0);
+  return candidatos.length ? Math.min(...candidatos) : 0;
+}
+
+/** Precio real del formato declarado (mismo criterio que api/mp-webhook.ts). */
+function precioReal(p: any, formato: string | null | undefined): number {
+  const f = (formato || '').toLowerCase();
+  if (f.includes('cartón') || f.includes('carton')) return Number(p?.precio_carton) || 0;
+  if (f.includes('plóter') || f.includes('ploter')) return Number(p?.precio_pdf_ploter) || 0;
+  if (f.includes('pdf-a4') || f.includes('pdf a4')) return Number(p?.precio_pdf_a4) || Number(p?.price) || 0;
+  if (f.includes('dxf') || f.includes('aama')) return Number(p?.precio_dxf) || 0;
+  if (f.includes('pds')) return Number(p?.precio_pds) || 0;
+  if (f.includes('mrk') || f.includes('tizado')) return Number(p?.precio_mrk) || 0;
+  if (f.includes('ads') || f.includes('audaces')) return Number(p?.precio_ads) || 0;
+  return precioMinimo(p);
+}
+
 async function pedidoReal(orderId: string): Promise<{
   ok: boolean;
   status: string | null;
+  currency: string | null;
   ownerEmail: string | null;
   guestEmail: string | null;
   items: { id: string; title: string; quantity: number; unit_price: number }[];
 }> {
-  const r = await fetch(
+  const NO_ENCONTRADO = { ok: false, status: null, currency: null, ownerEmail: null, guestEmail: null, items: [] };
+  let r = await fetch(
     `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}` +
-      `&select=payment_status,order_status,guest_email,cart_snapshot,` +
-      `buyer:profiles(email),order_items(product_id,quantity,price,product_name)`,
+      `&select=payment_status,order_status,guest_email,currency,cart_snapshot,` +
+      `buyer:profiles(email),order_items(product_id,quantity,price,formato,product_name)`,
     { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
   );
-  if (!r.ok) return { ok: false, status: null, ownerEmail: null, guestEmail: null, items: [] };
+  if (!r.ok) {
+    // Resiliente: si la migracion que agrega orders.currency todavia no se
+    // corrio, reintenta sin esa columna (ver mismo patron en mp-webhook.ts).
+    r = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}` +
+        `&select=payment_status,order_status,guest_email,cart_snapshot,` +
+        `buyer:profiles(email),order_items(product_id,quantity,price,formato,product_name)`,
+      { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+    );
+  }
+  if (!r.ok) return NO_ENCONTRADO;
   const rows = (await r.json()) as any[];
   const order = rows?.[0];
-  if (!order) return { ok: false, status: null, ownerEmail: null, guestEmail: null, items: [] };
+  if (!order) return NO_ENCONTRADO;
 
-  const raw: any[] =
-    order.order_items?.length ? order.order_items : (order.cart_snapshot || []);
+  const usandoRespaldo = !order.order_items?.length;
+  const raw: any[] = usandoRespaldo ? (order.cart_snapshot || []) : order.order_items;
+
+  // El respaldo cart_snapshot lo escribe el NAVEGADOR (ver CheckoutPage.tsx):
+  // antes se usaba tal cual it.price para armar el link de pago, así que
+  // alguien podía mandar un pedido con order_items vacío (el insert normal
+  // puede fallar y el checkout no lo bloquea) y un cart_snapshot con
+  // cualquier precio. Ahora, cuando se cae a este respaldo, el precio se
+  // recalcula siempre desde el catálogo real (mismo criterio que el webhook),
+  // nunca desde lo que mandó el cliente.
+  const preciosReales = new Map<string, any>();
+  if (usandoRespaldo && raw.length) {
+    const ids = Array.from(new Set(raw.map((it: any) => it.product_id).filter(Boolean)));
+    if (ids.length) {
+      const pRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/products?id=in.(${ids.join(',')})` +
+          `&select=id,price,precio_carton,precio_pdf_a4,precio_pdf_ploter,precio_dxf,precio_pds,precio_mrk,precio_ads`,
+        { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+      );
+      if (pRes.ok) {
+        for (const p of (await pRes.json()) as any[]) preciosReales.set(p.id, p);
+      }
+    }
+  }
 
   const items = raw
-    .map((it: any) => ({
-      id: String(it.product_id ?? ''),
-      title: String(it.product_name || 'Molde'),
-      quantity: Number(it.quantity) || 1,
-      unit_price: Number(it.price) || 0,
-    }))
+    .map((it: any) => {
+      const unitPrice = usandoRespaldo
+        ? precioReal(preciosReales.get(it.product_id), it.formato)
+        : Number(it.price) || 0;
+      return {
+        id: String(it.product_id ?? ''),
+        title: String(it.product_name || 'Molde'),
+        quantity: Number(it.quantity) || 1,
+        unit_price: unitPrice,
+      };
+    })
     .filter((it) => it.id && it.unit_price > 0);
 
   const ownerEmail: string | null = order.guest_email || order.buyer?.email || null;
 
-  return { ok: items.length > 0, status: order.payment_status, ownerEmail, guestEmail: order.guest_email || null, items };
+  return {
+    ok: items.length > 0,
+    status: order.payment_status,
+    currency: order.currency ?? null,
+    ownerEmail,
+    guestEmail: order.guest_email || null,
+    items,
+  };
 }
 
 export default async function handler(req: any, res: any) {
@@ -105,6 +175,15 @@ export default async function handler(req: any, res: any) {
       res.status(404).json({ error: 'No se encontraron los items de este pedido.' });
       return;
     }
+    // Mercado Pago en esta cuenta solo cobra en pesos argentinos. Un pedido
+    // en USD (comprador fuera de Argentina, ver FormatOptions/useCountry) no
+    // se puede cobrar correctamente por acá: antes esto armaba una
+    // preferencia igual con currency_id fijo en 'ARS' y cobraba el número en
+    // dólares como si fueran pesos (24 dólares -> 24 pesos).
+    if (pedido.currency && pedido.currency !== 'ARS') {
+      res.status(400).json({ error: 'Mercado Pago no está disponible para pedidos en dólares. Elegí PayPal, Payoneer, Wise, transferencia o cripto.' });
+      return;
+    }
 
     const volverA = pedido.guestEmail
       ? `https://modeltex.com.ar/mi-pedido?order=${orderId}&email=${encodeURIComponent(pedido.guestEmail)}`
@@ -121,7 +200,14 @@ export default async function handler(req: any, res: any) {
       payer: payerEmail ? { email: payerEmail } : undefined,
       back_urls: {
         success: `${volverA}${volverA.includes('?') ? '&' : '?'}pago=exitoso`,
-        failure: `https://modeltex.com.ar/checkout?pago=fallido`,
+        // Antes mandaba siempre a /checkout?pago=fallido: como el carrito ya
+        // se vació antes de redirigir a MP (ver CheckoutPage.tsx) y esa
+        // pantalla no sabe nada del pedido, el comprador volvía a un
+        // "carrito vacío" sin ninguna forma de reintentar el pago del pedido
+        // que quedó pendiente. Ahora vuelve al mismo lugar que success/pending
+        // (su pedido, con cuenta o de invitado), donde sí hay un botón para
+        // volver a generar el link de pago (MyOrdersPage.tsx / MyGuestOrderPage.tsx).
+        failure: `${volverA}${volverA.includes('?') ? '&' : '?'}pago=fallido`,
         pending: `${volverA}${volverA.includes('?') ? '&' : '?'}pago=pendiente`,
       },
       auto_return: 'approved',
@@ -130,6 +216,14 @@ export default async function handler(req: any, res: any) {
       // Aviso automatico de pago: MP llama a este endpoint cuando el pago se
       // acredita y el pedido se marca "pagado" solo (ver api/mp-webhook.ts).
       notification_url: 'https://modeltex.com.ar/api/mp-webhook',
+      // Sin esto el link de pago quedaba vivo para siempre: si alguien volvia
+      // a pagar por el mismo link semanas despues (o MP reintentaba un pago
+      // duplicado del comprador), el webhook lo descartaba en silencio como
+      // "ya estaba pagado" sin que nadie se enterara del cobro doble. 24hs
+      // alcanza de sobra para completar un pago normal.
+      expires: true,
+      expiration_date_from: new Date().toISOString(),
+      expiration_date_to: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(),
     };
 
     const mpRes = await fetch('https://api.mercadopago.com/checkout/preferences', {

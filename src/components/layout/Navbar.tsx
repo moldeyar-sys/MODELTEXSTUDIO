@@ -4,6 +4,7 @@ import { Menu, X, ShoppingCart, User, ChevronDown, LogOut, Package, Download, Se
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
 import { useLocale } from '../../lib/locale';
+import { useEscapeKey } from '../../lib/useEscapeKey';
 
 export function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,6 +13,11 @@ export function Navbar() {
   const { itemCount } = useCart();
   const { t } = useLocale();
   const location = useLocation();
+  // Antes solo se cerraban al hacer click afuera (el menú de usuario) o
+  // navegando (el móvil): ninguno de los dos se podía cerrar con Escape,
+  // la forma estándar de cerrar un menú desplegable con teclado.
+  useEscapeKey(() => setIsOpen(false), isOpen);
+  useEscapeKey(() => setUserMenuOpen(false), userMenuOpen);
 
   const isActive = (path: string) => location.pathname === path;
 
@@ -83,6 +89,8 @@ export function Navbar() {
               <div className="relative">
                 <button
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
+                  aria-haspopup="menu"
+                  aria-expanded={userMenuOpen}
                   className="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
                 >
                   <div className="w-7 h-7 bg-primary-100 rounded-full flex items-center justify-center">
@@ -164,6 +172,9 @@ export function Navbar() {
             </Link>
             <button
               onClick={() => setIsOpen(!isOpen)}
+              aria-label={isOpen ? t('nav.closeMenu', 'Cerrar menú') : t('nav.openMenu', 'Abrir menú')}
+              aria-expanded={isOpen}
+              aria-controls="mobile-menu"
               className="p-2 rounded-lg text-gray-600 hover:bg-gray-100"
             >
               {isOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -173,7 +184,7 @@ export function Navbar() {
 
         {/* Mobile menu */}
         {isOpen && (
-          <div className="md:hidden pb-4 border-t border-gray-100 pt-2 max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
+          <div id="mobile-menu" className="md:hidden pb-4 border-t border-gray-100 pt-2 max-h-[calc(100dvh-3.5rem)] overflow-y-auto">
             {navLinks.map(link => (
               <Link
                 key={link.to}

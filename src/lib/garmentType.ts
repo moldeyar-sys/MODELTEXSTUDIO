@@ -4,7 +4,7 @@
 // distintos. Nunca se reescribe la columna original; esto solo deriva una
 // familia de prenda controlada para usar en filtros, agrupaciones y las
 // futuras rutas /moldes/:categoria/:prenda/:formato (Programmatic SEO, aún
-// sin publicar — ver src/lib/programmaticSeo.ts).
+// sin publicar).
 //
 // Cobertura verificada contra el catálogo real: ~99% de los productos activos
 // matchean alguna keyword. Lo que no matchea devuelve null y ese producto

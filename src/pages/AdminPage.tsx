@@ -43,7 +43,27 @@ export default function AdminPage() {
   const [emailsCopied, setEmailsCopied] = useState(false);
   const [embedBusy, setEmbedBusy] = useState(false);
   const [embedStatus, setEmbedStatus] = useState('');
-  const [descDrafts, setDescDrafts] = useState<{ id: string; name: string; text: string; include: boolean }[]>([]);
+  // Persistido en localStorage: antes vivía solo en memoria de React, así
+  // que recargar la página, perder la sesión (el JWT expira) o cerrar la
+  // pestaña por accidente tiraba a la basura toda una tanda de borradores ya
+  // revisados/editados a mano (y el gasto de OpenRouter que costaron).
+  const DESC_DRAFTS_KEY = 'modeltex_admin_desc_drafts';
+  const [descDrafts, setDescDrafts] = useState<{ id: string; name: string; text: string; include: boolean }[]>(() => {
+    try {
+      const saved = localStorage.getItem(DESC_DRAFTS_KEY);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+  useEffect(() => {
+    try {
+      if (descDrafts.length) localStorage.setItem(DESC_DRAFTS_KEY, JSON.stringify(descDrafts));
+      else localStorage.removeItem(DESC_DRAFTS_KEY);
+    } catch {
+      /* localStorage lleno o deshabilitado: no es crítico, se sigue igual */
+    }
+  }, [descDrafts]);
   const [descBusy, setDescBusy] = useState(false);
   const [descSaving, setDescSaving] = useState(false);
   const [descStatus, setDescStatus] = useState('');
@@ -53,7 +73,9 @@ export default function AdminPage() {
   const [chatSessions, setChatSessions] = useState<ChatSession[]>([]);
   const [expandedChatSession, setExpandedChatSession] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [paySettings, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
+  // Nadie leía este estado (solo se lo llenaba en fetchAll): payForm es el
+  // que efectivamente se muestra y edita en la pestaña Pagos.
+  const [, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
   const [payForm, setPayForm] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
   const [paySaving, setPaySaving] = useState(false);
   const [paySaved, setPaySaved] = useState(false);
@@ -187,6 +209,21 @@ export default function AdminPage() {
   };
 
   const deleteProduct = async (id: string) => {
+    // Antes solo pedía confirmación y borraba: product_files tiene ON DELETE
+    // CASCADE (migración 001), así que un producto ya vendido perdía sus
+    // archivos y los compradores con el pedido "pagado" se quedaban sin
+    // poder descargar, sin ningún aviso. Bloquear el borrado si hay pedidos
+    // (de cualquier estado, no solo pagados: uno pendiente también referencia
+    // el producto) y ofrecer "ocultar" en su lugar, que sí es reversible.
+    const pedidosConEsteProducto = orders.filter(o => (o.order_items || []).some(oi => oi.product_id === id)).length;
+    if (pedidosConEsteProducto > 0) {
+      const ocultar = confirm(
+        `Este producto tiene ${pedidosConEsteProducto} pedido(s) asociado(s). Borrarlo dejaría a esos compradores sin sus archivos.\n\n` +
+        `Aceptar = OCULTARLO del catálogo (reversible, no borra nada).\nCancelar = no hacer nada.`,
+      );
+      if (ocultar) await toggleProductActive(id, false);
+      return;
+    }
     if (!confirm('Eliminar este producto?')) return;
     const { error } = await supabase.from('products').delete().eq('id', id);
     if (!error) setProducts(prev => prev.filter(p => p.id !== id));
@@ -236,18 +273,29 @@ export default function AdminPage() {
       }
       let offset = 0;
       let totalProcessed = 0;
-      // Tope de seguridad: nunca deberia hacer falta mas de 50 tandas para el catalogo actual.
-      for (let round = 0; round < 50; round++) {
+      let round = 0;
+      // Tope de seguridad dinámico: antes era fijo en 50 rondas × 40 = 2.000,
+      // por debajo de los productos reales del catálogo (2.044+). En modo
+      // "force" (sin filtro de embedding pendiente) offset SIEMPRE arranca
+      // en 0 en cada click, así que ese tope no solo cortaba antes de
+      // terminar: volver a apretar el botón reprocesaba exactamente los
+      // mismos primeros 2.000 y los últimos productos quedaban inalcanzables
+      // para siempre. Ahora el tope se calcula sobre products.length (ya
+      // cargado en el panel), con margen generoso por si el conteo cambió.
+      const maxRounds = Math.max(50, Math.ceil(products.length / 40) + 5);
+      while (round < maxRounds) {
         const res = await fetch('/api/embed-catalog', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ force, offset }),
         });
-        // 429 = freno anti-abuso del endpoint: esperar un toque y reintentar la misma tanda.
+        // 429 = freno anti-abuso del endpoint: esperar un toque y reintentar
+        // la misma tanda SIN gastar una ronda del tope (antes sí la gastaba).
         if (res.status === 429) {
           await new Promise(r => setTimeout(r, 2000));
           continue;
         }
+        round++;
         const data = await res.json().catch(() => ({}));
         if (!res.ok || data.error) {
           setEmbedStatus(data.error || `Error (${res.status}) generando embeddings.`);
@@ -265,7 +313,7 @@ export default function AdminPage() {
         offset = data.nextOffset ?? offset + (data.processed || 0);
         setEmbedStatus(`Procesados ${totalProcessed}${data.remaining != null ? ` · faltan ${data.remaining}` : ''}...`);
       }
-      setEmbedStatus(`Procesados ${totalProcessed}. Quedó para otra tanda: volvé a apretar el botón.`);
+      setEmbedStatus(`Procesados ${totalProcessed}. Todavía faltan productos: volvé a apretar el botón para seguir.`);
     } catch {
       setEmbedStatus('Error de red generando embeddings.');
     } finally {
@@ -285,10 +333,14 @@ export default function AdminPage() {
         setDescStatus('Iniciá sesión de nuevo e intentá otra vez.');
         return;
       }
+      // Manda los ids que ya están como borrador sin guardar: antes, pedir
+      // "otra tanda" antes de guardar la primera devolvía los MISMOS 10
+      // productos (el endpoint no sabía cuáles ya se habían mandado) y
+      // quedaban duplicados en la lista, con keys de React repetidas.
       const res = await fetch('/api/generate-descriptions', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({}),
+        body: JSON.stringify({ excludeIds: descDrafts.map(d => d.id) }),
       });
       if (res.status === 429) {
         setDescStatus('Demasiadas llamadas seguidas. Esperá un momento y volvé a apretar.');
@@ -306,7 +358,13 @@ export default function AdminPage() {
       }
       type DescItem = { id: string; name: string; text: string };
       const items: DescItem[] = data.items || [];
-      setDescDrafts(prev => [...prev, ...items.map(i => ({ ...i, include: !!i.text }))]);
+      // Defensa adicional: si por lo que sea el servidor devolviera un id que
+      // ya está en la lista, no se duplica en el estado.
+      setDescDrafts(prev => {
+        const existingIds = new Set(prev.map(d => d.id));
+        const nuevos = items.filter(i => !existingIds.has(i.id));
+        return [...prev, ...nuevos.map(i => ({ ...i, include: !!i.text }))];
+      });
       setDescRemaining(data.remainingBeforeThisBatch ?? null);
       const missingNote = data.missingCount ? ` (${data.missingCount} sin texto — esos quedan para la próxima tanda)` : '';
       setDescStatus(`Tanda generada: ${items.length} para revisar${missingNote}.`);
@@ -504,6 +562,18 @@ export default function AdminPage() {
                   className="input-field pl-10"
                 />
               </div>
+              {/* Antes existía el estado featuredFilter y se usaba para filtrar
+                  (más abajo) pero no había ningún control que lo cambiara: el
+                  filtro quedaba fijo en "Todos" para siempre. */}
+              <select
+                value={featuredFilter}
+                onChange={e => setFeaturedFilter(e.target.value as 'all' | 'featured' | 'regular')}
+                className="input-field w-auto"
+              >
+                <option value="all">Todos</option>
+                <option value="featured">Destacados</option>
+                <option value="regular">No destacados</option>
+              </select>
               <button onClick={() => { setEditingProduct(null); setShowProductForm(true); }} className="btn-primary">
                 <Plus className="w-4 h-4 mr-1" /> Nuevo producto
               </button>
@@ -523,7 +593,7 @@ export default function AdminPage() {
                 <div key={p.id} className="card p-3 flex items-center gap-3">
                   <div className="w-14 h-14 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
                     {p.main_image_url ? (
-                      <img src={p.main_image_url} alt="" className="w-full h-full object-cover" />
+                      <img src={p.main_image_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">M</div>
                     )}
@@ -576,7 +646,7 @@ export default function AdminPage() {
                           <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-lg bg-gray-100 flex-shrink-0 overflow-hidden">
                               {p.main_image_url ? (
-                                <img src={p.main_image_url} alt="" className="w-full h-full object-cover" />
+                                <img src={p.main_image_url} alt="" loading="lazy" decoding="async" className="w-full h-full object-cover" />
                               ) : (
                                 <div className="w-full h-full flex items-center justify-center text-gray-300 text-xs">M</div>
                               )}
@@ -1158,7 +1228,7 @@ export default function AdminPage() {
               <div className="grid sm:grid-cols-2 gap-3">
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Alias</label>
-                  <input type="text" value={payForm.transfer_alias} onChange={e => setPayForm(f => ({ ...f, transfer_alias: e.target.value }))} className="input-field" placeholder="MOLDEY.DIGITAL" />
+                  <input type="text" value={payForm.transfer_alias} onChange={e => setPayForm(f => ({ ...f, transfer_alias: e.target.value }))} className="input-field" placeholder="tu.alias.real" />
                 </div>
                 <div>
                   <label className="block text-xs font-medium text-gray-600 mb-1">Titular</label>
@@ -1952,10 +2022,38 @@ function ProductForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSaving(true);
     setError('');
 
-    const slug = form.slug || generateSlug(form.name);
+    // Antes: si el admin escribía el slug a mano, se guardaba tal cual (solo
+    // generateSlug corría con el botón "Generar" o si el campo estaba
+    // vacío). Un slug con espacios, mayúsculas o barras generaba una URL
+    // /producto/... que el middleware y el router NO matchean con lo
+    // publicado — 404 real, descubierto recién cuando un cliente lo reporta.
+    // Ahora SIEMPRE se normaliza antes de guardar, se haya tipeado a mano o no.
+    const slug = generateSlug(form.slug || form.name);
+
+    // Antes: los inputs de precio no tenían min="0" y parseFloat aceptaba
+    // cualquier número — un precio negativo o inválido quedaba comprable.
+    const precioFields: [string, string][] = [
+      ['Cartón (ARS)', form.precio_carton], ['PDF A4 (ARS)', form.precio_pdf_a4], ['PDF Plóter (ARS)', form.precio_pdf_ploter],
+      ['Cartón (USD)', form.precio_usd_carton], ['PDF A4 (USD)', form.precio_usd_pdf_a4], ['PDF Plóter (USD)', form.precio_usd_pdf_ploter],
+      ['DXF (ARS)', form.precio_dxf], ['PDS (ARS)', form.precio_pds], ['MRK (ARS)', form.precio_mrk], ['ADS (ARS)', form.precio_ads],
+      ['DXF (USD)', form.precio_usd_dxf], ['PDS (USD)', form.precio_usd_pds], ['MRK (USD)', form.precio_usd_mrk], ['ADS (USD)', form.precio_usd_ads],
+    ];
+    for (const [label, raw] of precioFields) {
+      if (raw === '') continue;
+      const n = parseFloat(raw);
+      if (!Number.isFinite(n) || n < 0) {
+        setError(`El precio "${label}" no es válido. Tiene que ser un número mayor o igual a 0.`);
+        return;
+      }
+    }
+    if (form.disponible_pdf_a4 !== false && !form.precio_pdf_a4) {
+      setError('Falta el precio de PDF-A4 (queda en $0 si se guarda vacío). Cargalo o desactivá "disponible" para ese formato.');
+      return;
+    }
+
+    setSaving(true);
     // Campos base que SIEMPRE existen en la base.
     const baseData = {
       name: form.name,
@@ -2153,7 +2251,7 @@ function ProductForm({
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Precio Moldes en Cartón <span className="text-gray-400 font-normal">(Solo Argentina)</span>
                 </label>
-                <input name="precio_carton" type="number" step="0.01" value={form.precio_carton} onChange={handleChange} className="input-field" placeholder="Vacío = Consultar" />
+                <input name="precio_carton" type="number" step="0.01" min="0" value={form.precio_carton} onChange={handleChange} className="input-field" placeholder="Vacío = Consultar" />
                 <label className="flex items-center gap-2 text-xs text-gray-600 mt-2">
                   <input type="checkbox" name="disponible_carton" checked={form.disponible_carton} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                   Disponible en Cartón
@@ -2163,7 +2261,7 @@ function ProductForm({
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Precio Moldes en PDF-A4 <span className="text-gray-400 font-normal">(Global)</span>
                 </label>
-                <input name="precio_pdf_a4" type="number" step="0.01" value={form.precio_pdf_a4} onChange={handleChange} className="input-field" placeholder="Vacío = usa el precio base" />
+                <input name="precio_pdf_a4" type="number" step="0.01" min="0" value={form.precio_pdf_a4} onChange={handleChange} className="input-field" placeholder="Vacío = usa el precio base" />
                 <label className="flex items-center gap-2 text-xs text-gray-600 mt-2">
                   <input type="checkbox" name="disponible_pdf_a4" checked={form.disponible_pdf_a4} onChange={handleChange} className="w-4 h-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500" />
                   Disponible en PDF-A4
@@ -2173,7 +2271,7 @@ function ProductForm({
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Precio Moldes en PDF Plóter <span className="text-gray-400 font-normal">(mismo precio para 90 / 120 / 150 cm)</span>
                 </label>
-                <input name="precio_pdf_ploter" type="number" step="0.01" value={form.precio_pdf_ploter} onChange={handleChange} className="input-field" placeholder="Vacío = Consultar" />
+                <input name="precio_pdf_ploter" type="number" step="0.01" min="0" value={form.precio_pdf_ploter} onChange={handleChange} className="input-field" placeholder="Vacío = Consultar" />
               </div>
               <div className="sm:col-span-2 border-t border-gray-200 pt-4 mt-1">
                 <p className="text-sm font-semibold text-gray-700 mb-3">💵 Precios en USD <span className="text-gray-400 font-normal">(clientes internacionales — Chile, Brasil, etc.)</span></p>
@@ -2182,21 +2280,21 @@ function ProductForm({
                     <label className="block text-xs font-medium text-gray-600 mb-1">Cartón (USD)</label>
                     <div className="flex items-center gap-1">
                       <span className="text-gray-400 text-xs">$</span>
-                      <input name="precio_usd_carton" type="number" step="0.01" value={form.precio_usd_carton} onChange={handleChange} className="input-field" placeholder="Ej: 25.00" />
+                      <input name="precio_usd_carton" type="number" step="0.01" min="0" value={form.precio_usd_carton} onChange={handleChange} className="input-field" placeholder="Ej: 25.00" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">PDF-A4 (USD)</label>
                     <div className="flex items-center gap-1">
                       <span className="text-gray-400 text-xs">$</span>
-                      <input name="precio_usd_pdf_a4" type="number" step="0.01" value={form.precio_usd_pdf_a4} onChange={handleChange} className="input-field" placeholder="Ej: 10.00" />
+                      <input name="precio_usd_pdf_a4" type="number" step="0.01" min="0" value={form.precio_usd_pdf_a4} onChange={handleChange} className="input-field" placeholder="Ej: 10.00" />
                     </div>
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">PDF Plóter (USD)</label>
                     <div className="flex items-center gap-1">
                       <span className="text-gray-400 text-xs">$</span>
-                      <input name="precio_usd_pdf_ploter" type="number" step="0.01" value={form.precio_usd_pdf_ploter} onChange={handleChange} className="input-field" placeholder="Ej: 18.00" />
+                      <input name="precio_usd_pdf_ploter" type="number" step="0.01" min="0" value={form.precio_usd_pdf_ploter} onChange={handleChange} className="input-field" placeholder="Ej: 18.00" />
                     </div>
                   </div>
                 </div>
@@ -2208,35 +2306,35 @@ function ProductForm({
                 <div className="grid sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">DXF / AAMA — ARS</label>
-                    <input name="precio_dxf" type="number" step="0.01" value={form.precio_dxf} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
+                    <input name="precio_dxf" type="number" step="0.01" min="0" value={form.precio_dxf} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">DXF / AAMA — USD</label>
-                    <input name="precio_usd_dxf" type="number" step="0.01" value={form.precio_usd_dxf} onChange={handleChange} className="input-field" placeholder="Ej: 60.00" />
+                    <input name="precio_usd_dxf" type="number" step="0.01" min="0" value={form.precio_usd_dxf} onChange={handleChange} className="input-field" placeholder="Ej: 60.00" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">PDS (Optitex) — ARS</label>
-                    <input name="precio_pds" type="number" step="0.01" value={form.precio_pds} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
+                    <input name="precio_pds" type="number" step="0.01" min="0" value={form.precio_pds} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">PDS (Optitex) — USD</label>
-                    <input name="precio_usd_pds" type="number" step="0.01" value={form.precio_usd_pds} onChange={handleChange} className="input-field" placeholder="Ej: 70.00" />
+                    <input name="precio_usd_pds" type="number" step="0.01" min="0" value={form.precio_usd_pds} onChange={handleChange} className="input-field" placeholder="Ej: 70.00" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">MRK (Tizado) — ARS</label>
-                    <input name="precio_mrk" type="number" step="0.01" value={form.precio_mrk} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
+                    <input name="precio_mrk" type="number" step="0.01" min="0" value={form.precio_mrk} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">MRK (Tizado) — USD</label>
-                    <input name="precio_usd_mrk" type="number" step="0.01" value={form.precio_usd_mrk} onChange={handleChange} className="input-field" placeholder="Ej: 80.00" />
+                    <input name="precio_usd_mrk" type="number" step="0.01" min="0" value={form.precio_usd_mrk} onChange={handleChange} className="input-field" placeholder="Ej: 80.00" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">ADS (Audaces) — ARS</label>
-                    <input name="precio_ads" type="number" step="0.01" value={form.precio_ads} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
+                    <input name="precio_ads" type="number" step="0.01" min="0" value={form.precio_ads} onChange={handleChange} className="input-field" placeholder="Vacío = no se muestra" />
                   </div>
                   <div>
                     <label className="block text-xs font-medium text-gray-600 mb-1">ADS (Audaces) — USD</label>
-                    <input name="precio_usd_ads" type="number" step="0.01" value={form.precio_usd_ads} onChange={handleChange} className="input-field" placeholder="Ej: 70.00" />
+                    <input name="precio_usd_ads" type="number" step="0.01" min="0" value={form.precio_usd_ads} onChange={handleChange} className="input-field" placeholder="Ej: 70.00" />
                   </div>
                 </div>
               </div>

@@ -95,6 +95,10 @@ export interface Order {
   /** Email del comprador cuando compró sin crear cuenta (user_id queda null). */
   guest_email?: string | null;
   total: number;
+  /** Moneda real del total (columna nueva; pedidos viejos no la tienen → asumir 'ARS'). */
+  currency?: 'ARS' | 'USD' | null;
+  /** Id del pago de Mercado Pago que confirmó este pedido (columna nueva, best-effort). */
+  mp_payment_id?: string | null;
   payment_method: PaymentMethod;
   payment_status: PaymentStatus;
   order_status: OrderStatus;
@@ -169,6 +173,15 @@ export interface CartItem {
   unitPrice?: number;
   /** Talles seleccionados por el cliente (ej: ["S","M","L","XL","2XL"]). */
   sizes?: string[];
+  /**
+   * Moneda REAL de unitPrice (ARS o USD, según useCountry al momento de
+   * agregar). Antes no existía: unitPrice de un comprador fuera de
+   * Argentina ya venía en dólares, pero se mostraba con formatPrice()
+   * asumiendo que siempre era pesos (podía dividir un monto que YA era
+   * dólares por la cotización de nuevo). Sin este campo, un carrito viejo
+   * (localStorage de antes de este cambio) cae a 'ARS' por defecto.
+   */
+  currency?: 'ARS' | 'USD';
 }
 
 export const CATEGORIES: { value: ProductCategory; label: string }[] = [
@@ -299,6 +312,13 @@ export const PAYMENT_METHODS: { value: PaymentMethod; label: string; description
   { value: 'payoneer', label: 'Payoneer', description: 'Pago internacional en USD vía Payoneer' },
   { value: 'wise', label: 'Wise', description: 'Pago internacional en USD/EUR vía Wise' },
   { value: 'stripe', label: 'Tarjeta de crédito/débito', description: 'Pagá con tarjeta a través de Stripe' },
-  { value: 'transfer', label: 'Transferencia bancaria', description: 'Transferí al alias MOLDEY.DIGITAL y confirmá tu pago' },
+  // Antes decía "Transferí al alias MOLDEY.DIGITAL": un alias de marca vieja
+  // que no existe (el real, cargado en payment_settings, es otro). El
+  // selector de idioma no está conectado a ningún control hoy, así que este
+  // texto en español SIEMPRE es el que ve el comprador — mostraba un alias
+  // distinto al que aparece más abajo en el mismo formulario (CheckoutPage,
+  // campo "Alias:" con el valor real de paySettings.transfer_alias), con
+  // riesgo real de que alguien apurado copie el de acá y transfiera mal.
+  { value: 'transfer', label: 'Transferencia bancaria', description: 'Transferí al alias que te mostramos abajo y confirmá tu pago' },
   { value: 'binance', label: 'Binance / Criptomonedas', description: 'Pagá con criptomonedas a través de Binance' },
 ];

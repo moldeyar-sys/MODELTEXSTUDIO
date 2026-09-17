@@ -114,7 +114,12 @@ async function generateDescriptions(products: RawProduct[]): Promise<Map<string,
       ],
     }),
   });
-  if (!res.ok) throw new Error(`OpenRouter chat ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    // El detalle completo (puede incluir info de cuenta/cuota de OpenRouter)
+    // queda en los logs del servidor, no en la respuesta que ve el admin.
+    console.error('generate-descriptions: OpenRouter chat', res.status, await res.text());
+    throw new Error(`Error de OpenRouter (${res.status}). Mirá los logs del servidor para el detalle.`);
+  }
 
   const data = (await res.json()) as {
     choices?: { message?: { content?: string }; finish_reason?: string }[];
@@ -189,17 +194,32 @@ export default async function handler(req: any, res: any) {
   lastCallAt = now;
 
   try {
-    // Solo productos activos sin descripcion todavia. No hace falta paginar
-    // por offset: a medida que el admin guarda las que aprueba, esas dejan
-    // de aparecer solas en la proxima tanda.
+    const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
+    // Antes: siempre pedía "los primeros 10 sin descripción", así que
+    // apretar "Generar tanda" dos veces seguidas (antes de guardar la
+    // primera) devolvía EXACTAMENTE los mismos 10 productos — quedaban
+    // duplicados en la lista de borradores (misma key de React, ediciones
+    // que se reflejaban en las dos copias). El panel ahora manda los ids que
+    // ya tiene como borrador sin guardar, para excluirlos de la próxima tanda.
+    const excludeIds: string[] = Array.isArray(body.excludeIds)
+      ? body.excludeIds.filter((id: unknown): id is string => typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id))
+      : [];
+    const excludeFilter = excludeIds.length ? `&id=not.in.(${excludeIds.join(',')})` : '';
+
+    // Solo productos activos sin descripcion todavia (y no excluidos). No
+    // hace falta paginar por offset: a medida que el admin guarda las que
+    // aprueba, esas dejan de aparecer solas en la proxima tanda.
     const listRes = await fetch(
       `${SUPABASE_URL}/rest/v1/products?select=id,name,garment_type,category,sizes,formats,recommended_fabrics` +
-        `&is_active=eq.true&or=(short_description.is.null,short_description.eq.)&order=id.asc&limit=${BATCH_SIZE}`,
+        `&is_active=eq.true&or=(short_description.is.null,short_description.eq.)${excludeFilter}&order=id.asc&limit=${BATCH_SIZE}`,
       {
         headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Prefer: 'count=exact' },
       },
     );
-    if (!listRes.ok) throw new Error(`Supabase list ${listRes.status}: ${await listRes.text()}`);
+    if (!listRes.ok) {
+      console.error('generate-descriptions: Supabase list', listRes.status, await listRes.text());
+      throw new Error(`No se pudo leer el catálogo (${listRes.status}).`);
+    }
     const products = (await listRes.json()) as RawProduct[];
     const totalMissing = parseInt((listRes.headers.get('content-range') || '').split('/')[1] || '0', 10);
 

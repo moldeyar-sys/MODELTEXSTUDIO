@@ -6,6 +6,8 @@ interface AddOptions {
   format?: string;
   unitPrice?: number;
   sizes?: string[];
+  /** Moneda real de unitPrice ('ARS' por defecto si no se especifica). */
+  currency?: 'ARS' | 'USD';
 }
 
 interface CartContextType {
@@ -51,15 +53,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const format = opts?.format;
     const unitPrice = opts?.unitPrice;
     const sizes = opts?.sizes;
+    const currency = opts?.currency ?? 'ARS';
     const key = `${product.id}|${format ?? ''}`;
     trackAddToCart({ id: product.id, name: product.name, category: product.category, price: unitPrice ?? product.sale_price ?? product.price, format });
     setItems(prev => {
-      const existing = prev.find(i => cartItemKey(i) === key);
+      // Un carrito no puede mezclar ARS y USD: el total se calcula sumando
+      // unitPrice de todos los ítems sin distinguir moneda, así que mezclar
+      // daba una suma sin sentido (pesos + dólares como si fueran lo mismo).
+      // Esto solo puede pasar si cambia el país detectado a mitad de sesión
+      // (VPN, o /api/geo que tarda): se vacía el carrito viejo antes de
+      // agregar el nuevo ítem, en vez de sumarlo a una moneda distinta.
+      const base = prev.length && prev[0].currency && prev[0].currency !== currency ? [] : prev;
+      const existing = base.find(i => cartItemKey(i) === key);
       if (existing) {
         // Al re-agregar el mismo producto+formato, actualiza talles y suma cantidad
-        return prev.map(i => (cartItemKey(i) === key ? { ...i, quantity: i.quantity + 1, sizes } : i));
+        return base.map(i => (cartItemKey(i) === key ? { ...i, quantity: i.quantity + 1, sizes } : i));
       }
-      return [...prev, { product, quantity: 1, format, unitPrice, sizes }];
+      return [...base, { product, quantity: 1, format, unitPrice, sizes, currency }];
     });
   };
 

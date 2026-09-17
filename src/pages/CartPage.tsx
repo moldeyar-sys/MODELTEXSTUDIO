@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import { Trash2, Plus, Minus, ArrowLeft, ShoppingBag } from 'lucide-react';
 import { useCart, cartItemKey, cartUnitPrice } from '../contexts/CartContext';
-import { useLocale } from '../lib/locale';
+import { useLocale, formatMoney } from '../lib/locale';
 import { useCountry } from '../hooks/useCountry';
 import { WhatsAppConsultButton } from '../components/ui/WhatsAppConsultButton';
 import type { CartItem } from '../lib/types';
@@ -162,29 +162,37 @@ export default function CartPage() {
                       {/* Precio + ajuste + cantidad */}
                       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mt-4">
                         <div className="flex flex-col gap-0.5">
-                          <span className="text-lg font-bold text-primary-900">{formatPrice(price)}</span>
+                          <span className="text-lg font-bold text-primary-900">{formatMoney(price, item.currency)}</span>
                           <PriceTag item={item} />
                         </div>
 
                         <div className="flex items-center gap-3">
+                          {/* Antes sin aria-label: un lector de pantalla anunciaba
+                              "botón" tres veces seguidas por producto, sin decir
+                              cuál suma, cuál resta y cuál borra — el paso
+                              obligatorio antes de pagar. w-11 h-11 (44px, en vez
+                              de w-8 h-8/32px): área táctil recomendada. */}
                           <div className="flex items-center border border-gray-200 rounded-lg">
                             <button
                               onClick={() => updateQuantity(key, item.quantity - 1)}
-                              className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-800"
+                              aria-label={t('cart.decrease', 'Restar unidad')}
+                              className="w-11 h-11 flex items-center justify-center text-gray-500 hover:text-primary-800"
                             >
                               <Minus className="w-3.5 h-3.5" />
                             </button>
-                            <span className="w-8 text-center text-sm font-medium">{item.quantity}</span>
+                            <span className="w-8 text-center text-sm font-medium" aria-live="polite">{item.quantity}</span>
                             <button
                               onClick={() => updateQuantity(key, item.quantity + 1)}
-                              className="w-8 h-8 flex items-center justify-center text-gray-500 hover:text-primary-800"
+                              aria-label={t('cart.increase', 'Sumar unidad')}
+                              className="w-11 h-11 flex items-center justify-center text-gray-500 hover:text-primary-800"
                             >
                               <Plus className="w-3.5 h-3.5" />
                             </button>
                           </div>
                           <button
                             onClick={() => removeItem(key)}
-                            className="w-8 h-8 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            aria-label={t('cart.remove', 'Quitar del carrito')}
+                            className="w-11 h-11 flex items-center justify-center text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -209,7 +217,7 @@ export default function CartPage() {
                       {item.product.name}{item.format ? ` — ${item.format}` : ''}
                     </span>
                     <span className="text-gray-900 font-medium flex-shrink-0">
-                      {formatPrice(cartUnitPrice(item) * item.quantity)}
+                      {formatMoney(cartUnitPrice(item) * item.quantity, item.currency)}
                     </span>
                   </div>
                 ))}
@@ -219,7 +227,10 @@ export default function CartPage() {
 
               <div className="flex justify-between items-baseline mb-6">
                 <span className="text-lg font-semibold text-gray-900">{t('cart.total', 'Total')}</span>
-                <span className="text-2xl font-bold text-primary-900">{formatPrice(total)}</span>
+                {/* El carrito nunca mezcla monedas (CartContext.addItem lo
+                    garantiza), así que la moneda del primer ítem vale para el
+                    total entero. */}
+                <span className="text-2xl font-bold text-primary-900">{formatMoney(total, items[0]?.currency)}</span>
               </div>
 
               <Link to="/checkout" className="btn-primary w-full text-center block">

@@ -47,7 +47,7 @@ export function FreeMoldCard({ mold }: Props) {
 
   const handleDownload = (f: { url: string; label?: string; name?: string }) => {
     incrementFreeMoldDownload(mold.id, fileDisplayName(f), !!user, user?.id ?? null);
-    trackFreeDownload({ id: mold.id, name: mold.name });
+    trackFreeDownload({ id: mold.id, name: mold.title });
     window.open(f.url, '_blank', 'noopener,noreferrer');
   };
 

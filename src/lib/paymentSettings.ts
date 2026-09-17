@@ -26,7 +26,11 @@ export interface PaymentSettings {
 
 export const PAYMENT_SETTINGS_DEFAULTS: PaymentSettings = {
   id: 'default',
-  transfer_alias: 'MOLDEY.DIGITAL',
+  // Vacío a propósito (no "MOLDEY.DIGITAL", un alias de marca vieja que no
+  // existe): CheckoutPage solo muestra la línea "Alias:" si hay un valor, así
+  // que mientras se carga el real (o si la carga falla) el comprador no ve
+  // ningún alias a medias en vez de uno que parece real pero está mal.
+  transfer_alias: '',
   transfer_holder: 'Modeltex',
   transfer_bank: '',
   transfer_cbu: '',

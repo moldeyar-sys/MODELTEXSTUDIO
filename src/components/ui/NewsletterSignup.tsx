@@ -50,7 +50,9 @@ export function NewsletterSignup({ source = 'moldes-gratis', className = '' }: P
       </div>
       <p className="text-xs text-gray-500 mb-3">Un mail cuando sumamos moldes gratis. Sin spam, te das de baja cuando quieras.</p>
       <form onSubmit={onSubmit} className="flex flex-col sm:flex-row gap-2">
+        <label htmlFor="newsletter-email" className="sr-only">Email para novedades</label>
         <input
+          id="newsletter-email"
           type="email"
           value={email}
           onChange={e => setEmail(e.target.value)}

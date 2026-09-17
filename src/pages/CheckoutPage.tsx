@@ -3,20 +3,38 @@ import { Link } from 'react-router-dom';
 import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet, Copy, Check, Globe } from 'lucide-react';
 import { useCart, cartUnitPrice, cartItemKey } from '../contexts/CartContext';
 import { useAuth } from '../contexts/AuthContext';
-import { useLocale } from '../lib/locale';
+import { useLocale, formatMoney } from '../lib/locale';
 import { supabase } from '../lib/supabase';
 import type { PaymentMethod } from '../lib/types';
 import { PAYMENT_METHODS } from '../lib/types';
 import { WhatsAppConsultButton } from '../components/ui/WhatsAppConsultButton';
 import { fetchPaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
-import { trackBeginCheckout, trackPurchase } from '../lib/analytics';
+import { trackBeginCheckout } from '../lib/analytics';
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
   const { user } = useAuth();
-  const { formatPrice, t } = useLocale();
+  const { t } = useLocale();
+  // El carrito no mezcla monedas (CartContext.addItem lo garantiza): la
+  // moneda del primer ítem vale para todo el pedido. 'ARS' por defecto para
+  // un carrito vacío o guardado antes de que existiera este campo.
+  const orderCurrency: 'ARS' | 'USD' = items[0]?.currency ?? 'ARS';
+  // Mercado Pago (esta cuenta) solo cobra en pesos: antes se ofrecía igual a
+  // compradores fuera de Argentina y el link se armaba con currency_id "ARS"
+  // fijo, cobrando el número en dólares como si fueran pesos (ver
+  // api/create-preference.ts). Ahora no se ofrece la opción directamente.
+  const availablePaymentMethods = orderCurrency === 'USD'
+    ? PAYMENT_METHODS.filter(m => m.value !== 'mercadopago')
+    : PAYMENT_METHODS;
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('mercadopago');
+
+  useEffect(() => {
+    if (orderCurrency === 'USD' && paymentMethod === 'mercadopago') {
+      setPaymentMethod('paypal');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [orderCurrency]);
   const [processing, setProcessing] = useState(false);
   const [orderId, setOrderId] = useState<string | null>(null);
   const [error, setError] = useState('');
@@ -97,19 +115,29 @@ export default function CheckoutPage() {
         order_status: 'pendiente',
       };
 
-      // Resiliente: si la migracion de cart_snapshot todavia no se corrio en
-      // la base (columna inexistente), reintenta sin ese campo para no
-      // bloquear la venta — igual que el patron ya usado para order_items.
+      // Resiliente: si la migracion de cart_snapshot/currency todavia no se
+      // corrio en la base (columna inexistente), reintenta sin esos campos
+      // para no bloquear la venta — igual que el patron ya usado para
+      // order_items. orderCurrency viaja en el pedido para que Mercado Pago
+      // (create-preference.ts) y el resto de las pantallas de pedido sepan
+      // en qué moneda cobrar/mostrar el total.
       let { error: orderError } = await supabase
         .from('orders')
-        .insert({ ...baseOrder, cart_snapshot: cartSnapshot });
+        .insert({ ...baseOrder, cart_snapshot: cartSnapshot, currency: orderCurrency });
+      if (orderError && /cart_snapshot|currency|column/i.test(orderError.message ?? '')) {
+        ({ error: orderError } = await supabase.from('orders').insert({ ...baseOrder, cart_snapshot: cartSnapshot }));
+      }
       if (orderError && /cart_snapshot|column/i.test(orderError.message ?? '')) {
         ({ error: orderError } = await supabase.from('orders').insert(baseOrder));
       }
 
       if (orderError) throw orderError;
 
-      trackPurchase({ id: newOrderId, value: total, itemCount: items.length });
+      // trackPurchase se llamaba ACÁ (justo después de crear el pedido
+      // "pendiente", antes de saber si el pago se completa). GA4 contaba
+      // como venta cerrada todo pedido creado, incluidos los que el
+      // comprador abandona o Mercado Pago rechaza. Ahora se dispara recién
+      // cuando el pedido pasa a "pagado" (MyOrdersPage.tsx / MyGuestOrderPage.tsx).
 
       const baseItems = items.map(item => ({
         order_id: newOrderId,
@@ -197,7 +225,7 @@ export default function CheckoutPage() {
   const AmountBox = () => (
     <div className="bg-white border-2 border-primary-200 rounded-xl p-4 mb-4 text-center">
       <p className="text-xs text-gray-500 mb-1">{t('co.amount', 'Monto exacto a pagar')}</p>
-      <p className="text-2xl sm:text-3xl font-bold text-primary-900 mb-3">{formatPrice(confirmedTotal)}</p>
+      <p className="text-2xl sm:text-3xl font-bold text-primary-900 mb-3">{formatMoney(confirmedTotal, orderCurrency)}</p>
       <button
         onClick={copyAmount}
         className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-primary-50 hover:bg-primary-100 text-primary-800 text-sm font-medium transition-colors"
@@ -386,7 +414,7 @@ export default function CheckoutPage() {
 
               <div className="bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 mb-4">
                 <p className="text-xs text-amber-800 font-medium">
-                  {t('co.mpNote', '⚠️ Al abrir el link de Mercado Pago, ingresá exactamente')} <strong>{formatPrice(confirmedTotal)}</strong> {t('co.mpNote2', 'como monto a pagar.')}
+                  {t('co.mpNote', '⚠️ Al abrir el link de Mercado Pago, ingresá exactamente')} <strong>{formatMoney(confirmedTotal, orderCurrency)}</strong> {t('co.mpNote2', 'como monto a pagar.')}
                 </p>
               </div>
 
@@ -460,8 +488,9 @@ export default function CheckoutPage() {
                 </div>
               ) : (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('co.yourEmail', 'Tu email')}</label>
+                  <label htmlFor="guest-email" className="block text-sm font-medium text-gray-700 mb-1.5">{t('co.yourEmail', 'Tu email')}</label>
                   <input
+                    id="guest-email"
                     type="email"
                     value={guestEmail}
                     onChange={(e) => setGuestEmail(e.target.value)}
@@ -484,7 +513,7 @@ export default function CheckoutPage() {
             <div className="card p-5 sm:p-6">
               <h2 className="font-semibold text-gray-900 text-lg mb-4">{t('co.paymentMethod', 'Método de pago')}</h2>
               <div className="space-y-3">
-                {PAYMENT_METHODS.map(method => (
+                {availablePaymentMethods.map(method => (
                   <button
                     key={method.value}
                     onClick={() => setPaymentMethod(method.value)}
@@ -556,7 +585,7 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <span className="text-sm font-semibold text-gray-900 flex-shrink-0 ml-3">
-                      {formatPrice(cartUnitPrice(item) * item.quantity)}
+                      {formatMoney(cartUnitPrice(item) * item.quantity, item.currency)}
                     </span>
                   </div>
                 ))}
@@ -570,11 +599,11 @@ export default function CheckoutPage() {
               <h3 className="font-semibold text-gray-900 text-lg mb-6">{t('co.summaryTitle', 'Resumen')}</h3>
               <div className="flex justify-between items-baseline mb-6">
                 <span className="text-lg font-semibold text-gray-900">{t('co.total', 'Total')}</span>
-                <span className="text-2xl font-bold text-primary-900">{formatPrice(total)}</span>
+                <span className="text-2xl font-bold text-primary-900">{formatMoney(total, orderCurrency)}</span>
               </div>
 
               {error && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
+                <div role="alert" className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">
                   {error}
                 </div>
               )}
@@ -596,7 +625,7 @@ export default function CheckoutPage() {
 
               <WhatsAppConsultButton
                 className="mt-3"
-                message={`Hola Modeltex, tengo una duda para finalizar mi compra (total ${formatPrice(total)}).`}
+                message={`Hola Modeltex, tengo una duda para finalizar mi compra (total ${formatMoney(total, orderCurrency)}).`}
               />
 
               <p className="text-xs text-gray-400 text-center mt-3">

@@ -149,7 +149,7 @@ export function ReviewsSection({ targetType, targetId, compact = false }: Props)
                   </div>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-400">{r.created_at && new Date(r.created_at).toLocaleDateString('es-AR')}</span>
+                  <span className="text-xs text-gray-500">{r.created_at && new Date(r.created_at).toLocaleDateString('es-AR')}</span>
                   {(isAdmin || (user && r.user_id === user.id)) && (
                     <button onClick={() => onDelete(r.id)} className="p-1 text-gray-300 hover:text-red-500 rounded" title={t('reviews.delete', 'Eliminar')}>
                       <Trash2 className="w-3.5 h-3.5" />

@@ -842,8 +842,9 @@ export default function CatalogPage() {
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.category', 'Categoria')}</label>
+                <label htmlFor="catalog-category" className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.category', 'Categoria')}</label>
                 <select
+                  id="catalog-category"
                   value={category}
                   onChange={(e) => updateFilter('categoria', e.target.value)}
                   className="input-field"
@@ -855,8 +856,9 @@ export default function CatalogPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.format', 'Formato')}</label>
+                <label htmlFor="catalog-format" className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.format', 'Formato')}</label>
                 <select
+                  id="catalog-format"
                   value={format}
                   onChange={(e) => updateFilter('formato', e.target.value)}
                   className="input-field"
@@ -868,8 +870,9 @@ export default function CatalogPage() {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.sortBy', 'Ordenar por')}</label>
+                <label htmlFor="catalog-sort" className="block text-sm font-medium text-gray-700 mb-2">{t('catalog.sortBy', 'Ordenar por')}</label>
                 <select
+                  id="catalog-sort"
                   value={sort}
                   onChange={(e) => updateFilter('orden', e.target.value)}
                   className="input-field"

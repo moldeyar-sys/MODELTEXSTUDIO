@@ -2,6 +2,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import { Download, Package, Loader2, Search, Clock, AlertCircle } from 'lucide-react';
 import { useSeo } from '../lib/seo';
+import { formatMoney } from '../lib/locale';
+import { fetchPaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
+import type { PaymentSettings } from '../lib/paymentSettings';
+import type { PaymentMethod } from '../lib/types';
+import { trackPurchase } from '../lib/analytics';
+import { PaymentInstructions } from '../components/ui/PaymentInstructions';
 
 interface GuestFile {
   id: string;
@@ -11,7 +17,7 @@ interface GuestFile {
 }
 
 interface GuestOrderResult {
-  order: { id: string; total: number; payment_method: string; payment_status: string; created_at: string };
+  order: { id: string; total: number; currency?: 'ARS' | 'USD' | null; payment_method: string; payment_status: string; created_at: string };
   files: GuestFile[];
   pending?: boolean;
 }
@@ -29,10 +35,16 @@ export default function MyGuestOrderPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [result, setResult] = useState<GuestOrderResult | null>(null);
+  const [paySettings, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
+  const pago = params.get('pago'); // 'exitoso' | 'pendiente' | 'fallido', ver back_urls de api/create-preference.ts
 
   // noindex: la URL real lleva ?order=...&email=... (dato personal del
   // comprador invitado) — no debe quedar indexable ni aparecer en buscadores.
   useSeo({ title: 'Mi pedido', path: '/mi-pedido', noindex: true });
+
+  useEffect(() => {
+    fetchPaymentSettings().then(setPaySettings);
+  }, []);
 
   const lookup = useCallback(async (id: string, mail: string) => {
     if (!id.trim() || !mail.trim()) return;
@@ -51,12 +63,22 @@ export default function MyGuestOrderPage() {
         return;
       }
       setResult(data);
+      // GA4 "purchase" real recién al ver el pedido ya pagado volviendo de
+      // Mercado Pago (antes se contaba al crear el pedido "pendiente" en
+      // CheckoutPage.tsx, aunque el pago se rechazara o se abandonara).
+      if (pago === 'exitoso' && data?.order?.payment_status === 'pagado') {
+        const trackedKey = `modeltex_tracked_purchase_${data.order.id}`;
+        if (!sessionStorage.getItem(trackedKey)) {
+          trackPurchase({ id: data.order.id, value: Number(data.order.total), itemCount: data.files?.length || 0 });
+          sessionStorage.setItem(trackedKey, '1');
+        }
+      }
     } catch {
       setError('No hay conexión en este momento. Probá de nuevo en un rato.');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [pago]);
 
   // Si el link ya trae los dos datos (llegó por mail), busca solo.
   useEffect(() => {
@@ -72,6 +94,22 @@ export default function MyGuestOrderPage() {
         <div className="max-w-2xl mx-auto">
           <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">Mi pedido</h1>
           <p className="text-gray-500 mb-8">Consultá tu compra con el número de pedido y el email que usaste al comprar.</p>
+
+          {pago === 'fallido' && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+              Tu pago no se pudo procesar. Buscá tu pedido abajo para reintentarlo.
+            </div>
+          )}
+          {pago === 'pendiente' && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+              Estamos confirmando tu pago. Te avisamos por mail apenas se acredite.
+            </div>
+          )}
+          {pago === 'exitoso' && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+              ¡Pago confirmado! Tus archivos ya están disponibles abajo.
+            </div>
+          )}
 
           <form
             onSubmit={(e) => { e.preventDefault(); lookup(orderId, email); }}
@@ -116,7 +154,7 @@ export default function MyGuestOrderPage() {
               <div className="flex items-center justify-between gap-3 mb-4 pb-4 border-b border-gray-100">
                 <div>
                   <p className="text-xs text-gray-400">Pedido #{result.order.id.slice(0, 8)}</p>
-                  <p className="font-semibold text-gray-900">${Number(result.order.total).toLocaleString('es-AR')}</p>
+                  <p className="font-semibold text-gray-900">{formatMoney(Number(result.order.total), result.order.currency)}</p>
                 </div>
                 <span
                   className={`text-xs font-semibold px-2.5 py-1 rounded-full ${
@@ -132,14 +170,27 @@ export default function MyGuestOrderPage() {
               </div>
 
               {result.pending ? (
-                <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
-                  <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
-                  <div>
-                    <p className="text-sm font-medium text-amber-800">Todavía estamos confirmando tu pago</p>
-                    <p className="text-sm text-amber-700 mt-1">
-                      Te va a llegar un mail apenas se acredite (puede tardar hasta 24 horas), con este mismo link para descargar. Volvé a esta página cuando quieras revisar el estado.
-                    </p>
+                <div>
+                  <div className="flex items-start gap-3 p-4 bg-amber-50 border border-amber-200 rounded-xl">
+                    <Clock className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+                    <div>
+                      <p className="text-sm font-medium text-amber-800">Todavía estamos confirmando tu pago</p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        Si ya pagaste, te va a llegar un mail apenas se acredite (puede tardar hasta 24 horas). Si todavía no pagaste, acá tenés cómo hacerlo:
+                      </p>
+                    </div>
                   </div>
+                  {/* Antes esta información solo existía en la pantalla de
+                      CheckoutPage.tsx justo después de comprar: si el invitado
+                      cerraba la pestaña, no tenía forma de volver a verla. */}
+                  <PaymentInstructions
+                    method={result.order.payment_method as PaymentMethod}
+                    total={Number(result.order.total)}
+                    currency={result.order.currency}
+                    settings={paySettings}
+                    orderId={result.order.id}
+                    payerEmail={email}
+                  />
                 </div>
               ) : result.files.length === 0 ? (
                 <div className="flex items-start gap-3 p-4 bg-gray-50 border border-gray-200 rounded-xl">

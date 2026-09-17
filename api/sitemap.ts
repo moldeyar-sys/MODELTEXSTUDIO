@@ -286,6 +286,12 @@ export default async function handler(_req: unknown, res: any) {
   ].join('\n');
 
   res.setHeader('Content-Type', 'application/xml; charset=utf-8');
-  res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+  // Vercel no reenvia s-maxage/stale-while-revalidate al navegador (son
+  // directivas para SU cache de borde): un cliente que no pasa por ese cache
+  // (crawler, otro proxy) recibia "Cache-Control: public" sin max-age, sin
+  // ninguna vida util. CDN-Cache-Control es la que Vercel sigue usando para
+  // el edge; Cache-Control ahora lleva un max-age real para el navegador.
+  res.setHeader('Cache-Control', 'public, max-age=3600');
+  res.setHeader('CDN-Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
   res.status(200).send(xml);
 }

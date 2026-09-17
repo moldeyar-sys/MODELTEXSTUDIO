@@ -1,4 +1,4 @@
-import { useState, useEffect, type FormEvent } from 'react';
+import { useState, useEffect, useRef, type FormEvent } from 'react';
 import { AlertCircle, Check, ShoppingBag, Download, ArrowRight, UserRound, MapPin, Package } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
@@ -44,8 +44,16 @@ export default function MyAccountPage() {
     customer_type: 'otro' as CustomerType,
   });
 
+  // Solo inicializa el formulario la PRIMERA vez que llega el perfil: antes
+  // corría en cada cambio de la referencia `profile` (AuthContext.fetchProfile
+  // crea un objeto nuevo cada vez que se ejecuta), así que cualquier cosa que
+  // disparara un refetch pisaba lo que el usuario estaba tipeando a medio
+  // llenar. AuthContext ya evita refetchear sin necesidad; esto es una
+  // segunda barrera puntual para esta pantalla.
+  const formInitialized = useRef(false);
   useEffect(() => {
-    if (profile) {
+    if (profile && !formInitialized.current) {
+      formInitialized.current = true;
       setFormData({
         full_name: profile.full_name || '',
         whatsapp: profile.whatsapp || '',

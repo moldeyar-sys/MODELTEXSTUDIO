@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { X, Ruler } from 'lucide-react';
 import { useLocale } from '../../lib/locale';
+import { useEscapeKey } from '../../lib/useEscapeKey';
 
 // ── Tablas de medidas MODELTEX (medidas anatómicas en cm) ─────────────────────
 
@@ -60,6 +61,7 @@ export function SizeGuide() {
   const { t } = useLocale();
   const [open, setOpen] = useState(false);
   const [tab, setTab] = useState<Tab>('dama');
+  useEscapeKey(() => setOpen(false), open);
 
   return (
     <>
@@ -77,6 +79,9 @@ export function SizeGuide() {
         <div
           className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
           onClick={() => setOpen(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={t('guide.title', 'Guía de talles Modeltex')}
         >
           <div
             className="bg-white w-full sm:max-w-2xl sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-hidden flex flex-col"
@@ -90,7 +95,7 @@ export function SizeGuide() {
                 </h3>
                 <p className="text-[11px] text-gray-400 mt-0.5">{t('guide.subtitle', 'Medidas anatómicas del cuerpo en centímetros')}</p>
               </div>
-              <button onClick={() => setOpen(false)} aria-label="Cerrar" className="p-1.5 hover:bg-gray-100 rounded-lg">
+              <button onClick={() => setOpen(false)} aria-label="Cerrar" className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-lg">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
@@ -117,8 +122,11 @@ export function SizeGuide() {
               ))}
             </div>
 
-            {/* Tabla */}
-            <div className="overflow-y-auto flex-1 p-1">
+            {/* Tabla. overflow-x-auto propio: sin esto, en una pantalla angosta
+                (body tiene overflow-x:hidden global) las columnas de más a la
+                derecha (ej. Cadera) quedaban recortadas sin ninguna forma de
+                verlas. */}
+            <div className="overflow-y-auto overflow-x-auto flex-1 p-1">
               {tab === 'dama' && (
                 <table className="w-full">
                   <thead>

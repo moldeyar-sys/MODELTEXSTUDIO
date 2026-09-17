@@ -107,7 +107,7 @@ export default function LoginPage() {
           <div className="mt-8 text-center border-t border-gray-100 pt-6">
             <p className="text-gray-500 text-sm">
               No tenes cuenta?{' '}
-              <Link to="/registro" className="font-semibold text-petroleum-600 hover:text-petroleum-700">
+              <Link to="/registro" state={{ next }} className="font-semibold text-petroleum-600 hover:text-petroleum-700">
                 Crea una
               </Link>
             </p>

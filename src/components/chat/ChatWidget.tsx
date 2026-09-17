@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Bot, X, Send, Loader2, UserPlus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
+import { useEscapeKey } from '../../lib/useEscapeKey';
 
 type Msg = { role: 'user' | 'assistant'; content: string };
 
@@ -56,6 +57,7 @@ interface ChatWidgetProps {
 }
 
 export function ChatWidget({ open, onClose }: ChatWidgetProps) {
+  useEscapeKey(onClose, open);
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: GREETING }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -107,7 +109,12 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
     <>
       {/* Panel del chat (la burbuja de apertura vive en ContactDock) */}
       {open && (
-        <div className="fixed inset-x-3 bottom-3 sm:inset-x-auto sm:right-6 sm:bottom-24 z-50 sm:w-[380px] max-w-[calc(100vw-1.5rem)]">
+        <div
+          className="fixed inset-x-3 bottom-3 sm:inset-x-auto sm:right-6 sm:bottom-24 z-50 sm:w-[380px] max-w-[calc(100vw-1.5rem)]"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Asistente Modeltex"
+        >
           <div className="flex flex-col bg-white rounded-2xl shadow-2xl border border-gray-200 overflow-hidden h-[70vh] sm:h-[520px]">
             {/* Header */}
             <div className="flex items-center justify-between px-4 py-3 bg-primary-800 text-white">
@@ -120,7 +127,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
                   <p className="text-[11px] text-white/70 leading-tight">Respuestas al instante</p>
                 </div>
               </div>
-              <button onClick={onClose} aria-label="Cerrar" className="p-1 hover:bg-white/15 rounded-lg">
+              <button onClick={onClose} aria-label="Cerrar" className="w-11 h-11 flex items-center justify-center hover:bg-white/15 rounded-lg">
                 <X className="w-5 h-5" />
               </button>
             </div>

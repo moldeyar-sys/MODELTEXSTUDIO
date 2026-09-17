@@ -626,7 +626,11 @@ export default async function handler(_req: unknown, res: any) {
     lines.push('');
 
     res.setHeader('Content-Type', 'text/plain; charset=utf-8');
-    res.setHeader('Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
+    // Ver mismo comentario en api/sitemap.ts: Vercel no reenvia s-maxage al
+    // navegador, así que sin CDN-Cache-Control por separado un cliente fuera
+    // del cache de borde bajaba el archivo completo (659 KB) en cada visita.
+    res.setHeader('Cache-Control', 'public, max-age=3600');
+    res.setHeader('CDN-Cache-Control', 'public, s-maxage=3600, stale-while-revalidate=86400');
     res.status(200).send(lines.join('\n'));
   } catch (err) {
     console.error('llms-full error', err);

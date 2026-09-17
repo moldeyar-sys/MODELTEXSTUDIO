@@ -47,6 +47,13 @@
          el meta no tiene ningún efecto ni error. -->
     <meta name="google-site-verification" content="%VITE_GSC_VERIFICATION%" />
 
+    <!-- La imagen del Hero es el LCP (Largest Contentful Paint) de la home.
+         Sin preload, el navegador recién la descubre cuando React monta
+         HeroCarousel (después de bajar y ejecutar vendor-react + vendor-supabase
+         + index, ~500 KB) en vez de apenas parsear este <head>. Es siempre el
+         primer slide mostrado (fallbackSrc en HomePage.tsx), se reemplace o no
+         después por una imagen que cargue el admin. -->
+    <link rel="preload" as="image" href="/brand/modeltex-hero.webp" fetchpriority="high" type="image/webp" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Adelanta la conexion (DNS/TLS) a Supabase: la home y el catalogo

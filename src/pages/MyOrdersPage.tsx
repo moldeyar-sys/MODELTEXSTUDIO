@@ -2,10 +2,16 @@ import { useState, useEffect } from 'react';
 import { ShoppingBag, Download, Loader2, FileText, MessageCircle, ImageOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import { PAYMENT_METHODS } from '../lib/types';
+import type { PaymentMethod } from '../lib/types';
 import { createSignedDownloadUrl, isStoragePath } from '../lib/storage';
 import { WHATSAPP_NUMBER } from '../lib/whatsapp';
+import { formatMoney } from '../lib/locale';
+import { fetchPaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
+import type { PaymentSettings } from '../lib/paymentSettings';
+import { trackPurchase } from '../lib/analytics';
+import { PaymentInstructions } from '../components/ui/PaymentInstructions';
 
 interface OrderItemRow {
   id: string;
@@ -19,6 +25,7 @@ interface OrderRow {
   id: string;
   created_at: string;
   total: number;
+  currency?: 'ARS' | 'USD' | null;
   payment_method: string;
   payment_status: string;
   order_status: string;
@@ -46,28 +53,54 @@ const consultWhatsApp = (productName: string) =>
 
 export default function MyOrdersPage() {
   const { user } = useAuth();
+  const [searchParams] = useSearchParams();
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [purchased, setPurchased] = useState<PurchasedProduct[]>([]);
   const [loading, setLoading] = useState(true);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [downloadError, setDownloadError] = useState('');
+  const [paySettings, setPaySettings] = useState<PaymentSettings>(PAYMENT_SETTINGS_DEFAULTS);
+  const pago = searchParams.get('pago'); // 'exitoso' | 'pendiente' | 'fallido', ver back_urls de api/create-preference.ts
 
   useEffect(() => {
     fetchData();
+    fetchPaymentSettings().then(setPaySettings);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user?.id]);
 
   const fetchData = async () => {
     if (!user?.id) return;
     setLoading(true);
-    const { data } = await supabase
+    const SELECT_BASE = 'id, created_at, total, payment_method, payment_status, order_status, order_items(id, quantity, price, formato, product_id, products(id, name, slug, main_image_url))';
+    const first = await supabase
       .from('orders')
-      .select('id, created_at, total, payment_method, payment_status, order_status, order_items(id, quantity, price, formato, product_id, products(id, name, slug, main_image_url))')
+      .select(`${SELECT_BASE}, currency`)
       .eq('user_id', user.id)
       .order('created_at', { ascending: false });
+    // Resiliente: la columna currency es nueva, puede no estar aplicada
+    // todavia en la base (ver migracion correspondiente).
+    const result = first.error
+      ? await supabase.from('orders').select(SELECT_BASE).eq('user_id', user.id).order('created_at', { ascending: false })
+      : first;
 
-    const ordersData = (data as unknown as OrderRow[]) || [];
+    const ordersData = ((result.data as unknown) as OrderRow[]) || [];
     setOrders(ordersData);
+
+    // GA4 "purchase" real: se dispara acá, al ver el pedido YA pagado tras
+    // volver de Mercado Pago con pago=exitoso — antes se disparaba en
+    // CheckoutPage.tsx apenas se CREABA el pedido "pendiente", así que
+    // quedaban contados como venta los pedidos abandonados o rechazados.
+    // Dedupe con sessionStorage: no repetir el evento si se recarga la página.
+    if (pago === 'exitoso') {
+      const paidJustNow = ordersData.find((o) => o.payment_status === 'pagado');
+      if (paidJustNow) {
+        const trackedKey = `modeltex_tracked_purchase_${paidJustNow.id}`;
+        if (!sessionStorage.getItem(trackedKey)) {
+          trackPurchase({ id: paidJustNow.id, value: Number(paidJustNow.total), itemCount: paidJustNow.order_items?.length || 0 });
+          sessionStorage.setItem(trackedKey, '1');
+        }
+      }
+    }
 
     // Agrupar productos de pedidos PAGADOS
     const groups = new Map<string, PurchasedProduct>();
@@ -173,6 +206,26 @@ export default function MyOrdersPage() {
             <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-600">{downloadError}</div>
           )}
 
+          {/* Antes, volver de Mercado Pago con un pago rechazado/abandonado
+              (?pago=fallido) no mostraba ningún aviso: el comprador solo veía
+              su historial de pedidos sin entender qué pasó ni cómo reintentar
+              (el botón está más abajo, en cada pedido pendiente). */}
+          {pago === 'fallido' && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-xl text-sm text-red-700">
+              Tu pago no se pudo procesar. Podés reintentarlo desde el pedido pendiente, más abajo.
+            </div>
+          )}
+          {pago === 'pendiente' && (
+            <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl text-sm text-amber-700">
+              Estamos confirmando tu pago. Te avisamos apenas se acredite.
+            </div>
+          )}
+          {pago === 'exitoso' && (
+            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-xl text-sm text-green-700">
+              ¡Pago confirmado! Ya podés descargar tus moldes más abajo.
+            </div>
+          )}
+
           {!hasOrders ? (
             <div className="card p-12 text-center">
               <ShoppingBag className="mx-auto text-gray-300 mb-4" size={48} />
@@ -267,11 +320,23 @@ export default function MyOrdersPage() {
                         </div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className={`text-xs font-medium px-2.5 py-1 rounded-lg ${statusBadge(order.payment_status)}`}>Pago: {order.payment_status}</span>
-                          <span className="text-sm font-bold text-primary-900 ml-1">${Number(order.total).toLocaleString('es-AR')}</span>
+                          <span className="text-sm font-bold text-primary-900 ml-1">{formatMoney(Number(order.total), order.currency)}</span>
                         </div>
                       </div>
-                      {order.payment_status === 'pendiente' && (order.payment_method === 'transfer' || order.payment_method === 'binance') && (
-                        <p className="text-amber-600 text-xs mt-2"><span className="font-semibold">Pendiente:</span> estamos verificando tu pago.</p>
+                      {/* Antes solo mostraba un texto genérico ("estamos verificando
+                          tu pago") para transferencia/Binance, y nada para el resto de
+                          los métodos: un pedido pendiente por PayPal/Payoneer/Wise/
+                          Mercado Pago no tenía forma de retomarse si el comprador
+                          volvía más tarde a esta pantalla. */}
+                      {order.payment_status === 'pendiente' && user?.email && (
+                        <PaymentInstructions
+                          method={order.payment_method as PaymentMethod}
+                          total={Number(order.total)}
+                          currency={order.currency}
+                          settings={paySettings}
+                          orderId={order.id}
+                          payerEmail={user.email}
+                        />
                       )}
                     </div>
                   ))}

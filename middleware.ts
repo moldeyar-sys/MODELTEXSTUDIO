@@ -218,9 +218,16 @@ function setRobots(html: string, value: string) {
 // nunca reciben este HTML, y aunque lo recibieran main.tsx lo saca antes de
 // montar React.
 function injectBody(html: string, inner: string, schemas?: Schema[]) {
+  // JSON.stringify escapa comillas y barras invertidas, pero NO escapa "<":
+  // si un dato de la base (nombre/descripción de producto, título de FAQ,
+  // generado por el admin o por generate-descriptions.ts) contiene la
+  // subcadena "</script>", el navegador cierra el script ahí mismo y el
+  // resto del string se interpreta como HTML/JS en el <head> — para
+  // CUALQUIER visitante que reciba esa página, no solo bots. \u003c es
+  // "<" escapado: JSON válido, pero ya no puede cerrar el tag.
   const scripts = schemas?.length
     ? schemas
-        .map((s) => `<script type="application/ld+json" data-seo-schema="${s.id}">${JSON.stringify(s.data)}</script>`)
+        .map((s) => `<script type="application/ld+json" data-seo-schema="${s.id}">${JSON.stringify(s.data).replace(/</g, '\\u003c')}</script>`)
         .join('\n')
     : '';
   if (scripts) html = html.replace('</head>', `${scripts}\n</head>`);
@@ -1727,6 +1734,7 @@ const NOINDEX_APP_PAGES: Record<string, { title: string; description: string }> 
   '/login': { title: 'Iniciar sesión', description: 'Ingresá a tu cuenta de Modeltex para ver tus compras y descargas.' },
   '/registro': { title: 'Crear cuenta', description: 'Creá tu cuenta gratuita de Modeltex para gestionar compras y descargas.' },
   '/recuperar-contrasena': { title: 'Recuperar contraseña', description: 'Recuperá el acceso a tu cuenta de Modeltex.' },
+  '/restablecer-contrasena': { title: 'Nueva contraseña', description: 'Definí tu nueva contraseña de Modeltex.' },
   '/carrito': { title: 'Carrito de compras', description: 'Revisá los moldes que agregaste antes de comprar.' },
   '/checkout': { title: 'Finalizar compra', description: 'Completá tu compra de moldes digitales Modeltex.' },
   '/mi-pedido': { title: 'Mi pedido', description: 'Seguimiento y descarga de una compra hecha sin cuenta.' },

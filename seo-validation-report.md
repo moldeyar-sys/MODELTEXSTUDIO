@@ -1,9 +1,9 @@
 # Reporte de validación SEO — Modeltex
 
-Generado el 2026-09-16 con `node scripts/seo-check.mjs --live https://modeltex.com.ar`.
-Origen de las pruebas: **sitio publicado (https://modeltex.com.ar)**.
+Generado el 2026-09-17 con `node scripts/seo-check.mjs`.
+Origen de las pruebas: **middleware local sobre `dist/`**.
 
-**464 de 464 controles OK.** Sin fallas.
+**468 de 468 controles OK.** Sin fallas.
 
 Sitemap: 2146 URLs (2044 fichas de producto), 38 verificadas una por una.
 
@@ -35,7 +35,7 @@ Sin fallas.
 
 Sin fallas.
 
-### Rutas no indexables — 18/18
+### Rutas no indexables — 21/21
 
 Sin fallas.
 
@@ -59,7 +59,7 @@ Sin fallas.
 
 Sin fallas.
 
-### robots.txt — 27/27
+### robots.txt — 28/28
 
 Sin fallas.
 

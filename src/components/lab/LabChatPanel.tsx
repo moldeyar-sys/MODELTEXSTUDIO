@@ -22,8 +22,14 @@ interface Props {
   className?: string;
 }
 
+// Clave PROPIA (distinta de la del chat comercial en ChatWidget.tsx): antes
+// las dos usaban 'modeltex_chat_session' y compartían el mismo contador de
+// api/chat.ts (ANON_MESSAGE_LIMIT), así que preguntarle algo al asesor de
+// ventas en la home gastaba cupo del tutor gratuito del curso (y viceversa),
+// pese a que api/chat.ts los trata como roles distintos (buildLabSystemPrompt
+// vs buildSystemPrompt).
 function getSessionId(): string {
-  const KEY = 'modeltex_chat_session';
+  const KEY = 'modeltex_lab_chat_session';
   let id = sessionStorage.getItem(KEY);
   if (!id) {
     id = crypto.randomUUID();

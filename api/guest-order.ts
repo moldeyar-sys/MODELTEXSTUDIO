@@ -73,22 +73,55 @@ export default async function handler(req: any, res: any) {
 
   try {
     const body = typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
-    const orderId = typeof body.orderId === 'string' ? body.orderId.trim() : '';
+    const orderIdInput = typeof body.orderId === 'string' ? body.orderId.trim() : '';
     const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
-    if (!orderId || !email) {
+    if (!orderIdInput || !email) {
       res.status(400).json({ error: 'Falta el número de pedido o el email.' });
       return;
     }
-
-    const orderRes = await fetch(
-      `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&guest_email=eq.${encodeURIComponent(email)}` +
-        `&select=id,total,payment_method,payment_status,order_status,created_at,cart_snapshot,` +
-        `order_items(quantity,price,formato,sizes,product_name,product:products(id,name))`,
-      { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+    // CheckoutPage.tsx solo le muestra al invitado los primeros 8 caracteres
+    // del UUID (ej. "#a1b2c3d4"), pero acá se buscaba por id=eq.<eso mismo> —
+    // un UUID truncado nunca matchea (y hace que PostgREST devuelva 400
+    // "invalid input syntax for type uuid", que este código traducía como un
+    // genérico "Error interno"), así que el invitado no podía consultar su
+    // propio pedido con el dato que el sitio le dio. Un UUID completo se
+    // sigue buscando exacto (más rápido, usa el índice); un prefijo de 8
+    // caracteres hex se busca con LIKE, siempre combinado con el email como
+    // segundo factor (igual de seguro: adivinar un prefijo de 8 caracteres Y
+    // el email exacto de otra persona no es más fácil que hoy).
+    const esUuidCompleto = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(orderIdInput);
+    const esPrefijoCorto = /^[0-9a-f]{8}$/i.test(orderIdInput);
+    if (!esUuidCompleto && !esPrefijoCorto) {
+      res.status(404).json({ error: 'No encontramos ningún pedido con ese número y ese email. Revisá que estén bien escritos.' });
+      return;
+    }
+    // Postgres no tiene operador LIKE nativo sobre uuid, así que un prefijo
+    // corto se resuelve trayendo los pedidos de ESE email (siempre exige el
+    // email exacto como segundo factor, acotado a los últimos 50 para no
+    // traer de más) y comparando el prefijo en el código, en vez de armar un
+    // filtro id=like.* que Postgres podría rechazar.
+    const filtroId = esUuidCompleto ? `&id=eq.${encodeURIComponent(orderIdInput)}` : '';
+    const ORDERS_BASE = `${SUPABASE_URL}/rest/v1/orders?guest_email=eq.${encodeURIComponent(email)}${filtroId}`;
+    const ORDERS_TAIL = `order_items(quantity,price,formato,sizes,product_name,product:products(id,name))&order=created_at.desc&limit=50`;
+    const H2 = { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` };
+    let orderRes = await fetch(
+      `${ORDERS_BASE}&select=id,total,payment_method,payment_status,order_status,created_at,currency,cart_snapshot,${ORDERS_TAIL}`,
+      { headers: H2 },
     );
+    if (!orderRes.ok) {
+      // Resiliente: orders.currency puede no estar aplicada todavia.
+      orderRes = await fetch(
+        `${ORDERS_BASE}&select=id,total,payment_method,payment_status,order_status,created_at,cart_snapshot,${ORDERS_TAIL}`,
+        { headers: H2 },
+      );
+    }
     if (!orderRes.ok) throw new Error(`Supabase orders ${orderRes.status}: ${await orderRes.text()}`);
     const rows = (await orderRes.json()) as any[];
-    const order = rows?.[0];
+    // Ya vienen ordenados por más reciente primero (order=created_at.desc):
+    // el primero que matchea el prefijo corto es el pedido correcto.
+    const order = esUuidCompleto
+      ? rows?.[0]
+      : rows.find((o) => String(o.id).toLowerCase().startsWith(orderIdInput.toLowerCase()));
 
     if (!order) {
       res.status(404).json({ error: 'No encontramos ningún pedido con ese número y ese email. Revisá que estén bien escritos.' });
@@ -98,6 +131,7 @@ export default async function handler(req: any, res: any) {
     const summary = {
       id: order.id,
       total: order.total,
+      currency: order.currency ?? 'ARS',
       payment_method: order.payment_method,
       payment_status: order.payment_status,
       created_at: order.created_at,

@@ -61,6 +61,7 @@ const NO_INDEXABLES = [
   { path: '/carrito', status: 200, motivo: 'ruta de compra' },
   { path: '/checkout', status: 200, motivo: 'ruta de compra' },
   { path: '/mi-cuenta', status: 200, motivo: 'ruta privada' },
+  { path: '/restablecer-contrasena', status: 200, motivo: 'ruta privada' },
   { path: '/admin', status: 200, motivo: 'panel privado' },
 ];
 
@@ -423,7 +424,7 @@ for (const t of NO_INDEXABLES) {
 // ---------------------------------------------------------------------------
 // 7. robots.txt
 // ---------------------------------------------------------------------------
-const PRIVADAS = ['/admin', '/checkout', '/carrito', '/mi-cuenta', '/mis-compras', '/mi-pedido', '/descargas', '/login', '/registro', '/recuperar-contrasena', '/lab/ia', '/api/chat', '/legal/respaldo-drive-denis'];
+const PRIVADAS = ['/admin', '/checkout', '/carrito', '/mi-cuenta', '/mis-compras', '/mi-pedido', '/descargas', '/login', '/registro', '/recuperar-contrasena', '/restablecer-contrasena', '/lab/ia', '/api/chat', '/legal/respaldo-drive-denis'];
 const PUBLICAS = ['/', '/catalogo', '/producto/algo', '/moldes-pdf', '/moldes-pdf-a4', '/moldes-para-plotter', '/moldes-gratis', '/molderia-digital', '/guias', '/guias/algo', '/lab', '/lab/curso/modulo/clase'];
 {
   const a = 'robots.txt';

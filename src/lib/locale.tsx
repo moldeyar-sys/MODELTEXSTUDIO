@@ -9,6 +9,25 @@ const CURRENCY_CHOSEN_KEY = 'modeltex_currency_chosen'; // '1' si el usuario eli
 const RATE_CACHE_KEY = 'modeltex_last_known_rate'; // ultima cotizacion real obtenida (respaldo si la API falla)
 const FALLBACK_ARS_PER_USD = 1450; // respaldo final si nunca se pudo obtener una cotizacion real
 
+/**
+ * Formatea un monto que YA está en la moneda indicada (sin ninguna
+ * conversión). Distinto de formatPrice() de acá abajo: formatPrice() asume
+ * que el número que recibe SIEMPRE es ARS y lo convierte según la
+ * preferencia de visualización del visitante (currency, el toggle ES/EN que
+ * ya no tiene UI propia); eso rompe con los precios de FormatOptions/
+ * CartContext, que para un comprador fuera de Argentina ya vienen en
+ * dólares reales (no ARS para convertir). Usar formatMoney() en cualquier
+ * lugar donde el monto tenga una moneda propia conocida (carrito, checkout,
+ * pedidos): nunca divide ni multiplica, solo aplica el símbolo y el
+ * separador correctos.
+ */
+export function formatMoney(amount: number, currency: 'ARS' | 'USD' | null | undefined = 'ARS'): string {
+  if (currency === 'USD') {
+    return 'US$ ' + amount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  return '$' + Math.round(amount).toLocaleString('es-AR');
+}
+
 // Diccionario solo para inglés. Si falta la clave (o el idioma es 'es'),
 // se usa el texto en español que se pasa como fallback en t(key, es).
 const EN: Record<string, string> = {
@@ -302,7 +321,7 @@ const EN: Record<string, string> = {
   'co.emailPlaceholder': 'you@email.com',
   'co.guestHint2': 'You are buying without an account — we will email you and send you the download link once we confirm the payment.',
   'co.alreadyAccount': 'Already have an account?',
-  'co.methodDesc.paypal': 'QR de PayPal',
+  'co.methodDesc.paypal': 'PayPal QR code',
   'co.mpDescLabel': 'link de Mercado Pago',
   'co.confirmShowsHow': 'When you confirm we will show you how to pay',
   'co.downloadEnabled': 'Download is enabled once we confirm your payment.',

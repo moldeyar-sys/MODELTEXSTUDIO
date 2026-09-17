@@ -7,6 +7,7 @@ import { ReviewsSection } from './ReviewsSection';
 import type { PromoProduct } from '../../lib/promo';
 import { productImageAlt } from '../../lib/productContent';
 import { trackFreeDownload } from '../../lib/analytics';
+import { useEscapeKey } from '../../lib/useEscapeKey';
 
 const categoryLabel = (c: string) => {
   switch (c) {
@@ -27,6 +28,7 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
   const { product, files } = item;
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [showReviews, setShowReviews] = useState(false);
+  useEscapeKey(() => setShowReviews(false), showReviews);
   const [showAllFiles, setShowAllFiles] = useState(false);
   const visibleFiles = showAllFiles ? files : files.slice(0, FILES_COLLAPSED);
   const hiddenCount = files.length - FILES_COLLAPSED;
@@ -142,14 +144,20 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
       </div>
 
       {showReviews && (
-        <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4" onClick={() => setShowReviews(false)}>
+        <div
+          className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
+          onClick={() => setShowReviews(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`Opiniones de ${product.name}`}
+        >
           <div className="bg-white w-full sm:max-w-lg sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[85vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
             <div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-gray-100 sticky top-0 bg-white">
               <div className="min-w-0">
                 <p className="text-xs text-gray-400">Opiniones de</p>
                 <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
               </div>
-              <button onClick={() => setShowReviews(false)} aria-label="Cerrar" className="p-1 hover:bg-gray-100 rounded-lg flex-shrink-0"><X className="w-5 h-5 text-gray-500" /></button>
+              <button onClick={() => setShowReviews(false)} aria-label="Cerrar" className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-lg flex-shrink-0"><X className="w-5 h-5 text-gray-500" /></button>
             </div>
             <div className="p-4 sm:p-5"><ReviewsSection targetType="product" targetId={product.id} compact /></div>
           </div>

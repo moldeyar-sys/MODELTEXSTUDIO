@@ -430,6 +430,14 @@ export default async function handler(req: any, res: any) {
     const incoming: ChatMessage[] = Array.isArray(body.messages) ? body.messages : [];
     // Identifica la sesion (para historial y limite) y, si mando token, quien es.
     const sessionId = typeof body.sessionId === 'string' && body.sessionId ? body.sessionId.slice(0, 100) : null;
+    const clientIp = getClientIp(req);
+    // Antes, si el body no traia sessionId, ni el conteo por sesion ni el
+    // conteo por IP se ejecutaban (los dos vivian adentro de `if (sessionId...)`
+    // mas abajo) y tampoco se guardaba el mensaje en el historial: alguien que
+    // simplemente no mandara sessionId quedaba sin ningun tope. sessionEffId
+    // siempre existe (usa la IP como respaldo) para que el conteo y el log
+    // corran igual sin depender de lo que decida mandar el cliente.
+    const sessionEffId = sessionId || (clientIp ? `ip:${clientIp}` : null);
     const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '') || null;
     const userId = await getUserId(token);
     // MODELTEX LAB: si el frontend manda `lab`, este mensaje viene del tutor
@@ -452,15 +460,15 @@ export default async function handler(req: any, res: any) {
 
     const lastUserMessage = [...history].reverse().find((m) => m.role === 'user')?.content || '';
 
-    const clientIp = getClientIp(req);
-
     // Limite de preguntas para quien no tiene cuenta. Se chequea ANTES de
     // gastar en OpenRouter: si ya llego al tope, ni se llama al modelo.
-    // Dos conteos combinados: por sessionId (lo manda el navegador, se
-    // resetea borrando localStorage) y por IP+dia (mas dificil de rotar).
-    if (sessionId && !userId && lastUserMessage) {
+    // Dos conteos combinados: por sesion efectiva (sessionId real, o la IP
+    // como respaldo cuando el cliente no manda uno) y por IP+dia (mas dificil
+    // de rotar que el sessionId, que vive en localStorage). El conteo por IP
+    // corre siempre que haya IP, sin depender de sessionId.
+    if (!userId && lastUserMessage) {
       const [askedSoFar, askedFromIpToday] = await Promise.all([
-        countSessionMessages(sessionId),
+        sessionEffId ? countSessionMessages(sessionEffId) : Promise.resolve(0),
         clientIp ? countIpMessagesToday(clientIp) : Promise.resolve(0),
       ]);
       if (askedSoFar >= ANON_MESSAGE_LIMIT || askedFromIpToday >= ANON_MESSAGE_LIMIT) {
@@ -477,8 +485,8 @@ export default async function handler(req: any, res: any) {
       ? [lab.courseSlug, lab.moduleSlug, lab.lessonSlug].filter(Boolean).join('/')
       : undefined;
 
-    if (sessionId && lastUserMessage) {
-      await logMessage(sessionId, userId, 'user', lastUserMessage, labContextLabel, clientIp);
+    if (sessionEffId && lastUserMessage) {
+      await logMessage(sessionEffId, userId, 'user', lastUserMessage, labContextLabel, clientIp);
     }
 
     let messages: ChatMessage[];
@@ -535,7 +543,7 @@ export default async function handler(req: any, res: any) {
 
     const data = (await orRes.json()) as any;
     const reply = data?.choices?.[0]?.message?.content?.trim() || 'No pude generar una respuesta. Probá de nuevo.';
-    if (sessionId) await logMessage(sessionId, userId, 'assistant', reply, labContextLabel);
+    if (sessionEffId) await logMessage(sessionEffId, userId, 'assistant', reply, labContextLabel);
     res.status(200).json(lab ? { reply, sources } : { reply });
   } catch (err) {
     console.error('chat handler error', err);

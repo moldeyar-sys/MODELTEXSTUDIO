@@ -48,14 +48,30 @@ export async function submitReview(input: {
   comment: string;
 }): Promise<{ ok: boolean; error?: string }> {
   try {
-    const { error } = await supabase.from('reviews').insert({
+    // upsert (no insert): la migración 044 agregó un UNIQUE sobre
+    // (target_type, target_id, user_id) para que nadie pueda dejar más de
+    // una reseña por producto e inflar el AggregateRating público. Antes de
+    // esa migración, un insert simple ya alcanzaba (no había restricción);
+    // con upsert sigue funcionando igual en ambos casos: si la fila no
+    // existe la crea, si existe la actualiza en vez de fallar con "duplicate
+    // key" o (peor, antes de 044) crear una segunda reseña del mismo usuario.
+    const row = {
       target_type: input.targetType,
       target_id: input.targetId,
       user_id: input.userId,
       author_name: input.authorName,
       rating: input.rating,
       comment: input.comment,
-    });
+    };
+    let { error } = await supabase.from('reviews').upsert(row, { onConflict: 'target_type,target_id,user_id' });
+    // Resiliente: si la migración 044 (UNIQUE target_type,target_id,user_id)
+    // todavía no se corrió, Postgres rechaza el upsert porque no existe la
+    // restricción que el onConflict pide ("no unique or exclusion constraint
+    // matching..."). Sin este fallback, dejar una reseña se rompía del todo
+    // hasta que se aplicara esa migración.
+    if (error && /no unique|exclusion constraint|on conflict/i.test(error.message ?? '')) {
+      ({ error } = await supabase.from('reviews').insert(row));
+    }
     if (error) return { ok: false, error: error.message };
     return { ok: true };
   } catch (e) {

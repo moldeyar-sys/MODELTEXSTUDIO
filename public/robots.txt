@@ -25,6 +25,7 @@ Disallow: /descargas
 Disallow: /login
 Disallow: /registro
 Disallow: /recuperar-contrasena
+Disallow: /restablecer-contrasena
 Disallow: /legal/
 Disallow: /lab/ia
 Disallow: /api/
@@ -64,6 +65,7 @@ Disallow: /descargas
 Disallow: /login
 Disallow: /registro
 Disallow: /recuperar-contrasena
+Disallow: /restablecer-contrasena
 Disallow: /legal/
 Disallow: /lab/ia
 Disallow: /api/

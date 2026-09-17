@@ -29,9 +29,21 @@ export default defineConfig(({ mode }) => {
     build: {
       rollupOptions: {
         output: {
-          manualChunks: {
-            'vendor-react': ['react', 'react-dom', 'react-router-dom'],
-            'vendor-supabase': ['@supabase/supabase-js'],
+          // Función en vez de objeto: un objeto de manualChunks solo agrupa
+          // por nombre de paquete exacto, y lucide-react se importa como
+          // decenas de archivos internos separados (un ícono = un módulo).
+          // Sin esto, Rollup terminaba con ~37 chunks de menos de 2 KB cada
+          // uno (un ícono por chunk) repartidos entre las páginas que lo usan
+          // en vez de un único vendor de íconos cacheado una sola vez.
+          manualChunks(id: string) {
+            if (id.includes('node_modules/lucide-react')) return 'vendor-icons';
+            if (
+              id.includes('node_modules/react/') ||
+              id.includes('node_modules/react-dom/') ||
+              id.includes('node_modules/react-router-dom/') ||
+              id.includes('node_modules/react-router/')
+            ) return 'vendor-react';
+            if (id.includes('node_modules/@supabase/supabase-js')) return 'vendor-supabase';
           },
         },
       },

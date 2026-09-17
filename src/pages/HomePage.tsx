@@ -357,6 +357,11 @@ const HomePage = () => {
       <section className="relative py-12 md:py-20 bg-gray-50 overflow-hidden">
         <FloatingPatterns variant="dark" />
         <div className="container-custom">
+          {/* Antes pasaba directo de h1 (hero) a h3 (cada tarjeta), sin
+              ningún h2 de sección: un lector de pantalla que navega por
+              encabezados veía un salto ilógico. sr-only: no cambia nada
+              visualmente. */}
+          <h2 className="sr-only">{t('home.benefits.title', 'Por qué elegir Modeltex')}</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {benefits.map((benefit, index) => {
               const Icon = benefit.icon;
@@ -534,6 +539,14 @@ const HomePage = () => {
             <p className="font-sans text-lg text-gray-600 max-w-2xl mx-auto">
               {t('home.testimonials.subtitle', 'Emprendedores, talleres, diseñadores y fábricas de todo el mundo ya producen con Modeltex')}
             </p>
+            {/* Antes se mostraban con nombre, rol y 5 estrellas exactamente
+                igual que una reseña real verificada, sin ninguna aclaración
+                (PENDIENTES-DENIS.md ya documentaba que son ficticios: "Carolina
+                M.", "Diego R." y "Valentina S." no son clientes reales).
+                Desaparece solo apenas entre la primera reseña real. */}
+            {realReviews.length === 0 && (
+              <p className="text-xs text-gray-400 mt-2">{t('home.testimonials.example', 'Testimonios de ejemplo')}</p>
+            )}
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">

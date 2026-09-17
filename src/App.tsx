@@ -28,6 +28,7 @@ function PageViewTracker() {
 const LoginPage = lazy(() => import('./pages/LoginPage'));
 const RegisterPage = lazy(() => import('./pages/RegisterPage'));
 const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ResetPasswordPage = lazy(() => import('./pages/ResetPasswordPage'));
 const CatalogPage = lazy(() => import('./pages/CatalogPage'));
 const ProductDetailPage = lazy(() => import('./pages/ProductDetailPage'));
 const CartPage = lazy(() => import('./pages/CartPage'));
@@ -80,6 +81,7 @@ function AppLayout() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/registro" element={<RegisterPage />} />
             <Route path="/recuperar-contrasena" element={<ForgotPasswordPage />} />
+            <Route path="/restablecer-contrasena" element={<ResetPasswordPage />} />
             <Route path="/catalogo" element={<CatalogPage />} />
             <Route path="/molderia-digital" element={<MolderiaDigitalPage />} />
             <Route path="/moldes-pdf" element={<MoldesPdfPage />} />

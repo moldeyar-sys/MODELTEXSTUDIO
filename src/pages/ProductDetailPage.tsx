@@ -64,10 +64,20 @@ export default function ProductDetailPage() {
   const [activeImage, setActiveImage] = useState(0);
 
   useEffect(() => {
-    fetchProduct();
+    // Como esta pantalla no se desmonta al cambiar de /producto/:slug (React
+    // Router reusa el componente), una respuesta que llega FUERA de orden
+    // (ficha A tarda más que la ficha B, abierta después) podía pisar el
+    // producto ya mostrado con uno viejo bajo la URL nueva. `cancelled` corta
+    // ese caso, igual que ya hace el efecto de reseñas más abajo.
+    let cancelled = false;
+    fetchProduct(() => cancelled);
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
-  const fetchProduct = async () => {
+  const fetchProduct = async (isCancelled: () => boolean) => {
     setLoading(true);
     const newSlug = slug ? SLUG_REDIRECTS[slug] : undefined;
     if (newSlug) {
@@ -85,6 +95,7 @@ export default function ProductDetailPage() {
       // antes de dar el producto por inexistente.
       ({ data } = await supabase.from('products').select('*').eq('slug', slug).eq('is_active', true).maybeSingle());
     }
+    if (isCancelled()) return;
 
     if (data) {
       const p = data as unknown as Product;
@@ -103,7 +114,7 @@ export default function ProductDetailPage() {
         }
       }
     }
-    setLoading(false);
+    if (!isCancelled()) setLoading(false);
   };
 
   const fetchRelated = async (p: Product) => {
@@ -430,7 +441,12 @@ export default function ProductDetailPage() {
                 </div>
                 <Sparkles className="w-5 h-5 text-accent-500 flex-shrink-0 mt-1" />
               </div>
-              <FormatOptions product={product} />
+              {/* key=product.id: sin esto, al navegar a otro producto (ej. desde
+                  "Productos relacionados") React reutilizaba la MISMA instancia
+                  de FormatOptions — sus talles seleccionados (useState interno)
+                  quedaban del producto anterior, y el botón "Agregar" no se
+                  bloqueaba aunque esos talles no existieran en el nuevo producto. */}
+              <FormatOptions key={product.id} product={product} />
               <p className="mt-4 text-[11px] text-gray-400 leading-relaxed">
                 {t('pd.digitalNote', 'Producto digital. Revisá el formato elegido antes de finalizar la compra. Si necesitás una adaptación especial, consultanos antes de pagar.')}
               </p>

@@ -81,7 +81,10 @@ async function embedTexts(texts: string[]): Promise<number[][]> {
     },
     body: JSON.stringify({ model: EMBED_MODEL, input: texts }),
   });
-  if (!res.ok) throw new Error(`OpenRouter embeddings ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    console.error('embed-catalog: OpenRouter embeddings', res.status, await res.text());
+    throw new Error(`Error de OpenRouter (${res.status}). Mirá los logs del servidor para el detalle.`);
+  }
   const data = (await res.json()) as { data: { embedding: number[] }[] };
   const vectors = (data.data || []).map((d) => d?.embedding);
   // Sin esta validacion, una respuesta incompleta guardaria embeddings vacios
@@ -129,7 +132,10 @@ async function handleCatalog(token: string, body: any, res: any) {
       },
     },
   );
-  if (!listRes.ok) throw new Error(`Supabase list ${listRes.status}: ${await listRes.text()}`);
+  if (!listRes.ok) {
+    console.error('embed-catalog: Supabase list', listRes.status, await listRes.text());
+    throw new Error(`No se pudo leer el catálogo (${listRes.status}).`);
+  }
   const products = (await listRes.json()) as RawProduct[];
   const totalMatching = parseInt((listRes.headers.get('content-range') || '').split('/')[1] || '0', 10);
 
@@ -203,7 +209,10 @@ async function sbGet(path: string, token: string) {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}` },
   });
-  if (!res.ok) throw new Error(`Supabase GET ${path} -> ${res.status}: ${await res.text()}`);
+  if (!res.ok) {
+    console.error('embed-catalog: Supabase GET', path, res.status, await res.text());
+    throw new Error(`No se pudo leer "${path.split('?')[0]}" (${res.status}).`);
+  }
   return res.json();
 }
 
@@ -324,14 +333,18 @@ async function handleLab(token: string, res: any) {
   const embeddings = await embedTexts(chunks.map((c) => c.content.slice(0, 6000)));
   const now = new Date().toISOString();
 
-  // Borra los chunks viejos de cada fuente y crea los nuevos (evita
-  // conocimiento obsoleto cuando se edita una clase publicada).
-  for (const sourceId of new Set(chunks.map((c) => c.source_id))) {
-    await fetch(`${SUPABASE_URL}/rest/v1/lab_chunks?source_id=eq.${sourceId}`, {
-      method: 'DELETE',
-      headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Prefer: 'return=minimal' },
-    });
-  }
+  // Antes borraba solo los chunks de las fuentes que siguen PUBLICADAS
+  // (chunks recién armados más arriba, que por diseño ya excluye lo
+  // despublicado/borrado): una clase que pasó a borrador o se eliminó nunca
+  // se borraba de lab_chunks, así que el tutor IA seguía respondiendo con
+  // contenido retirado y links que ahora dan 404. Como esta función SIEMPRE
+  // recalcula la lista completa de contenido publicado, es más simple y
+  // correcto vaciar la tabla entera antes de insertar de nuevo: no puede
+  // quedar ningún chunk huérfano.
+  await fetch(`${SUPABASE_URL}/rest/v1/lab_chunks?source_id=not.is.null`, {
+    method: 'DELETE',
+    headers: { apikey: SUPABASE_ANON_KEY, Authorization: `Bearer ${token}`, Prefer: 'return=minimal' },
+  });
 
   const rows = chunks.map((c, i) => ({ ...c, embedding: embeddings[i], updated_at: now }));
   const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/lab_chunks`, {
@@ -344,7 +357,10 @@ async function handleLab(token: string, res: any) {
     },
     body: JSON.stringify(rows),
   });
-  if (!insertRes.ok) throw new Error(`Supabase insert lab_chunks ${insertRes.status}: ${await insertRes.text()}`);
+  if (!insertRes.ok) {
+    console.error('embed-catalog: Supabase insert lab_chunks', insertRes.status, await insertRes.text());
+    throw new Error(`No se pudo guardar el índice del Lab (${insertRes.status}).`);
+  }
 
   res.status(200).json({ processed: rows.length });
 }

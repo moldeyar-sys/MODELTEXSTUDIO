@@ -198,25 +198,25 @@ export default function ContactPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                   <div className="grid sm:grid-cols-2 gap-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">Nombre *</label>
-                      <input name="name" value={form.name} onChange={handleChange} required className="input-field" placeholder="Tu nombre" />
+                      <label htmlFor="contact-name" className="block text-sm font-medium text-gray-700 mb-1.5">Nombre *</label>
+                      <input id="contact-name" name="name" value={form.name} onChange={handleChange} required className="input-field" placeholder="Tu nombre" />
                     </div>
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp</label>
-                      <input name="whatsapp" value={form.whatsapp} onChange={handleChange} className="input-field" placeholder="+54 9 11 ..." />
+                      <label htmlFor="contact-whatsapp" className="block text-sm font-medium text-gray-700 mb-1.5">WhatsApp</label>
+                      <input id="contact-whatsapp" name="whatsapp" value={form.whatsapp} onChange={handleChange} className="input-field" placeholder="+54 9 11 ..." />
                     </div>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
-                    <input name="email" type="email" value={form.email} onChange={handleChange} className="input-field" placeholder="tu@email.com" />
+                    <label htmlFor="contact-email" className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                    <input id="contact-email" name="email" type="email" value={form.email} onChange={handleChange} className="input-field" placeholder="tu@email.com" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Asunto</label>
-                    <input name="subject" value={form.subject} onChange={handleChange} className="input-field" placeholder="Ej: Consulta por un molde" />
+                    <label htmlFor="contact-subject" className="block text-sm font-medium text-gray-700 mb-1.5">Asunto</label>
+                    <input id="contact-subject" name="subject" value={form.subject} onChange={handleChange} className="input-field" placeholder="Ej: Consulta por un molde" />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">Mensaje *</label>
-                    <textarea name="message" value={form.message} onChange={handleChange} required rows={5} className="input-field resize-none" placeholder="Contanos en qué te ayudamos..." />
+                    <label htmlFor="contact-message" className="block text-sm font-medium text-gray-700 mb-1.5">Mensaje *</label>
+                    <textarea id="contact-message" name="message" value={form.message} onChange={handleChange} required rows={5} className="input-field resize-none" placeholder="Contanos en qué te ayudamos..." />
                   </div>
                   <button type="submit" disabled={sending} className="btn-primary w-full disabled:opacity-50">
                     {sending ? <Loader2 className="w-5 h-5 animate-spin mr-2" /> : <Send className="w-5 h-5 mr-2" />}

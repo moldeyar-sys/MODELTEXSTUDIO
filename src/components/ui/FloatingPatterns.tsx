@@ -34,11 +34,10 @@ const Cuello = () => (
 
 /* ── BUZO OVER 011-M ── */
 
-const Espalda = () => (
-  <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">
-    <polygon points="3.82,96.81 6.61,86.55 7.80,82.61 8.60,79.21 7.62,76.53 5.22,72.33 3.19,67.67 1.58,62.66 0.52,57.36 0.16,54.31 0.00,51.28 0.00,48.27 0.19,45.29 1.08,39.46 2.61,33.89 3.96,30.35 5.50,27.04 7.22,23.94 9.15,21.03 11.30,18.27 13.63,15.66 16.19,13.17 18.94,10.77 22.78,7.90 26.81,5.50 31.00,3.54 35.31,2.03 39.71,0.93 44.18,0.26 48.67,0.00 53.17,0.12 57.62,0.65 62.02,1.54 66.33,2.80 70.48,4.43 74.48,6.41 78.30,8.72 81.89,11.35 85.22,14.34 88.94,18.39 92.13,22.75 94.78,27.41 96.88,32.29 98.46,37.32 99.51,42.50 100.00,47.74 99.94,53.01 99.33,58.28 98.16,63.45 96.44,68.53 94.13,73.45 91.29,78.16 87.85,82.61 83.86,86.76 79.27,90.56 76.18,92.68 72.97,94.52 69.68,96.08 66.30,97.41 62.83,98.44 59.34,99.23 55.77,99.74 52.19,100.00 48.60,100.00 44.99,99.72 41.38,99.21 37.82,98.42 34.26,97.39 30.76,96.08 27.32,94.55 23.94,92.75 19.17,92.91 13.97,94.26 8.78,95.73 5.92,96.46" />
-  </svg>
-);
+// Nota: la silueta "espalda" del BUZO OVER 011-M se extrajo del DXF (ver
+// comentario del encabezado) pero nunca se sumó a SHAPE_MAP/PIECES más abajo
+// — quedaba declarada y sin usar. Como es un elemento puramente decorativo,
+// se saca en vez de forzarla en la animación sin saber si combina bien.
 
 const Frente = () => (
   <svg viewBox="0 0 100 108" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" strokeLinecap="round">

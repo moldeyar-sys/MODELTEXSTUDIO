@@ -1,12 +1,17 @@
 import { useState, type FormEvent } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff, User } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { BrandLogo } from '../components/brand/BrandLogo';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { signUp } = useAuth();
+  // Mismo patrón que LoginPage: si el registro se originó desde una ruta
+  // protegida (ej. /descargas sin cuenta), volver ahí después, no siempre a
+  // /mi-cuenta.
+  const next = (location.state as { next?: string } | null)?.next ?? '/mi-cuenta';
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
@@ -14,24 +19,37 @@ export default function RegisterPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
+  const [info, setInfo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
+    setInfo('');
 
     if (!name.trim()) { setError('Ingresa tu nombre completo'); return; }
     if (password.length < 6) { setError('La contrasena debe tener al menos 6 caracteres'); return; }
     if (password !== confirmPassword) { setError('Las contrasenas no coinciden'); return; }
 
     setIsLoading(true);
-    const { error: signUpError } = await signUp(email, password, name);
+    const { error: signUpError, hasSession } = await signUp(email, password, name);
     if (signUpError) {
+      // Antes: "Este email ya esta registrado" cuando Supabase devolvía
+      // exactamente ese error — confirmaba o negaba, para cualquiera que
+      // probara una lista de emails, cuáles ya son clientes de Modeltex.
+      // Un mensaje neutro (con salida a login/recuperar) resuelve el mismo
+      // caso real sin filtrar ese dato.
       setError(signUpError === 'User already registered'
-        ? 'Este email ya esta registrado'
+        ? 'No pudimos crear la cuenta con ese email. Si ya tenés cuenta, ingresá o recuperá tu contraseña.'
         : signUpError);
+    } else if (!hasSession) {
+      // Hoy no pasa (mailer_autoconfirm activo en Supabase), pero si algún
+      // día se activa "Confirm email" sin tocar código, signUp deja de
+      // devolver sesión: antes esto igual navegaba a /mi-cuenta y el usuario
+      // rebotaba a /login sin entender por qué.
+      setInfo('Te mandamos un mail para confirmar tu cuenta. Confirmalo y después iniciá sesión.');
     } else {
-      navigate('/mi-cuenta');
+      navigate(next);
     }
     setIsLoading(false);
   };
@@ -52,6 +70,11 @@ export default function RegisterPage() {
             {error && (
               <div className="bg-red-50 border border-red-200 rounded-xl p-3">
                 <p className="text-red-600 text-sm">{error}</p>
+              </div>
+            )}
+            {info && (
+              <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+                <p className="text-blue-700 text-sm">{info}</p>
               </div>
             )}
 
@@ -98,7 +121,7 @@ export default function RegisterPage() {
           <div className="mt-8 text-center border-t border-gray-100 pt-6">
             <p className="text-gray-500 text-sm">
               Ya tenes cuenta?{' '}
-              <Link to="/login" className="font-semibold text-petroleum-600 hover:text-petroleum-700">Ingresa</Link>
+              <Link to="/login" state={{ next }} className="font-semibold text-petroleum-600 hover:text-petroleum-700">Ingresa</Link>
             </p>
           </div>
         </div>

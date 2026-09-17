@@ -86,7 +86,11 @@ export function FormatOptions({ product }: FormatOptionsProps) {
   const add = (format: string, unitPrice: number, withSizes = true) => {
     if (withSizes && !canAdd) return;
     // Los formatos industriales incluyen la curva completa: no llevan talles elegidos.
-    addItem(product, { format, unitPrice, sizes: withSizes && hasSizes ? selectedSizes : undefined });
+    // currency: isArgentina decide si unitPrice vino de las columnas ARS o
+    // USD (líneas 67-69 más arriba) — sin marcarlo, el carrito no tenía forma
+    // de saber que un precio ya estaba en dólares y lo mostraba/cobraba como
+    // si fueran pesos.
+    addItem(product, { format, unitPrice, sizes: withSizes && hasSizes ? selectedSizes : undefined, currency: isArgentina ? 'ARS' : 'USD' });
     setAdded(format);
     setTimeout(() => setAdded(cur => (cur === format ? null : cur)), 1800);
   };
@@ -219,7 +223,7 @@ export function FormatOptions({ product }: FormatOptionsProps) {
       <div className="flex items-center justify-between gap-3 border border-gray-100 rounded-xl p-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 leading-tight">{t('fmt.carton', 'Moldes en Cartón')}</p>
-          <p className="text-[11px] text-gray-400">{t('fmt.argOnly', 'Solo Argentina')}</p>
+          <p className="text-[11px] text-gray-500">{t('fmt.argOnly', 'Solo Argentina')}</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           {cartonAvailable(product) && effectiveCarton !== null && (
@@ -240,7 +244,7 @@ export function FormatOptions({ product }: FormatOptionsProps) {
       <div className="flex items-center justify-between gap-3 border border-gray-100 rounded-xl p-3">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-gray-900 leading-tight">{t('fmt.pdfA4', 'Moldes en PDF-A4')}</p>
-          <p className="text-[11px] text-gray-400">{t('fmt.global', 'Global')}</p>
+          <p className="text-[11px] text-gray-500">{t('fmt.global', 'Global')}</p>
         </div>
         <div className="flex items-center gap-3 flex-shrink-0">
           {pdfAvailable(product) && effectivePdf !== null && (
@@ -262,7 +266,7 @@ export function FormatOptions({ product }: FormatOptionsProps) {
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="text-sm font-semibold text-gray-900 leading-tight">{t('fmt.ploter', 'Moldes en PDF Plóter')}</p>
-            <p className="text-[11px] text-gray-400">{t('fmt.chooseWidth', 'Elegí la medida')}</p>
+            <p className="text-[11px] text-gray-500">{t('fmt.chooseWidth', 'Elegí la medida')}</p>
           </div>
           <div className="flex items-center gap-3 flex-shrink-0">
             {effectivePloter !== null && (

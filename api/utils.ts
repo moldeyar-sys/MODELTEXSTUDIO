@@ -76,7 +76,7 @@ async function handleNotifyOrder(req: any, res: any) {
 
     const query =
       `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}` +
-      `&select=id,total,payment_method,payment_status,created_at,notified_at,` +
+      `&select=id,total,payment_method,payment_status,created_at,notified_at,guest_email,` +
       `order_items(quantity,price,formato,sizes,product_name,product:products(name)),` +
       `buyer:profiles(email,whatsapp,full_name)`;
 
@@ -102,6 +102,31 @@ async function handleNotifyOrder(req: any, res: any) {
       return res.status(404).json({ error: 'Pedido no encontrado' });
     }
 
+    // Reserva atómica ANTES de mandar nada: dos POST concurrentes con el
+    // mismo orderId (red lenta reintentando el sendBeacon, o alguien
+    // repitiendo el pedido a mano) antes solo chequeaban notified_at con un
+    // GET y lo escribian recien AL FINAL, asi que los dos pasaban el chequeo
+    // y mandaban WhatsApp/email por duplicado. Ahora el PATCH filtra
+    // notified_at=is.null: si otra llamada ya lo reservó, esta no trae
+    // ninguna fila de vuelta y no manda nada.
+    const claimRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&notified_at=is.null`,
+      {
+        method: 'PATCH',
+        headers: {
+          apikey: SERVICE_ROLE,
+          Authorization: `Bearer ${SERVICE_ROLE}`,
+          'Content-Type': 'application/json',
+          Prefer: 'return=representation',
+        },
+        body: JSON.stringify({ notified_at: new Date().toISOString() }),
+      },
+    );
+    const claimed = claimRes.ok ? ((await claimRes.json()) as any[]) : [];
+    if (!claimed.length) {
+      return res.status(200).json({ ok: true, skipped: 'already_notified' });
+    }
+
     const items: any[] = order.order_items ?? [];
     const lines = items.map((it) => {
       const name = it.product?.name || it.product_name || 'Producto';
@@ -113,7 +138,10 @@ async function handleNotifyOrder(req: any, res: any) {
     });
 
     const buyer = order.buyer || {};
-    const buyerName = buyer.full_name || buyer.email || 'Cliente';
+    // order.guest_email cubre las compras sin cuenta (buyer siempre es null
+    // ahí, porque no hay user_id): antes el aviso decía "Cliente: Cliente"
+    // sin ningún dato para contactar a quien acababa de comprar.
+    const buyerName = buyer.full_name || buyer.email || order.guest_email || 'Cliente (sin cuenta)';
     const total = `$${Number(order.total).toLocaleString('es-AR')}`;
     const metodo = paymentLabels[order.payment_method] || order.payment_method;
     const shortId = String(order.id).slice(0, 8);
@@ -180,22 +208,16 @@ async function handleNotifyOrder(req: any, res: any) {
       results.email = 'skip (sin RESEND_API_KEY/NOTIFY_EMAIL)';
     }
 
-    try {
-      await fetch(`${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}`, {
-        method: 'PATCH',
-        headers: {
-          apikey: SERVICE_ROLE,
-          Authorization: `Bearer ${SERVICE_ROLE}`,
-          'Content-Type': 'application/json',
-          Prefer: 'return=minimal',
-        },
-        body: JSON.stringify({ notified_at: new Date().toISOString() }),
-      });
-    } catch (e) {
-      console.error('notify-order: no se pudo marcar notified_at', e);
-    }
+    // notified_at ya quedó marcado en el PATCH de reserva de arriba, antes de
+    // mandar nada (así el segundo POST concurrente no llega a duplicar el aviso).
 
-    res.status(200).json({ ok: true, results });
+    // Antes `results` (con textos como "skip (sin CALLMEBOT_*)" o
+    // "skip (sin RESEND_API_KEY/NOTIFY_EMAIL)") volvía en la respuesta: este
+    // endpoint es público y sin sesión, así que cualquiera podía usarlo para
+    // saber qué integraciones tiene o no configuradas el sitio. El detalle
+    // real queda en los logs del servidor (console.error de cada rama).
+    console.log(`notify-order: pedido ${orderId} → whatsapp=${results.whatsapp}, email=${results.email}`);
+    res.status(200).json({ ok: true });
   } catch (err) {
     console.error('notify-order error', err);
     res.status(500).json({ error: 'Error interno' });
@@ -206,21 +228,20 @@ async function handleNotifyOrder(req: any, res: any) {
 // notify-buyer-paid: avisa por mail al comprador invitado que su pedido ya
 // esta pagado y listo. Solo el admin puede dispararla.
 // ---------------------------------------------------------------------------
-async function handleNotifyBuyerPaid(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-  if (!token || !(await isAdmin(token))) {
-    return res.status(403).json({ error: 'Esta accion es solo para administradores.' });
-  }
+/**
+ * Manda el mail "tu pedido ya está listo" a un comprador SIN cuenta.
+ * Separado del handler HTTP para que api/mp-webhook.ts pueda llamarlo
+ * directo (mismo proceso, sin pasar por la verificación de admin) apenas
+ * aprueba un pago automáticamente: antes esto SOLO se disparaba si el admin
+ * apretaba un botón a mano en el panel, así que un pago aprobado sin
+ * intervención humana nunca mandaba el mail que el checkout le prometió al
+ * comprador ("te avisamos por mail... con un link para descargar").
+ * Best-effort: nunca tira una excepción, siempre devuelve un resultado.
+ */
+export async function sendBuyerPaidEmailCore(orderId: string): Promise<{ ok: boolean; skipped?: boolean; error?: string }> {
   const resendKey = process.env.RESEND_API_KEY;
-  if (!SERVICE_ROLE || !resendKey) {
-    return res.status(200).json({ ok: false, skipped: true });
-  }
+  if (!SERVICE_ROLE || !resendKey) return { ok: false, skipped: true };
   try {
-    const body = readBody(req);
-    const orderId = typeof body.orderId === 'string' ? body.orderId.trim() : '';
-    if (!orderId) return res.status(400).json({ error: 'orderId requerido' });
-
     const orderRes = await fetch(
       `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=id,total,guest_email,payment_status`,
       { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
@@ -230,7 +251,7 @@ async function handleNotifyBuyerPaid(req: any, res: any) {
     const order = rows?.[0];
 
     if (!order || !order.guest_email || order.payment_status !== 'pagado') {
-      return res.status(200).json({ ok: false, skipped: true });
+      return { ok: false, skipped: true };
     }
 
     const shortId = String(order.id).slice(0, 8);
@@ -258,10 +279,28 @@ async function handleNotifyBuyerPaid(req: any, res: any) {
     });
 
     if (!r.ok) {
-      console.error('notify-buyer-paid resend', r.status, await r.text());
-      return res.status(200).json({ ok: false, error: `resend ${r.status}` });
+      console.error('sendBuyerPaidEmailCore: resend', r.status, await r.text());
+      return { ok: false, error: `resend ${r.status}` };
     }
-    res.status(200).json({ ok: true });
+    return { ok: true };
+  } catch (err) {
+    console.error('sendBuyerPaidEmailCore error', err);
+    return { ok: false, error: 'error interno' };
+  }
+}
+
+async function handleNotifyBuyerPaid(req: any, res: any) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!token || !(await isAdmin(token))) {
+    return res.status(403).json({ error: 'Esta accion es solo para administradores.' });
+  }
+  try {
+    const body = readBody(req);
+    const orderId = typeof body.orderId === 'string' ? body.orderId.trim() : '';
+    if (!orderId) return res.status(400).json({ error: 'orderId requerido' });
+    const result = await sendBuyerPaidEmailCore(orderId);
+    res.status(200).json(result);
   } catch (err) {
     console.error('notify-buyer-paid error', err);
     res.status(500).json({ error: 'Error interno' });
@@ -354,6 +393,28 @@ function safeFileName(name: string): string {
   return cleanExt ? `${cleanBase || 'archivo'}.${cleanExt}` : (cleanBase || 'archivo');
 }
 
+// Antes se confiaba en el `contentType` que manda el navegador (cualquier
+// string) y se subía tal cual: con un token de admin se podía subir un
+// .html o un .svg con <script>, que después /img/... reenvía desde
+// modeltex.com.ar con ese mismo content-type (donde vive la sesión de
+// Supabase en localStorage). Ahora se exige que el tipo declarado esté en
+// esta lista Y que coincida con la firma real de los primeros bytes del
+// archivo — así un .html renombrado a .jpg con contentType falso no pasa.
+const ALLOWED_IMAGE_TYPES: Record<string, (b: Buffer) => boolean> = {
+  'image/jpeg': (b) => b.length > 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff,
+  'image/png': (b) => b.length > 8 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47,
+  'image/webp': (b) => b.length > 12 && b.slice(0, 4).toString('ascii') === 'RIFF' && b.slice(8, 12).toString('ascii') === 'WEBP',
+  'image/gif': (b) => b.length > 6 && b.slice(0, 3).toString('ascii') === 'GIF',
+  'image/avif': (b) => b.length > 12 && b.slice(4, 8).toString('ascii') === 'ftyp',
+};
+const EXT_BY_TYPE: Record<string, string> = {
+  'image/jpeg': 'jpg',
+  'image/png': 'png',
+  'image/webp': 'webp',
+  'image/gif': 'gif',
+  'image/avif': 'avif',
+};
+
 async function handleUploadImage(req: any, res: any) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
@@ -373,7 +434,7 @@ async function handleUploadImage(req: any, res: any) {
   try {
     const body = readBody(req);
     const fileName = typeof body.fileName === 'string' ? body.fileName : '';
-    const contentType = typeof body.contentType === 'string' ? body.contentType : 'application/octet-stream';
+    const contentType = typeof body.contentType === 'string' ? body.contentType.toLowerCase() : '';
     const dataBase64 = typeof body.dataBase64 === 'string' ? body.dataBase64 : '';
     const folder = typeof body.folder === 'string' && /^[a-z0-9-]+$/.test(body.folder) ? body.folder : 'products';
     if (!fileName || !dataBase64) return res.status(400).json({ error: 'fileName y dataBase64 son requeridos' });
@@ -383,7 +444,14 @@ async function handleUploadImage(req: any, res: any) {
     // así que esto nunca debería acercarse a 15 MB salvo un archivo mal enviado.
     if (bytes.length > 15 * 1024 * 1024) return res.status(413).json({ error: 'Archivo demasiado grande' });
 
-    const path = `${folder}/${Date.now()}-${safeFileName(fileName)}`;
+    const signatureCheck = ALLOWED_IMAGE_TYPES[contentType];
+    if (!signatureCheck || !signatureCheck(bytes)) {
+      return res.status(415).json({ error: 'Solo se admiten imágenes JPEG, PNG, WEBP, GIF o AVIF.' });
+    }
+    // La extensión sale del tipo real verificado, no de lo que diga el
+    // nombre de archivo que mandó el navegador (evita "foto.jpg" que en
+    // realidad es un HTML/SVG con content-type falseado).
+    const path = `${folder}/${Date.now()}-${safeFileName(fileName).replace(/\.[a-z0-9]+$/i, '')}.${EXT_BY_TYPE[contentType]}`;
     const client = new AwsClient({ accessKeyId, secretAccessKey, service: 's3', region: 'auto' });
     const endpoint = `https://${accountId}.r2.cloudflarestorage.com/${bucket}/${path}`;
     const uploadRes = await client.fetch(endpoint, {

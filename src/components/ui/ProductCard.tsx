@@ -9,6 +9,7 @@ import { ConsultButtons } from './ConsultButtons';
 import { FormatOptions } from './FormatOptions';
 import { useCountry } from '../../hooks/useCountry';
 import { productImageAlt } from '../../lib/productContent';
+import { useEscapeKey } from '../../lib/useEscapeKey';
 
 interface ProductCardProps {
   product: Product;
@@ -25,6 +26,10 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
   const { formatPrice, t } = useLocale();
   const { isArgentina } = useCountry();
   const [showOptions, setShowOptions] = useState(false);
+  // Antes este modal no se podía cerrar con Escape ni anunciaba que era un
+  // diálogo a un lector de pantalla (a diferencia de IaTextilModal.tsx, que
+  // sí lo hacía) — bloqueaba justo el paso de elegir formato antes de comprar.
+  useEscapeKey(() => setShowOptions(false), showOptions);
   const categoryLabel =
     CATEGORIES.find((c) => c.value === product.category)?.label || product.category.replace('-', ' ');
 
@@ -134,7 +139,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
               : t('common.consult', 'Consultar')}
           </p>
           {product.codigo && (
-            <span className="text-[11px] font-medium text-gray-400 whitespace-nowrap">{t('card.code', 'Cod.')} {product.codigo}</span>
+            <span className="text-[11px] font-medium text-gray-500 whitespace-nowrap">{t('card.code', 'Cod.')} {product.codigo}</span>
           )}
         </div>
 
@@ -153,6 +158,9 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
         <div
           className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4"
           onClick={() => setShowOptions(false)}
+          role="dialog"
+          aria-modal="true"
+          aria-label={`${t('card.chooseFormat', 'Elegi el formato')}: ${product.name}`}
         >
           <div
             className="bg-white w-full sm:max-w-md sm:rounded-2xl rounded-t-2xl shadow-2xl max-h-[90vh] overflow-y-auto"
@@ -163,7 +171,7 @@ export function ProductCard({ product, priority = false }: ProductCardProps) {
                 <p className="text-xs text-gray-400">{t('card.chooseFormat', 'Elegi el formato')}</p>
                 <h3 className="font-semibold text-gray-900 truncate">{product.name}</h3>
               </div>
-              <button onClick={() => setShowOptions(false)} aria-label="Cerrar" className="p-1 hover:bg-gray-100 rounded-lg flex-shrink-0">
+              <button onClick={() => setShowOptions(false)} aria-label="Cerrar" className="w-11 h-11 flex items-center justify-center hover:bg-gray-100 rounded-lg flex-shrink-0">
                 <X className="w-5 h-5 text-gray-500" />
               </button>
             </div>
