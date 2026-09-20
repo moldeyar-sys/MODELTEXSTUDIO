@@ -2,7 +2,20 @@
 <html lang="es">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="/brand/favicon.png" />
+
+    <!-- Iconos del sitio: el maniqui de la marca, recortado del telon negro
+         (que no forma parte de la paleta) y centrado con aire. Google recorta
+         el favicon en CIRCULO en los resultados de busqueda: si el dibujo toca
+         los bordes, el recorte le come los hombros y la base.
+         Antes /favicon.ico no existia y, como todo lo que no se encuentra va a
+         index.html, a Google le llegaba la pagina HTML entera en vez de un
+         icono. Ahora el archivo existe.
+         Los genera: npm run iconos -->
+    <link rel="icon" href="/favicon.ico" sizes="16x16 32x32 48x48" />
+    <link rel="icon" type="image/png" sizes="96x96" href="/brand/favicon-96.png?v=4" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/brand/favicon-192.png?v=4" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/brand/apple-touch-icon.png?v=4" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="theme-color" content="#0048AD" />
 

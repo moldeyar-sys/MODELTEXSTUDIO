@@ -37,19 +37,21 @@ export function Navbar() {
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group flex-shrink-0 mr-2" onClick={() => setIsOpen(false)} aria-label="Modeltex - Inicio">
-            {/* width/height = medidas reales del archivo (367x179). El alto
+            {/* width/height = medidas reales del archivo (706x1024). El alto
                 visible lo fija el CSS, pero sin las medidas el navegador no
                 sabe cuanto ancho reservar hasta que baja la imagen y la barra
                 superior se corre sola en el primer pintado (CLS) en TODAS las
-                paginas del sitio. */}
+                paginas del sitio.
+                alt vacio a proposito: el nombre va en el <span> de al lado y,
+                ademas, el <Link> ya lleva su aria-label. */}
             <img
-              src="/brand/modeltex-mark-buzo.png?v=1"
-              alt="Modeltex"
-              width={367}
-              height={179}
+              src="/brand/modeltex-mark.png?v=4"
+              alt=""
+              width={706}
+              height={1024}
               decoding="async"
               draggable={false}
-              className="h-7 sm:h-9 w-auto select-none transition-transform group-hover:scale-[1.03]"
+              className="h-8 sm:h-10 w-auto select-none transition-transform group-hover:scale-[1.03]"
             />
             <span className="font-bold text-lg sm:text-xl tracking-tight text-gray-900 hidden sm:inline">MODELTEX</span>
           </Link>

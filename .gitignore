@@ -31,3 +31,9 @@ apk/KEYSTORE-INFO.txt
 # sin trackear a proposito, pero cualquier `git add -A` las volvia a meter en
 # el repo. Los archivos siguen en el disco; solo quedan fuera de git.
 MODELTEX LAB/
+
+# Hoja de prueba de scripts/generar-iconos.mjs (los iconos si se versionan)
+scripts/.iconos-prueba.html
+
+# HTML intermedio de scripts/generar-lockup.mjs
+scripts/.build/

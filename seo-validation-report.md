@@ -1,6 +1,6 @@
 # Reporte de validación SEO — Modeltex
 
-Generado el 2026-09-17 con `node scripts/seo-check.mjs`.
+Generado el 2026-09-20 con `node scripts/seo-check.mjs`.
 Origen de las pruebas: **middleware local sobre `dist/`**.
 
 **468 de 468 controles OK.** Sin fallas.
