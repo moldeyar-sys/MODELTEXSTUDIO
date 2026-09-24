@@ -529,6 +529,7 @@ const EN: Record<string, string> = {
   'tp.pv.s3.i1': 'Supabase may store account and order data.',
   'tp.pv.s3.i2': 'Vercel may host the site and its functions.',
   'tp.pv.s3.i3': 'Mercado Pago, PayPal, Payoneer, Wise or others process payments depending on availability.',
+  'tp.pv.s3.i4': 'Google Analytics and the Meta Pixel may measure visits and purchases to improve the site and our ads.',
   'tp.pv.s4.title': 'Questions about your data',
   'tp.pv.s4.text': 'If you want to review, correct or request a review of your data linked to a purchase, write to us from the same email or WhatsApp used on your account.',
   'tp.pv.s4.i1': 'We may ask for identity verification.',

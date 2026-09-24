@@ -2,9 +2,10 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
-import { initGA } from './lib/analytics';
+import { initGA, initMetaPixel } from './lib/analytics';
 
 initGA();
+initMetaPixel();
 
 // El middleware (middleware.ts) agrega a los robots un bloque de contenido
 // estatico debajo de #root. Si ese HTML llega a un navegador real (o Google

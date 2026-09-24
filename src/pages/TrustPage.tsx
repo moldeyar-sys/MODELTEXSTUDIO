@@ -282,6 +282,7 @@ function buildPages(t: (key: string, es: string) => string): Record<TrustPageVar
             t('tp.pv.s3.i1', 'Supabase puede almacenar datos de cuenta y pedidos.'),
             t('tp.pv.s3.i2', 'Vercel puede alojar el sitio y funciones.'),
             t('tp.pv.s3.i3', 'Mercado Pago, PayPal, Payoneer, Wise u otros procesan pagos según disponibilidad.'),
+            t('tp.pv.s3.i4', 'Google Analytics y el Píxel de Meta pueden medir visitas y compras para mejorar el sitio y nuestros anuncios.'),
           ],
         },
         {
