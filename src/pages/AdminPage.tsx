@@ -21,13 +21,14 @@ import { fetchChatSessions } from '../lib/chatHistory';
 import type { ChatSession } from '../lib/chatHistory';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 import { LabAdminPanel } from '../components/admin/lab/LabAdminPanel';
+import { AllContactsPanel } from '../components/admin/AllContactsPanel';
 import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
 import { PRODUCT_COLUMNS } from '../lib/productColumns';
 import { queueIndexNowUrl } from '../lib/indexNowClient';
 
-type AdminTab = 'dashboard' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'lab' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats' | 'chats';
+type AdminTab = 'dashboard' | 'people' | 'products' | 'orders' | 'customers' | 'requests' | 'free' | 'lab' | 'contacts' | 'newsletter' | 'hero' | 'payments' | 'ia' | 'stats' | 'chats';
 
 export default function AdminPage() {
   useAuth();
@@ -127,9 +128,10 @@ export default function AdminPage() {
 
   const tabs: { id: AdminTab; label: string; icon: React.ReactNode }[] = [
     { id: 'dashboard', label: 'Dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
+    { id: 'people', label: 'Todos los contactos', icon: <Users className="w-4 h-4" /> },
     { id: 'products', label: 'Productos', icon: <Box className="w-4 h-4" /> },
     { id: 'orders', label: 'Pedidos', icon: <ShoppingCart className="w-4 h-4" /> },
-    { id: 'customers', label: 'Clientes', icon: <UserCheck className="w-4 h-4" /> },
+    { id: 'customers', label: `Clientes con cuenta (${customers.length})`, icon: <UserCheck className="w-4 h-4" /> },
     { id: 'requests', label: 'Solicitudes', icon: <ClipboardList className="w-4 h-4" /> },
     { id: 'free', label: 'Moldes Gratis', icon: <Gift className="w-4 h-4" /> },
     { id: 'lab', label: 'Modeltex Lab', icon: <GraduationCap className="w-4 h-4" /> },
@@ -854,6 +856,8 @@ export default function AdminPage() {
             {orders.length === 0 && <p className="text-gray-500 text-center py-8">No hay pedidos todavía</p>}
           </div>
         )}
+
+        {activeTab === 'people' && <AllContactsPanel customers={customers} subscribers={subscribers} />}
 
         {/* Customers */}
         {activeTab === 'customers' && (
