@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronUp, Download, MessageCircle, FileDown, Tag, Lock, UserPlus, Star, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import type { FreeMold } from '../../lib/types';
 import { buildFreeMoldWhatsApp, incrementFreeMoldDownload } from '../../lib/freeMolds';
 import { useAuth } from '../../contexts/AuthContext';
@@ -35,6 +35,9 @@ const FILES_COLLAPSED = 4;
 
 export function FreeMoldCard({ mold }: Props) {
   const { user } = useAuth();
+  // Para que después de registrarse el usuario vuelva a esta misma página
+  // (antes caía en /mi-cuenta y perdía el molde que estaba por descargar).
+  const location = useLocation();
   const [showReviews, setShowReviews] = useState(false);
   const [showAllFiles, setShowAllFiles] = useState(false);
   const waUrl = buildFreeMoldWhatsApp(mold);
@@ -160,6 +163,7 @@ export function FreeMoldCard({ mold }: Props) {
               <p className="text-[11px] text-gray-600 mb-1.5">Creá tu cuenta para descargar gratis <b>todos los talles</b>.</p>
               <Link
                 to="/registro"
+                state={{ next: location.pathname }}
                 className="flex items-center justify-center gap-1.5 w-full py-2 bg-petroleum-600 text-white text-xs font-semibold rounded-lg hover:bg-petroleum-700 transition-colors"
               >
                 <UserPlus className="w-3.5 h-3.5" /> Crear cuenta gratis

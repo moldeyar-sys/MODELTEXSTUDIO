@@ -2,12 +2,15 @@ import { useState, type FormEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../lib/locale';
 import { BrandLogo } from '../components/brand/BrandLogo';
+import { GoogleAuthButton } from '../components/ui/GoogleAuthButton';
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const location = useLocation();
   const { signIn } = useAuth();
+  const { t } = useLocale();
   // Si una ruta protegida (ej: /admin) mando aca, volver ahi despues del login.
   const next = (location.state as { next?: string } | null)?.next ?? '/';
 
@@ -25,7 +28,7 @@ export default function LoginPage() {
     const { error: signInError } = await signIn(email, password);
     if (signInError) {
       setError(signInError === 'Invalid login credentials'
-        ? 'Email o contraseña incorrectos'
+        ? t('auth.badCredentials', 'Email o contraseña incorrectos')
         : signInError);
     } else {
       navigate(next, { replace: true });
@@ -41,19 +44,21 @@ export default function LoginPage() {
             <Link to="/" className="inline-flex justify-center mb-6" aria-label="Modeltex - Inicio">
               <BrandLogo variant="full" size={96} />
             </Link>
-            <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">Iniciar sesion</h1>
-            <p className="text-gray-500">Ingresa a tu cuenta de Modeltex</p>
+            <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">{t('auth.login.title', 'Iniciar sesión')}</h1>
+            <p className="text-gray-500">{t('auth.login.subtitle', 'Ingresá a tu cuenta de Modeltex')}</p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="bg-red-50 border border-red-200 rounded-xl p-3">
-                <p className="text-red-600 text-sm">{error}</p>
-              </div>
-            )}
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5">
+              <p className="text-red-600 text-sm">{error}</p>
+            </div>
+          )}
 
+          <GoogleAuthButton next={next} onError={setError} />
+
+          <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('auth.email', 'Email')}</label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -68,7 +73,7 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Contrasena</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('auth.password', 'Contraseña')}</label>
               <div className="relative">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
@@ -82,6 +87,7 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  aria-label={showPassword ? t('auth.hidePassword', 'Ocultar contraseña') : t('auth.showPassword', 'Mostrar contraseña')}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
@@ -91,7 +97,7 @@ export default function LoginPage() {
 
             <div className="text-right">
               <Link to="/recuperar-contrasena" className="text-sm text-petroleum-600 hover:text-petroleum-700 font-medium">
-                Olvidaste tu contrasena?
+                {t('auth.forgot', '¿Olvidaste tu contraseña?')}
               </Link>
             </div>
 
@@ -100,15 +106,15 @@ export default function LoginPage() {
               disabled={isLoading}
               className="btn-primary w-full disabled:opacity-50"
             >
-              {isLoading ? 'Ingresando...' : 'Ingresar'}
+              {isLoading ? t('auth.signingIn', 'Ingresando...') : t('auth.signin', 'Ingresar')}
             </button>
           </form>
 
           <div className="mt-8 text-center border-t border-gray-100 pt-6">
             <p className="text-gray-500 text-sm">
-              No tenes cuenta?{' '}
+              {t('auth.noAccount', '¿No tenés cuenta?')}{' '}
               <Link to="/registro" state={{ next }} className="font-semibold text-petroleum-600 hover:text-petroleum-700">
-                Crea una
+                {t('auth.createOne', 'Creá una')}
               </Link>
             </p>
           </div>

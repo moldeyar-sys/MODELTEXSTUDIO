@@ -14,3 +14,23 @@ const supabaseUrl = (import.meta.env.VITE_SUPABASE_URL as string) || FALLBACK_SU
 const supabaseAnonKey = (import.meta.env.VITE_SUPABASE_ANON_KEY as string) || FALLBACK_SUPABASE_ANON_KEY;
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+
+/**
+ * ¿Está activado un provider OAuth (ej. 'google') en el panel de Supabase?
+ * Consulta el endpoint público /auth/v1/settings. Hace falta porque
+ * signInWithOAuth NO devuelve error cuando el provider está apagado:
+ * redirige el navegador a una página JSON cruda de Supabase con el 400
+ * ("provider is not enabled") y el usuario queda fuera del sitio.
+ * Si el chequeo falla (sin conexión, etc.) devuelve true: se sigue con el
+ * flujo normal y en el peor caso se ve el comportamiento de siempre.
+ */
+export async function isOAuthProviderEnabled(provider: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${supabaseUrl}/auth/v1/settings`, { headers: { apikey: supabaseAnonKey } });
+    if (!res.ok) return true;
+    const settings = await res.json() as { external?: Record<string, boolean> };
+    return settings.external?.[provider] !== false;
+  } catch {
+    return true;
+  }
+}

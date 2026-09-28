@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { Link, useParams } from 'react-router-dom';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import {
   ArrowLeft,
   ArrowRight,
@@ -32,6 +32,8 @@ import { trackLabLessonComplete } from '../lib/analytics';
 const SITE_URL = 'https://modeltex.com.ar';
 
 export default function LabLessonPage() {
+  // Volver a esta clase después del registro (antes caía en /mi-cuenta).
+  const location = useLocation();
   const { cursoSlug = '', moduloSlug = '', claseSlug = '' } = useParams<{
     cursoSlug: string;
     moduloSlug: string;
@@ -385,7 +387,7 @@ export default function LabLessonPage() {
             </button>
             {!user && (
               <p className="text-xs text-gray-400">
-                Tu progreso se guarda en este navegador. <Link to="/registro" className="text-primary-700 hover:underline">Creá una cuenta</Link> para no perderlo.
+                Tu progreso se guarda en este navegador. <Link to="/registro" state={{ next: location.pathname }} className="text-primary-700 hover:underline">Creá una cuenta</Link> para no perderlo.
               </p>
             )}
           </div>

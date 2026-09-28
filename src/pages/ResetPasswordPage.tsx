@@ -2,6 +2,7 @@ import { useState, useEffect, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Lock, Eye, EyeOff, CheckCircle, AlertCircle } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../lib/locale';
 import { supabase } from '../lib/supabase';
 import { BrandLogo } from '../components/brand/BrandLogo';
 
@@ -23,6 +24,7 @@ import { BrandLogo } from '../components/brand/BrandLogo';
 export default function ResetPasswordPage() {
   const navigate = useNavigate();
   const { updatePassword } = useAuth();
+  const { t } = useLocale();
   const [ready, setReady] = useState(false);
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -46,8 +48,8 @@ export default function ResetPasswordPage() {
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setError('');
-    if (password.length < 6) { setError('La contraseña debe tener al menos 6 caracteres'); return; }
-    if (password !== confirmPassword) { setError('Las contraseñas no coinciden'); return; }
+    if (password.length < 6) { setError(t('auth.passwordShort', 'La contraseña debe tener al menos 6 caracteres')); return; }
+    if (password !== confirmPassword) { setError(t('reset.mismatch', 'Las contraseñas no coinciden')); return; }
 
     setIsLoading(true);
     const { error: updateError } = await updatePassword(password);
@@ -68,20 +70,20 @@ export default function ResetPasswordPage() {
             <Link to="/" className="inline-flex justify-center mb-6" aria-label="Modeltex - Inicio">
               <BrandLogo variant="full" size={96} />
             </Link>
-            <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">Nueva contraseña</h1>
+            <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">{t('reset.title', 'Nueva contraseña')}</h1>
           </div>
 
           {done ? (
             <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-start gap-3">
               <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
-              <p className="text-green-700 text-sm">Contraseña actualizada. Te llevamos a tu cuenta...</p>
+              <p className="text-green-700 text-sm">{t('reset.done', 'Contraseña actualizada. Te llevamos a tu cuenta...')}</p>
             </div>
           ) : !ready ? (
             <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3">
               <AlertCircle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
               <p className="text-amber-700 text-sm">
-                Este link no es válido o ya venció. Pedí uno nuevo desde{' '}
-                <Link to="/recuperar-contrasena" className="underline font-medium">recuperar contraseña</Link>.
+                {t('reset.invalid', 'Este link no es válido o ya venció. Pedí uno nuevo desde')}{' '}
+                <Link to="/recuperar-contrasena" className="underline font-medium">{t('reset.invalidLink', 'recuperar contraseña')}</Link>.
               </p>
             </div>
           ) : (
@@ -92,14 +94,14 @@ export default function ResetPasswordPage() {
                 </div>
               )}
               <div>
-                <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1.5">Nueva contraseña</label>
+                <label htmlFor="new-password" className="block text-sm font-medium text-gray-700 mb-1.5">{t('reset.newPass', 'Nueva contraseña')}</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     id="new-password"
                     type={showPassword ? 'text' : 'password'}
                     required
-                    placeholder="Mínimo 6 caracteres"
+                    placeholder={t('auth.passwordMin', 'Mínimo 6 caracteres')}
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     className="input-field pl-10 pr-10"
@@ -110,14 +112,14 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
               <div>
-                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1.5">Confirmar contraseña</label>
+                <label htmlFor="confirm-password" className="block text-sm font-medium text-gray-700 mb-1.5">{t('reset.confirmPass', 'Confirmar contraseña')}</label>
                 <div className="relative">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input
                     id="confirm-password"
                     type={showPassword ? 'text' : 'password'}
                     required
-                    placeholder="Repetí la contraseña"
+                    placeholder={t('reset.repeatPh', 'Repetí la contraseña')}
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
                     className="input-field pl-10"
@@ -125,7 +127,7 @@ export default function ResetPasswordPage() {
                 </div>
               </div>
               <button type="submit" disabled={isLoading} className="btn-primary w-full disabled:opacity-50">
-                {isLoading ? 'Guardando...' : 'Guardar contraseña'}
+                {isLoading ? t('reset.saving', 'Guardando...') : t('reset.save', 'Guardar contraseña')}
               </button>
             </form>
           )}

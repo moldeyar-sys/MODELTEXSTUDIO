@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Bot, X, Send, Loader2, UserPlus } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { useEscapeKey } from '../../lib/useEscapeKey';
@@ -57,6 +57,8 @@ interface ChatWidgetProps {
 }
 
 export function ChatWidget({ open, onClose }: ChatWidgetProps) {
+  // Volver a esta página después del registro (antes caía en /mi-cuenta).
+  const location = useLocation();
   useEscapeKey(onClose, open);
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: GREETING }]);
   const [input, setInput] = useState('');
@@ -179,6 +181,7 @@ export function ChatWidget({ open, onClose }: ChatWidgetProps) {
               <div className="p-3 border-t border-gray-100 bg-white">
                 <Link
                   to="/registro"
+                  state={{ next: location.pathname }}
                   className="flex items-center justify-center gap-2 w-full py-2.5 bg-primary-800 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
                 >
                   <UserPlus className="w-4 h-4" /> Crear cuenta gratis para seguir preguntando

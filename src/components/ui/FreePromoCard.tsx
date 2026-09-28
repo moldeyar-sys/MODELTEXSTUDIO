@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { ChevronDown, ChevronUp, Download, Lock, UserPlus, FileDown, Clock, Star, X } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { createSignedDownloadUrl, isStoragePath } from '../../lib/storage';
@@ -25,6 +25,8 @@ const FILES_COLLAPSED = 4;
 
 export function FreePromoCard({ item }: { item: PromoProduct }) {
   const { user } = useAuth();
+  // Volver a esta página después del registro (antes caía en /mi-cuenta).
+  const location = useLocation();
   const { product, files } = item;
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [showReviews, setShowReviews] = useState(false);
@@ -129,7 +131,7 @@ export function FreePromoCard({ item }: { item: PromoProduct }) {
           {!user && files.length > 0 && (
             <div className="mt-2.5 pt-2.5 border-t border-gray-200">
               <p className="text-[11px] text-gray-600 mb-1.5">Creá tu cuenta gratis para <b>descargar este molde</b>.</p>
-              <Link to="/registro" className="flex items-center justify-center gap-1.5 w-full py-2 bg-petroleum-600 text-white text-xs font-semibold rounded-lg hover:bg-petroleum-700 transition-colors">
+              <Link to="/registro" state={{ next: location.pathname }} className="flex items-center justify-center gap-1.5 w-full py-2 bg-petroleum-600 text-white text-xs font-semibold rounded-lg hover:bg-petroleum-700 transition-colors">
                 <UserPlus className="w-3.5 h-3.5" /> Crear cuenta gratis
               </Link>
             </div>

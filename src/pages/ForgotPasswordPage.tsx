@@ -2,10 +2,12 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useLocale } from '../lib/locale';
 import { BrandLogo } from '../components/brand/BrandLogo';
 
 export default function ForgotPasswordPage() {
   const { resetPassword } = useAuth();
+  const { t } = useLocale();
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -31,7 +33,7 @@ export default function ForgotPasswordPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8 sm:p-10">
           <div className="mb-6">
             <Link to="/login" className="inline-flex items-center gap-2 text-petroleum-600 hover:text-petroleum-700 font-medium text-sm">
-              <ArrowLeft className="w-4 h-4" /> Volver a iniciar sesion
+              <ArrowLeft className="w-4 h-4" /> {t('forgot.back', 'Volver a iniciar sesión')}
             </Link>
           </div>
 
@@ -39,20 +41,23 @@ export default function ForgotPasswordPage() {
             <div className="inline-flex justify-center mb-6">
               <BrandLogo variant="full" size={96} />
             </div>
-            <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">Recuperar contrasena</h1>
-            <p className="text-gray-500 text-sm">Te enviamos un enlace para restablecer tu contrasena</p>
+            <h1 className="font-display text-3xl font-bold text-primary-900 mb-2">{t('forgot.title', 'Recuperar contraseña')}</h1>
+            <p className="text-gray-500 text-sm">{t('forgot.subtitle', 'Ingresá tu email y te mandamos un enlace para crear una contraseña nueva.')}</p>
           </div>
 
           {submitted ? (
             <div className="space-y-4">
               <div className="bg-green-50 border border-green-200 rounded-xl p-4">
                 <p className="text-green-700 text-sm font-medium">
-                  Si el email existe, recibiras un enlace para restablecer tu contrasena
+                  {t('forgot.sent', 'Si el email existe, vas a recibir un enlace para restablecer tu contraseña. Revisá también la carpeta de spam.')}
                 </p>
               </div>
               <button onClick={() => setSubmitted(false)} className="btn-secondary w-full">
-                Intentar con otro email
+                {t('forgot.tryOther', 'Intentar con otro email')}
               </button>
+              <p className="text-xs text-gray-400 text-center">
+                {t('forgot.help', '¿No te llega el mail? Escribinos por WhatsApp desde la página de contacto y te ayudamos a recuperar tu cuenta.')}
+              </p>
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-5">
@@ -63,7 +68,7 @@ export default function ForgotPasswordPage() {
               )}
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('auth.email', 'Email')}</label>
                 <div className="relative">
                   <Mail className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
                   <input type="email" required placeholder="tu@email.com" value={email} onChange={e => setEmail(e.target.value)} className="input-field pl-10" />
@@ -71,7 +76,7 @@ export default function ForgotPasswordPage() {
               </div>
 
               <button type="submit" disabled={isLoading} className="btn-primary w-full disabled:opacity-50">
-                {isLoading ? 'Enviando...' : 'Enviar enlace'}
+                {isLoading ? t('forgot.sending', 'Enviando...') : t('forgot.send', 'Enviar enlace')}
               </button>
             </form>
           )}

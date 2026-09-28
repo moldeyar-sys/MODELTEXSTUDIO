@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Send, Loader2, UserPlus, Sparkles } from 'lucide-react';
 import { supabase } from '../../lib/supabase';
 import { WHATSAPP_NUMBER } from '../../lib/whatsapp';
@@ -54,6 +54,8 @@ const DEFAULT_GREETING =
   '¡Hola! 👋 Soy el tutor de MODELTEX LAB. Preguntame lo que necesites sobre moldería o producción textil.';
 
 export function LabChatPanel({ lab, contextLabel, greeting, suggestions, className }: Props) {
+  // Volver a esta página después del registro (antes caía en /mi-cuenta).
+  const location = useLocation();
   const [messages, setMessages] = useState<Msg[]>([{ role: 'assistant', content: greeting || DEFAULT_GREETING }]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
@@ -168,6 +170,7 @@ export function LabChatPanel({ lab, contextLabel, greeting, suggestions, classNa
         <div className="p-3 border-t border-gray-100 bg-white">
           <Link
             to="/registro"
+            state={{ next: location.pathname }}
             className="flex items-center justify-center gap-2 w-full py-2.5 bg-primary-800 text-white text-sm font-semibold rounded-xl hover:bg-primary-700 transition-colors"
           >
             <UserPlus className="w-4 h-4" /> Crear cuenta gratis para seguir preguntando

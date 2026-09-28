@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
-import { supabase } from '../lib/supabase';
+import { supabase, isOAuthProviderEnabled } from '../lib/supabase';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '../lib/types';
 
@@ -10,8 +10,16 @@ interface AuthContextType {
   /** true una vez que el perfil terminó de intentar cargarse (haya o no encontrado uno). */
   profileLoaded: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null }>;
+  /**
+   * Ingreso/registro con Google (OAuth de Supabase). Redirige el navegador a
+   * Google; al volver, detectSessionInUrl abre la sesión y onAuthStateChange
+   * hace el resto. `next` es la ruta del sitio a la que vuelve el usuario.
+   * Requiere el provider Google activado en el panel de Supabase — si no lo
+   * está, devuelve error y el caller muestra un mensaje amigable.
+   */
+  signInWithGoogle: (next?: string) => Promise<{ error: string | null }>;
   /** hasSession=false cuando Supabase pide confirmar el email antes de dar sesión (hoy no pasa: autoconfirm está activo). */
-  signUp: (email: string, password: string, fullName: string) => Promise<{ error: string | null; hasSession: boolean }>;
+  signUp: (email: string, password: string, fullName: string, whatsapp?: string) => Promise<{ error: string | null; hasSession: boolean }>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<{ error: string | null }>;
   /** Para la pantalla de /restablecer-contrasena (link del mail de recuperación). */
@@ -89,18 +97,47 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null };
   };
 
-  const signUp = async (email: string, password: string, fullName: string) => {
+  const signInWithGoogle = async (next: string = '/') => {
+    // signInWithOAuth con el provider apagado NO devuelve error: redirige a
+    // una página JSON cruda de Supabase. Chequear antes evita sacar al
+    // usuario del sitio (GoogleAuthButton muestra el mensaje amigable).
+    if (!(await isOAuthProviderEnabled('google'))) {
+      return { error: 'provider is not enabled' };
+    }
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        // Vuelve a la ruta desde la que se inició (patrón `next` de
+        // Login/RegisterPage). Debe estar permitida en el panel de Supabase:
+        // Authentication -> URL Configuration -> Redirect URLs.
+        redirectTo: `${window.location.origin}${next}`,
+      },
+    });
+    return { error: error?.message ?? null };
+  };
+
+  const signUp = async (email: string, password: string, fullName: string, whatsapp: string = '') => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { full_name: fullName },
+        data: { full_name: fullName, whatsapp },
         // Adonde manda Supabase el link de confirmación SI se activa
         // "Confirm email" en el panel (hoy mailer_autoconfirm=true, así que
         // no aplica, pero sin esto el link caería en la Site URL genérica).
         emailRedirectTo: `${window.location.origin}/login`,
       },
     });
+    // El trigger handle_new_user solo copia full_name al perfil: el WhatsApp
+    // se guarda acá, con la sesión ya abierta. Best-effort: si falla no
+    // frena el registro (el dato queda igual en user_metadata).
+    if (!error && data.session && whatsapp.trim()) {
+      await supabase
+        .from('profiles')
+        .update({ whatsapp: whatsapp.trim() })
+        .eq('id', data.session.user.id)
+        .then(({ error: wErr }) => { if (wErr) console.error('No se pudo guardar el WhatsApp del registro', wErr); });
+    }
     // Sin "Confirm email" (autoconfirm), signUp devuelve session de una. Si
     // algún día se activa la confirmación, data.session viene null y el
     // caller (RegisterPage) tiene que avisarle al usuario que revise su mail
@@ -145,7 +182,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const isAdmin = profile?.role === 'admin';
 
   return (
-    <AuthContext.Provider value={{ user, profile, loading, profileLoaded, signIn, signUp, signOut, resetPassword, updatePassword, updateProfile, isAdmin }}>
+    <AuthContext.Provider value={{ user, profile, loading, profileLoaded, signIn, signInWithGoogle, signUp, signOut, resetPassword, updatePassword, updateProfile, isAdmin }}>
       {children}
     </AuthContext.Provider>
   );

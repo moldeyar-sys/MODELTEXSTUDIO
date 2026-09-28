@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { CreditCard, ArrowLeft, CheckCircle, AlertCircle, Banknote, Wallet, Copy, Check, Globe } from 'lucide-react';
 import { useCart, cartUnitPrice, cartItemKey } from '../contexts/CartContext';
@@ -14,7 +14,7 @@ import { trackBeginCheckout } from '../lib/analytics';
 
 export default function CheckoutPage() {
   const { items, total, clearCart } = useCart();
-  const { user } = useAuth();
+  const { user, signUp } = useAuth();
   const { t } = useLocale();
   // El carrito no mezcla monedas (CartContext.addItem lo garantiza): la
   // moneda del primer ítem vale para todo el pedido. 'ARS' por defecto para
@@ -46,6 +46,42 @@ export default function CheckoutPage() {
   const [guestEmail, setGuestEmail] = useState('');
   const [guestEmailTouched, setGuestEmailTouched] = useState(false);
   const guestEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim());
+  // "Crear cuenta en un paso" en la pantalla de éxito de una compra de
+  // invitado: el email ya lo tenemos, solo falta elegir contraseña.
+  // linked = el pedido quedó vinculado a la cuenta nueva (RPC migración 034);
+  // unlinked = cuenta creada pero el pedido sigue como invitado (la RPC no
+  // existe todavía o falló) — el link de invitado sigue cubriendo la descarga.
+  const [accPassword, setAccPassword] = useState('');
+  const [accBusy, setAccBusy] = useState(false);
+  const [accError, setAccError] = useState('');
+  const [accStatus, setAccStatus] = useState<'idle' | 'linked' | 'unlinked'>('idle');
+
+  const handleCreateAccount = async (e: FormEvent) => {
+    e.preventDefault();
+    setAccError('');
+    if (accPassword.length < 6) {
+      setAccError(t('auth.passwordShort', 'La contraseña debe tener al menos 6 caracteres'));
+      return;
+    }
+    setAccBusy(true);
+    const { error: signUpError, hasSession } = await signUp(guestEmail.trim().toLowerCase(), accPassword, '');
+    if (signUpError) {
+      setAccError(signUpError === 'User already registered'
+        ? t('co.accTaken', 'Ese email ya tiene una cuenta. Iniciá sesión para ver tus compras — este pedido igual queda guardado con el link de arriba.')
+        : signUpError);
+      setAccBusy(false);
+      return;
+    }
+    let linked = false;
+    if (hasSession && orderId) {
+      try {
+        const { data, error: rpcError } = await supabase.rpc('claim_guest_order', { p_order_id: orderId });
+        linked = !rpcError && data === true;
+      } catch { /* la cuenta ya está creada; el link de invitado sigue sirviendo */ }
+    }
+    setAccStatus(linked ? 'linked' : 'unlinked');
+    setAccBusy(false);
+  };
 
   useEffect(() => {
     fetchPaymentSettings().then(s => setPaySettings(s));
@@ -274,6 +310,45 @@ export default function CheckoutPage() {
                 </Link>{' '}
                 {t('co.guestNotice3', 'con tu número de pedido')} (<span className="font-mono">#{orderId.slice(0, 8)}</span>) {t('co.guestNotice4', 'y tu email.')}
               </p>
+            </div>
+          )}
+
+          {/* Crear cuenta en un paso con el email de la compra (solo invitados) */}
+          {!user && accStatus === 'idle' && (
+            <div className="bg-white border-2 border-petroleum-200 rounded-xl p-4 mb-6 text-left">
+              <p className="text-sm font-semibold text-primary-900 mb-1">{t('co.accTitle', '¿Querés tener este pedido siempre a mano?')}</p>
+              <p className="text-xs text-gray-500 mb-3">{t('co.accHint', 'Creá tu cuenta con el mismo email en un paso: solo elegí una contraseña.')}</p>
+              <form onSubmit={handleCreateAccount} className="space-y-2">
+                {accError && (
+                  <p role="alert" className="text-xs text-red-600">{accError}</p>
+                )}
+                <input type="email" value={guestEmail} disabled aria-label={t('co.yourEmail', 'Tu email')} className="input-field bg-gray-50 text-gray-500" />
+                <input
+                  type="password"
+                  value={accPassword}
+                  onChange={(e) => setAccPassword(e.target.value)}
+                  placeholder={t('auth.passwordMin', 'Mínimo 6 caracteres')}
+                  aria-label={t('auth.password', 'Contraseña')}
+                  className="input-field"
+                />
+                <button type="submit" disabled={accBusy} className="btn-primary w-full disabled:opacity-50">
+                  {accBusy ? t('co.accCreating', 'Creando cuenta...') : t('co.accCreate', 'Crear cuenta con este email')}
+                </button>
+              </form>
+            </div>
+          )}
+          {accStatus !== 'idle' && (
+            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6 text-left">
+              <p className="text-sm text-green-700">
+                {accStatus === 'linked'
+                  ? t('co.accLinked', 'Cuenta creada. Este pedido ya figura en "Mis compras": ahí vas a poder descargarlo apenas confirmemos el pago.')
+                  : t('co.accCreated', 'Cuenta creada. Este pedido sigue disponible con el link que te mandamos por email, y tus próximas compras van a quedar en "Mis compras".')}
+              </p>
+              {accStatus === 'unlinked' && (
+                <Link to={`/mi-pedido?order=${orderId}&email=${encodeURIComponent(guestEmail)}`} className="inline-block mt-2 text-sm underline font-medium text-green-800">
+                  {t('co.viewOrder', 'Ver mi pedido')}
+                </Link>
+              )}
             </div>
           )}
 
