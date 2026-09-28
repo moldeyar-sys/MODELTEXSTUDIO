@@ -1030,9 +1030,10 @@ const STATIC_PAGES: Record<
     faqTitle: 'Preguntas frecuentes sobre moldes gratis',
     // Pensada para compartir el link en publicaciones de Facebook/WhatsApp.
     // Se genera desde el diseño del anuncio (JPG liviano: WhatsApp no muestra
-    // vistas previas de imágenes de más de ~300 KB).
+    // vistas previas de imágenes de más de ~300 KB). Si se cambia la imagen,
+    // cambiar también el nombre del archivo: Facebook la cachea por URL.
     image: {
-      url: 'https://modeltex.com.ar/brand/og-moldes-gratis.jpg',
+      url: 'https://modeltex.com.ar/brand/og-moldes-gratis-v2.jpg',
       alt: 'Moldes gratis Modeltex: vestido, remera y short en PDF listos para producir',
       width: 1200,
       height: 630,
