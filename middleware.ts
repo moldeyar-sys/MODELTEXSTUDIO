@@ -1033,8 +1033,8 @@ const STATIC_PAGES: Record<
     // vistas previas de imágenes de más de ~300 KB). Si se cambia la imagen,
     // cambiar también el nombre del archivo: Facebook la cachea por URL.
     image: {
-      url: 'https://modeltex.com.ar/brand/og-moldes-gratis-v2.jpg',
-      alt: 'Moldes gratis Modeltex: vestido, remera y short en PDF listos para producir',
+      url: 'https://modeltex.com.ar/brand/og-moldes-gratis-v3.jpg',
+      alt: 'Moldes gratis Modeltex: shorts, top, vestido y remera en PDF listos para producir',
       width: 1200,
       height: 630,
     },
