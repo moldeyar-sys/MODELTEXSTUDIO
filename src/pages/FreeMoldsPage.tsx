@@ -25,6 +25,7 @@ export default function FreeMoldsPage() {
     description:
       'Moldes de ropa gratis para descargar: moldería gratis en PDF, listos para imprimir en A4 o plotter. Probá la calidad Modeltex antes de comprar, con nuevos moldes gratis cada semana.',
     path: '/moldes-gratis',
+    image: 'https://modeltex.com.ar/brand/og-moldes-gratis.jpg',
   });
 
   useStructuredData(

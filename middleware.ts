@@ -188,9 +188,12 @@ function escapeHtml(value: string) {
     .replace(/'/g, '&#39;');
 }
 
+// Reemplazos con función, no con string: en un string de reemplazo "$1" es
+// una referencia al grupo capturado, y los precios ("Desde $15.000 ARS")
+// terminaban insertando la etiqueta entera dentro de la descripción.
 function replaceAttr(html: string, matchAttr: string, content: string) {
   const pattern = new RegExp(`(${matchAttr}content=")[^"]*(")`, 'i');
-  return html.replace(pattern, `$1${content}$2`);
+  return html.replace(pattern, (_m, open: string, close: string) => `${open}${content}${close}`);
 }
 
 function setHeadSeo(html: string, title: string, description: string, pageUrl: string) {
@@ -198,14 +201,42 @@ function setHeadSeo(html: string, title: string, description: string, pageUrl: s
   const d = escapeHtml(description);
   const u = escapeHtml(pageUrl);
   html = html
-    .replace(/<title>.*?<\/title>/s, `<title>${t}</title>`)
-    .replace(/(<meta name="description" content=")[^"]*(")/, `$1${d}$2`)
-    .replace(/(<link rel="canonical" href=")[^"]*(")/, `$1${u}$2`);
+    .replace(/<title>.*?<\/title>/s, () => `<title>${t}</title>`)
+    .replace(/(<meta name="description" content=")[^"]*(")/, (_m, open: string, close: string) => `${open}${d}${close}`)
+    .replace(/(<link rel="canonical" href=")[^"]*(")/, (_m, open: string, close: string) => `${open}${u}${close}`);
   html = replaceAttr(html, 'property="og:title" ', t);
   html = replaceAttr(html, 'property="og:description" ', d);
   html = replaceAttr(html, 'property="og:url" ', u);
   html = replaceAttr(html, 'name="twitter:title" ', t);
   html = replaceAttr(html, 'name="twitter:description" ', d);
+  return html;
+}
+
+interface ShareImage {
+  url: string;
+  alt: string;
+  width?: number;
+  height?: number;
+}
+
+/**
+ * Imagen de la vista previa al compartir el link (Facebook, WhatsApp, X):
+ * los scrapers de esas redes no ejecutan JavaScript, así que solo ven lo que
+ * sale de acá. Sin width/height (ej. fotos de producto, de tamaño variable)
+ * se sacan las etiquetas de index.html, que declaran 1200x630: una medida
+ * declarada que no coincide con la imagen real hace que Facebook la recorte mal.
+ */
+function setShareImage(html: string, img: ShareImage) {
+  const u = escapeHtml(img.url);
+  html = replaceAttr(html, 'property="og:image" ', u);
+  html = replaceAttr(html, 'property="og:image:alt" ', escapeHtml(img.alt));
+  html = replaceAttr(html, 'name="twitter:image" ', u);
+  if (img.width && img.height) {
+    html = replaceAttr(html, 'property="og:image:width" ', String(img.width));
+    html = replaceAttr(html, 'property="og:image:height" ', String(img.height));
+  } else {
+    html = html.replace(/[ \t]*<meta property="og:image:(?:width|height)" content="[^"]*" \/>\r?\n?/g, '');
+  }
   return html;
 }
 
@@ -230,8 +261,8 @@ function injectBody(html: string, inner: string, schemas?: Schema[]) {
         .map((s) => `<script type="application/ld+json" data-seo-schema="${s.id}">${JSON.stringify(s.data).replace(/</g, '\\u003c')}</script>`)
         .join('\n')
     : '';
-  if (scripts) html = html.replace('</head>', `${scripts}\n</head>`);
-  return html.replace(/(<div id="root"><\/div>)/, `$1\n<main data-bot-content>\n${inner}\n</main>`);
+  if (scripts) html = html.replace('</head>', () => `${scripts}\n</head>`);
+  return html.replace(/(<div id="root"><\/div>)/, (root: string) => `${root}\n<main data-bot-content>\n${inner}\n</main>`);
 }
 
 function respond(html: string, status = 200) {
@@ -796,6 +827,8 @@ const STATIC_PAGES: Record<
     schemas?: (origin: string) => Schema[];
     /** Encabezado del bloque de FAQ (las preguntas salen de landingFaqs.ts). */
     faqTitle?: string;
+    /** Imagen propia para la vista previa al compartir el link; si falta, la genérica de index.html. */
+    image?: ShareImage;
   }
 > = {
   '/': {
@@ -995,6 +1028,15 @@ const STATIC_PAGES: Record<
     title: 'Moldes gratis en PDF para descargar e imprimir | Modeltex',
     description: 'Moldes de ropa gratis para descargar en PDF, listos para imprimir. Moldería gratis real, mismo nivel de calidad que el catálogo pago de Modeltex.',
     faqTitle: 'Preguntas frecuentes sobre moldes gratis',
+    // Pensada para compartir el link en publicaciones de Facebook/WhatsApp.
+    // Se genera desde el diseño del anuncio (JPG liviano: WhatsApp no muestra
+    // vistas previas de imágenes de más de ~300 KB).
+    image: {
+      url: 'https://modeltex.com.ar/brand/og-moldes-gratis.jpg',
+      alt: 'Moldes gratis Modeltex: vestido, remera y short en PDF listos para producir',
+      width: 1200,
+      height: 630,
+    },
     body: (o) => `
 <h1>Moldes gratis — probá la calidad antes de comprar</h1>
 <p>Publicamos moldes reales de nuestro catálogo para descarga gratuita, en PDF listos para imprimir: el mismo nivel de terminación, talles y prolijidad que los moldes pagos. Descargalos, imprimilos y comprobá cómo trabajamos antes de hacer tu primera compra.</p>
@@ -1830,9 +1872,7 @@ export default async function middleware(request: Request) {
       const { title, description } = productSeo(product);
       html = setHeadSeo(html, title, description, pageUrl);
       html = html.replace(/(<meta property="og:type" content=")[^"]*(")/, `$1product$2`);
-      html = replaceAttr(html, 'property="og:image" ', escapeHtml(product.main_image_url || DEFAULT_IMAGE));
-      html = replaceAttr(html, 'property="og:image:alt" ', escapeHtml(`${product.name} — molde digital Modeltex`));
-      html = replaceAttr(html, 'name="twitter:image" ', escapeHtml(product.main_image_url || DEFAULT_IMAGE));
+      html = setShareImage(html, { url: product.main_image_url || DEFAULT_IMAGE, alt: `${product.name} — molde digital Modeltex` });
       const { inner, schemas } = await productBody(product, pageUrl, url.origin);
       return respond(injectBody(html, inner, schemas));
     }
@@ -2048,6 +2088,7 @@ export default async function middleware(request: Request) {
 
     const pageUrl = `${url.origin}${path === '/' ? '/' : path}`;
     html = setHeadSeo(html, page.title, page.description, pageUrl);
+    if (page.image) html = setShareImage(html, page.image);
     const cuerpo = [
       page.body(url.origin),
       faqHtml(path, page.faqTitle || 'Preguntas frecuentes'),
