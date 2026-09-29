@@ -74,6 +74,8 @@ const EN: Record<string, string> = {
   'auth.name': 'Name',
   'auth.namePh': 'Your name',
   'auth.optional': 'optional',
+  'auth.newsOptIn': 'Email me when new free patterns and other news are published',
+  'auth.newsOptInHint': 'You get an email when we add free patterns. Unsubscribe anytime.',
   'auth.whatsappHint': 'With country code. One more way to reach you about your purchases and help you recover your account.',
   'auth.creating': 'Creating account...',
   'auth.create': 'Create account',

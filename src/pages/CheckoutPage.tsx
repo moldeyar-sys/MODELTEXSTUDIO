@@ -48,7 +48,7 @@ export default function CheckoutPage() {
   const guestEmailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(guestEmail.trim());
   // "Crear cuenta en un paso" en la pantalla de éxito de una compra de
   // invitado: el email ya lo tenemos, solo falta elegir contraseña.
-  // linked = el pedido quedó vinculado a la cuenta nueva (RPC migración 034);
+  // linked = el pedido quedó vinculado a la cuenta nueva (RPC migración 046);
   // unlinked = cuenta creada pero el pedido sigue como invitado (la RPC no
   // existe todavía o falló) — el link de invitado sigue cubriendo la descarga.
   const [accPassword, setAccPassword] = useState('');

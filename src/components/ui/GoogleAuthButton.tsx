@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLocale } from '../../lib/locale';
 import { isOAuthProviderEnabled } from '../../lib/supabase';
+import { setNewsletterPending } from '../../lib/newsletter';
 
 // Una sola consulta por carga de página, compartida entre Login y Registro.
 let googleEnabled: Promise<boolean> | null = null;
@@ -19,8 +20,11 @@ function checkGoogleEnabled() {
  * Mientras el provider Google no esté activado en el panel de Supabase, el
  * bloque entero se oculta solo (en vez de ofrecer un botón que no funciona) y
  * aparece sin tocar código el día que se active.
+ *
+ * newsletterSource: si viene, quien entre con Google queda anotado en la lista
+ * de novedades con ese origen (casilla tildada en RegisterPage).
  */
-export function GoogleAuthButton({ next = '/', onError }: { next?: string; onError: (msg: string) => void }) {
+export function GoogleAuthButton({ next = '/', onError, newsletterSource = null }: { next?: string; onError: (msg: string) => void; newsletterSource?: string | null }) {
   const { signInWithGoogle } = useAuth();
   const { t } = useLocale();
   const [busy, setBusy] = useState(false);
@@ -38,6 +42,7 @@ export function GoogleAuthButton({ next = '/', onError }: { next?: string; onErr
   const handleClick = async () => {
     setBusy(true);
     onError('');
+    setNewsletterPending(newsletterSource);
     const { error } = await signInWithGoogle(next);
     if (error) {
       onError(/not enabled|unsupported provider/i.test(error)

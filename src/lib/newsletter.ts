@@ -27,6 +27,33 @@ export async function subscribeToNewsletter(email: string, source = 'moldes-grat
   }
 }
 
+// Registro con Google: la casilla de novedades se tilda ANTES de salir hacia
+// Google, pero el email recién se conoce al volver con la sesión abierta.
+// Se guarda la intención en el navegador y AuthContext la consume en el
+// SIGNED_IN. Vence a los 30 minutos para no anotar a nadie en un login
+// posterior que no tenga nada que ver.
+const PENDING_KEY = 'modeltex_newsletter_pending';
+const PENDING_TTL_MS = 30 * 60 * 1000;
+
+export function setNewsletterPending(source: string | null) {
+  try {
+    if (source) localStorage.setItem(PENDING_KEY, JSON.stringify({ source, at: Date.now() }));
+    else localStorage.removeItem(PENDING_KEY);
+  } catch { /* sin localStorage: se pierde solo la suscripción, no el registro */ }
+}
+
+export async function consumeNewsletterPending(email: string) {
+  let pending: { source?: string; at?: number } | null = null;
+  try {
+    pending = JSON.parse(localStorage.getItem(PENDING_KEY) || 'null');
+    localStorage.removeItem(PENDING_KEY);
+  } catch {
+    return;
+  }
+  if (!pending?.source || !pending.at || Date.now() - pending.at > PENDING_TTL_MS) return;
+  await subscribeToNewsletter(email, pending.source);
+}
+
 /** Trae los suscriptos para el panel admin. Resiliente. */
 export async function fetchNewsletterSubscribers(): Promise<NewsletterSubscriber[]> {
   try {

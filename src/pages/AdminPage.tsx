@@ -22,6 +22,7 @@ import type { ChatSession } from '../lib/chatHistory';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 import { LabAdminPanel } from '../components/admin/lab/LabAdminPanel';
 import { AllContactsPanel } from '../components/admin/AllContactsPanel';
+import { NewsletterAutoPanel } from '../components/admin/NewsletterAutoPanel';
 import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
@@ -1158,10 +1159,11 @@ export default function AdminPage() {
         {/* Novedades (lista de emails de "Moldes Gratis") */}
         {activeTab === 'newsletter' && (
           <div className="space-y-4">
+            <NewsletterAutoPanel />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="font-semibold text-gray-900 text-lg">Lista de novedades</h2>
-                <p className="text-sm text-gray-500">Emails que se sumaron desde <span className="font-mono">/moldes-gratis</span> para que les avises de moldes nuevos.</p>
+                <p className="text-sm text-gray-500">Emails que pidieron que les avises de moldes gratis nuevos: desde el botón "Avisame" de Moldes Gratis o tildando la casilla al crear su cuenta.</p>
               </div>
               {subscribers.length > 0 && (
                 <button onClick={copyAllEmails} className="inline-flex items-center gap-2 text-sm font-medium px-3.5 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 flex-shrink-0">

@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react';
 import { supabase, isOAuthProviderEnabled } from '../lib/supabase';
+import { consumeNewsletterPending } from '../lib/newsletter';
 import type { User } from '@supabase/supabase-js';
 import type { Profile } from '../lib/types';
 
@@ -76,8 +77,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null);
+      // Vuelta del registro con Google con la casilla de novedades tildada.
+      // setTimeout: no llamar a Supabase dentro del propio callback de auth.
+      if (event === 'SIGNED_IN' && session?.user?.email) {
+        const email = session.user.email;
+        setTimeout(() => { void consumeNewsletterPending(email); }, 0);
+      }
       if (session?.user) {
         if (session.user.id !== lastFetchedUserId.current) {
           fetchProfile(session.user.id);

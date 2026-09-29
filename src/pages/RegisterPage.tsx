@@ -1,10 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
-import { Mail, Lock, Eye, EyeOff, User, Phone } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Phone, Gift } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useLocale } from '../lib/locale';
 import { BrandLogo } from '../components/brand/BrandLogo';
 import { GoogleAuthButton } from '../components/ui/GoogleAuthButton';
+import { subscribeToNewsletter } from '../lib/newsletter';
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -25,6 +26,8 @@ export default function RegisterPage() {
   const [whatsapp, setWhatsapp] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  // Destildada por defecto: el aviso por mail lo pide la persona, no se asume.
+  const [wantsNews, setWantsNews] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -47,14 +50,19 @@ export default function RegisterPage() {
       setError(signUpError === 'User already registered'
         ? t('auth.registerTaken', 'No pudimos crear la cuenta con ese email. Si ya tenés cuenta, ingresá o recuperá tu contraseña.')
         : signUpError);
-    } else if (!hasSession) {
-      // Hoy no pasa (mailer_autoconfirm activo en Supabase), pero si algún
-      // día se activa "Confirm email" sin tocar código, signUp deja de
-      // devolver sesión: antes esto igual navegaba a /mi-cuenta y el usuario
-      // rebotaba a /login sin entender por qué.
-      setInfo(t('auth.confirmMail', 'Te mandamos un mail para confirmar tu cuenta. Confirmalo y después iniciá sesión.'));
     } else {
-      navigate(next);
+      // La suscripción no depende de tener sesión: la tabla acepta altas de
+      // cualquiera. Si falla, el registro ya está hecho y no se frena.
+      if (wantsNews) await subscribeToNewsletter(email, 'registro');
+      if (!hasSession) {
+        // Hoy no pasa (mailer_autoconfirm activo en Supabase), pero si algún
+        // día se activa "Confirm email" sin tocar código, signUp deja de
+        // devolver sesión: antes esto igual navegaba a /mi-cuenta y el usuario
+        // rebotaba a /login sin entender por qué.
+        setInfo(t('auth.confirmMail', 'Te mandamos un mail para confirmar tu cuenta. Confirmalo y después iniciá sesión.'));
+      } else {
+        navigate(next);
+      }
     }
     setIsLoading(false);
   };
@@ -82,7 +90,23 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <GoogleAuthButton next={next} onError={setError} />
+          <label className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl p-3.5 mb-5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={wantsNews}
+              onChange={e => setWantsNews(e.target.checked)}
+              className="mt-0.5 w-5 h-5 rounded border-gray-300 text-green-600 focus:ring-green-500 flex-shrink-0"
+            />
+            <span className="text-sm text-gray-700">
+              <span className="block font-semibold text-gray-900">
+                <Gift className="inline w-4 h-4 text-green-600 mr-1 -mt-0.5 align-middle" />
+                {t('auth.newsOptIn', 'Quiero que me avisen cuando publiquen nuevos moldes gratis y otras novedades')}
+              </span>
+              <span className="block text-xs text-gray-500 mt-0.5">{t('auth.newsOptInHint', 'Te llega un mail cuando sumamos moldes gratis. Te das de baja cuando quieras.')}</span>
+            </span>
+          </label>
+
+          <GoogleAuthButton next={next} onError={setError} newsletterSource={wantsNews ? 'registro-google' : null} />
 
           <form onSubmit={handleSubmit} className="space-y-5">
             <div>

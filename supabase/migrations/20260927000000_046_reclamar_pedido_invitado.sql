@@ -1,5 +1,5 @@
 /*
-  034 — Crear cuenta después de comprar como invitado: reclamar el pedido
+  046 — Crear cuenta después de comprar como invitado: reclamar el pedido
 
   CheckoutPage ahora ofrece, en la pantalla de éxito de una compra SIN
   cuenta, crear la cuenta con el mismo email en un paso (solo elegir una
