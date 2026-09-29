@@ -7,6 +7,7 @@ import { SCHEMA_IDS } from '../lib/schemaIds';
 import { fetchActiveFreeMolds } from '../lib/freeMolds';
 import { fetchPromoProducts, type PromoProduct } from '../lib/promo';
 import { FreeMoldCard } from '../components/ui/FreeMoldCard';
+import { assignFreeMoldSlugs } from '../lib/freeMoldFormats';
 import { FreePromoCard } from '../components/ui/FreePromoCard';
 import { NewsletterSignup } from '../components/ui/NewsletterSignup';
 import type { FreeMold } from '../lib/types';
@@ -59,6 +60,7 @@ export default function FreeMoldsPage() {
     });
   }, []);
 
+  const slugs = useMemo(() => assignFreeMoldSlugs(molds), [molds]);
   const showPromos = !search.trim();
 
   const filtered = useMemo(() => {
@@ -189,7 +191,7 @@ export default function FreeMoldsPage() {
               <FreePromoCard key={p.product.id} item={p} />
             ))}
             {filtered.map(m => (
-              <FreeMoldCard key={m.id} mold={m} />
+              <FreeMoldCard key={m.id} mold={m} slug={slugs.get(m.id)} />
             ))}
           </div>
         )}

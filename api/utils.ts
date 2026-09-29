@@ -20,6 +20,7 @@
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { AwsClient } from 'aws4fetch';
+import { assignFreeMoldSlugs, freeMoldName, freeMoldPath } from '../src/lib/freeMoldFormats.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
 const SUPABASE_ANON_KEY =
@@ -520,12 +521,6 @@ function escHtml(s: string) {
   return s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c] as string));
 }
 
-// Mismo formato que las imágenes del anuncio: "short 125-L" -> "Short 125-L".
-function moldName(title: string) {
-  const s = title.trim().toLowerCase().replace(/\s+/g, ' ').split(' ').map((w) => (/\d/.test(w) ? w.toUpperCase() : w)).join(' ');
-  return s.charAt(0).toUpperCase() + s.slice(1);
-}
-
 function moldSizes(sizes: MoldRow['sizes']) {
   const list = (Array.isArray(sizes) ? sizes : [sizes]).filter(Boolean).join('-').split(/[-,\s]+/).filter(Boolean);
   if (list.length >= 4) return `Talles ${list[0]} a ${list[list.length - 1]}`;
@@ -551,20 +546,24 @@ function emailImage(url: string, title: string) {
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}${crop}&w=520&h=520&fit=contain&cbg=ffffff&output=jpg&q=82`;
 }
 
-function buildNewsletterEmail(molds: MoldRow[], unsubUrl: string) {
-  const link = `${SITE_URL}/moldes-gratis?utm_source=newsletter&utm_medium=email&utm_campaign=moldes_gratis`;
+const UTM = 'utm_source=newsletter&utm_medium=email&utm_campaign=moldes_gratis';
+
+/** slugs: id -> slug de su pagina (/moldes-gratis/<slug>); sin slug se enlaza la lista. */
+function buildNewsletterEmail(molds: MoldRow[], unsubUrl: string, slugs: Map<string, string>) {
+  const link = `${SITE_URL}/moldes-gratis?${UTM}`;
+  const moldLink = (m: MoldRow) => (slugs.get(m.id) ? `${SITE_URL}${freeMoldPath(slugs.get(m.id) as string)}?${UTM}` : link);
   const subject = molds.length === 1
-    ? `🎁 Nuevo molde gratis: ${moldName(molds[0].title)}`
+    ? `🎁 Nuevo molde gratis: ${freeMoldName(molds[0].title)}`
     : `🎁 ${molds.length} moldes gratis nuevos para descargar`;
   const cells = molds.map((m) => {
-    const name = escHtml(moldName(m.title));
+    const name = escHtml(freeMoldName(m.title));
     const img = m.image_url
-      ? `<a href="${link}"><img src="${escHtml(emailImage(m.image_url, m.title))}" width="260" height="260" alt="${name}" style="display:block;width:100%;max-width:260px;height:auto;border-radius:12px;border:1px solid #e5e7eb;"></a>`
+      ? `<a href="${moldLink(m)}"><img src="${escHtml(emailImage(m.image_url, m.title))}" width="260" height="260" alt="${name}" style="display:block;width:100%;max-width:260px;height:auto;border-radius:12px;border:1px solid #e5e7eb;"></a>`
       : '';
     return `<td width="50%" valign="top" style="padding:8px;">${img}` +
       `<p style="margin:10px 0 2px;font:bold 16px Arial,sans-serif;color:#0F172A;">${name}</p>` +
       `<p style="margin:0 0 10px;font:13px Arial,sans-serif;color:#64748b;">${escHtml(moldSizes(m.sizes))}</p>` +
-      `<a href="${link}" style="display:inline-block;background:#16a34a;color:#fff;font:bold 13px Arial,sans-serif;padding:9px 14px;border-radius:8px;text-decoration:none;">Descargar gratis</a></td>`;
+      `<a href="${moldLink(m)}" style="display:inline-block;background:#16a34a;color:#fff;font:bold 13px Arial,sans-serif;padding:9px 14px;border-radius:8px;text-decoration:none;">Descargar gratis</a></td>`;
   });
   const rows: string[] = [];
   for (let i = 0; i < cells.length; i += 2) rows.push(`<tr>${cells[i]}${cells[i + 1] || '<td width="50%"></td>'}</tr>`);
@@ -586,7 +585,7 @@ function buildNewsletterEmail(molds: MoldRow[], unsubUrl: string) {
     `</table></div>`;
   const text =
     `${intro}\n\n` +
-    molds.map((m) => `- ${moldName(m.title)} (${moldSizes(m.sizes)})`).join('\n') +
+    molds.map((m) => `- ${freeMoldName(m.title)} (${moldSizes(m.sizes)}): ${moldLink(m)}`).join('\n') +
     `\n\nDescargalos gratis: ${link}\n\nPara darte de baja de estos avisos: ${unsubUrl}\n`;
   return { subject, html, text };
 }
@@ -614,15 +613,28 @@ async function fetchSubscriberEmails(): Promise<string[]> {
   return [...new Set(rows.map((x) => (x.email || '').trim().toLowerCase()).filter(Boolean))];
 }
 
+/** Slugs de las paginas de todos los moldes activos (mismo calculo que la app y middleware.ts). */
+async function fetchMoldSlugs(): Promise<Map<string, string>> {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/free_molds?select=id,title,created_at&is_active=eq.true`, {
+      headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
+    });
+    return r.ok ? assignFreeMoldSlugs((await r.json()) as Array<{ id: string; title: string; created_at: string }>) : new Map();
+  } catch {
+    return new Map();
+  }
+}
+
 /** Manda el aviso a cada email (lotes de 100, el máximo del endpoint batch de Resend). */
 async function sendNewsletter(molds: MoldRow[], emails: string[]): Promise<{ sent: number; error?: string }> {
   const resendKey = process.env.RESEND_API_KEY;
   if (!resendKey) return { sent: 0, error: 'Falta RESEND_API_KEY en las variables de Vercel.' };
+  const slugs = await fetchMoldSlugs();
   let sent = 0;
   for (let i = 0; i < emails.length; i += 100) {
     const batch = emails.slice(i, i + 100).map((to) => {
       const unsub = unsubscribeUrl(to);
-      const { subject, html, text } = buildNewsletterEmail(molds, unsub);
+      const { subject, html, text } = buildNewsletterEmail(molds, unsub, slugs);
       return {
         from: NEWSLETTER_FROM,
         to: [to],
@@ -676,7 +688,7 @@ async function handleAnnounceFreeMolds(req: any, res: any) {
       if (mode === 'status') {
         return res.status(200).json({
           subscribers: emails.length,
-          pending: pending.map((m) => moldName(m.title)),
+          pending: pending.map((m) => freeMoldName(m.title)),
           nextSendUtc: new Date(next.getTime() + 3600_000).toISOString(),
           resendConfigured: !!process.env.RESEND_API_KEY,
           from: NEWSLETTER_FROM,

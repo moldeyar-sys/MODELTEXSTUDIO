@@ -25,6 +25,8 @@
 //
 // Para que esta copia no se desincronice, scripts/seo-check.mjs compara estas
 // fechas contra las de src/lib/guiasData.ts y falla si alguna no coincide.
+import { assignFreeMoldSlugs, freeMoldName, freeMoldPath } from '../src/lib/freeMoldFormats.js';
+
 const GUIAS: Record<string, string> = {
   'como-hacer-moldes-de-ropa-paso-a-paso': '2026-09-07',
   'formatos-de-molderia-digital': '2026-09-06',
@@ -218,11 +220,32 @@ async function fetchLabRoutes(): Promise<RouteEntry[]> {
   return out;
 }
 
+/** Una pagina por molde gratis activo (/moldes-gratis/<slug>), con su foto. */
+async function fetchFreeMoldRoutes(): Promise<RouteEntry[]> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/free_molds?is_active=eq.true&select=id,title,image_url,created_at`,
+      { headers: { apikey: SUPABASE_ANON_KEY } },
+    );
+    if (!res.ok) return [];
+    const rows = (await res.json()) as Array<{ id: string; title: string; image_url?: string | null; created_at?: string }>;
+    const slugs = assignFreeMoldSlugs(rows);
+    return rows.map((m) => ({
+      path: freeMoldPath(slugs.get(m.id) as string),
+      lastmod: m.created_at,
+      image: m.image_url ? { loc: m.image_url, title: `${freeMoldName(m.title)} — molde gratis` } : undefined,
+    }));
+  } catch {
+    return [];
+  }
+}
+
 export default async function handler(_req: unknown, res: any) {
   let products: ProductRow[] = [];
   let labRoutes: RouteEntry[] = [];
+  let freeMoldRoutes: RouteEntry[] = [];
   try {
-    [products, labRoutes] = await Promise.all([fetchProductRows(), fetchLabRoutes()]);
+    [products, labRoutes, freeMoldRoutes] = await Promise.all([fetchProductRows(), fetchLabRoutes(), fetchFreeMoldRoutes()]);
   } catch {
     /* se publica lo que haya */
   }
@@ -255,7 +278,7 @@ export default async function handler(_req: unknown, res: any) {
     { path: '/moldes-pdf-a4', lastmod: fechaDe('/moldes-pdf-a4') },
     { path: '/moldes-para-plotter', lastmod: fechaDe('/moldes-para-plotter') },
     { path: '/moldes-para-emprendedores', lastmod: fechaDe('/moldes-para-emprendedores') },
-    { path: '/moldes-gratis', lastmod: fechaDe('/moldes-gratis') },
+    { path: '/moldes-gratis', lastmod: maxDate([fechaDe('/moldes-gratis'), ...freeMoldRoutes.map((r) => r.lastmod)]) },
     // /lab/ia queda fuera a proposito: es un chat interactivo con noindex real
     // (ver middleware.ts y src/pages/LabAiPage.tsx) — no tiene sentido pedirle
     // a Google que indexe una URL que le va a devolver "noindex".
@@ -280,6 +303,7 @@ export default async function handler(_req: unknown, res: any) {
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">',
     ...staticRoutes.map(toUrlNode),
     ...productRoutes.map(toUrlNode),
+    ...freeMoldRoutes.map(toUrlNode),
     ...labRoutes.map(toUrlNode),
     '</urlset>',
     '',

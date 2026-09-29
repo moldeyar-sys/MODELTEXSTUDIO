@@ -1,3 +1,5 @@
+import type { FreeFileFormat } from './freeMoldFormats';
+
 export type CustomerType = 'emprendedor' | 'fabricante' | 'disenador' | 'taller' | 'otro';
 export type UserRole = 'user' | 'admin';
 export type PaymentMethod = 'mercadopago' | 'paypal' | 'payoneer' | 'wise' | 'stripe' | 'transfer' | 'binance';
@@ -227,6 +229,14 @@ export interface FreeMoldFile {
   name: string;  // nombre del archivo
   url: string;   // URL publica de descarga
   free?: boolean; // true = se descarga SIN crear cuenta (muestra gratis)
+  /** Sección de descarga. Si falta (archivos viejos) se deduce del nombre: ver freeMoldFormats.ts. */
+  format?: FreeFileFormat;
+  /** Talle (PDF A4 y demás formatos por talle). */
+  size?: string;
+  /** Ancho de papel en cm, solo PDF plotter (60, 90, 100, 120, 150). */
+  width?: number;
+  /** Tamaño del archivo en bytes, para mostrar "2,3 MB". */
+  bytes?: number;
 }
 
 export interface FreeMold {

@@ -41,6 +41,7 @@ import { buildPersonSchema, getArticleAuthor, personSchemaId, SITE } from './src
 import { CATEGORIA_LINKS, relatedFor } from './src/lib/internalLinks.js';
 import { faqsFor } from './src/lib/landingFaqs.js';
 import { labCourseListSchema, labCourseSchema } from './src/lib/labSchema.js';
+import { assignFreeMoldSlugs, freeMoldName, freeMoldPath, groupFiles } from './src/lib/freeMoldFormats.js';
 import {
   MD_CATEGORIAS,
   MD_DESCRIPTION,
@@ -65,6 +66,7 @@ export const config = {
     '/moldes-para-plotter',
     '/moldes-para-emprendedores',
     '/moldes-gratis',
+    '/moldes-gratis/:path*',
     '/como-funciona',
     '/ayuda-impresion',
     '/preguntas-frecuentes',
@@ -1284,6 +1286,147 @@ const STATIC_PAGES: Record<
   },
 };
 
+// ---------- Moldes gratis: una pagina por molde ----------
+
+interface FreeMoldRow {
+  id: string;
+  title: string;
+  code?: string | null;
+  category?: string | null;
+  product_type?: string | null;
+  fabric_recommendation?: string | null;
+  sizes?: string[] | null;
+  description?: string | null;
+  image_url?: string | null;
+  files?: Array<{ name: string; url: string; label?: string; free?: boolean }> | null;
+  created_at?: string;
+}
+
+/** Moldes gratis activos (tabla publica de lectura, misma anon key). [] si falla. */
+async function fetchFreeMolds(): Promise<FreeMoldRow[]> {
+  try {
+    const res = await fetch(
+      `${SUPABASE_URL}/rest/v1/free_molds?is_active=eq.true&order=sort_order.asc,created_at.desc` +
+        `&select=id,title,code,category,product_type,fabric_recommendation,sizes,description,image_url,files,created_at`,
+      { headers: { apikey: SUPABASE_ANON_KEY } },
+    );
+    if (!res.ok) return [];
+    const rows = (await res.json()) as FreeMoldRow[];
+    return Array.isArray(rows) ? rows : [];
+  } catch {
+    return [];
+  }
+}
+
+function freeMoldDescription(m: FreeMoldRow, formats: string[]) {
+  const name = freeMoldName(m.title);
+  return cortar(
+    (m.description || '').trim() ||
+      `Molde gratis de ${name}${m.product_type ? ` (${m.product_type.toLowerCase()})` : ''} para descargar en ${formats.join(', ') || 'PDF'}. Probá la calidad de la moldería Modeltex.`,
+    160,
+  );
+}
+
+async function freeMoldPage(html: string, origin: string, slug: string, requestedUrl: string) {
+  const molds = await fetchFreeMolds();
+  const slugs = assignFreeMoldSlugs(molds);
+  const mold = molds.find((m) => slugs.get(m.id) === slug || m.id === slug);
+  if (!mold) {
+    return notFound(html, requestedUrl, {
+      title: 'Molde gratis no encontrado',
+      description: 'Este molde gratis ya no está disponible. Encontrá otros en Moldes Gratis de Modeltex.',
+      body: `<h1>Molde gratis no encontrado</h1>\n<p>Este molde ya no está disponible. <a href="${origin}/moldes-gratis">Ver todos los moldes gratis</a> o el <a href="${origin}/catalogo">catálogo completo</a>.</p>`,
+    });
+  }
+  const canonicalSlug = slugs.get(mold.id) as string;
+  // Link por id (tarjetas del Lab) o slug viejo: una sola URL por molde.
+  if (slug !== canonicalSlug) return Response.redirect(`${origin}${freeMoldPath(canonicalSlug)}`, 301);
+
+  const pageUrl = `${origin}${freeMoldPath(canonicalSlug)}`;
+  const name = freeMoldName(mold.title);
+  const sections = groupFiles(mold.files || []);
+  const formats = sections.map((s) => s.format.short);
+  const description = freeMoldDescription(mold, formats);
+  const cat = CATEGORIAS[mold.category || ''];
+  const migas = [
+    { name: 'Inicio', url: `${origin}/` },
+    { name: 'Moldes gratis', url: `${origin}/moldes-gratis` },
+    { name, url: pageUrl },
+  ];
+  const ficha = [
+    cat ? `<li>Categoría: ${escapeHtml(cat.label)}</li>` : '',
+    mold.product_type ? `<li>Tipo de prenda: ${escapeHtml(mold.product_type)}</li>` : '',
+    (mold.sizes || []).length ? `<li>Talles: ${escapeHtml((mold.sizes || []).join(', '))}</li>` : '',
+    mold.fabric_recommendation ? `<li>Tela recomendada: ${escapeHtml(mold.fabric_recommendation)}</li>` : '',
+    mold.code ? `<li>Código: ${escapeHtml(mold.code)}</li>` : '',
+  ].filter(Boolean);
+  const inner = [
+    breadcrumbHtml(migas),
+    `<h1>${escapeHtml(name)} — molde gratis para descargar</h1>`,
+    `<p>${escapeHtml(description)}</p>`,
+    ficha.length ? `<h2>Ficha del molde</h2><ul>${ficha.join('')}</ul>` : '',
+    sections.length
+      ? `<h2>Archivos para descargar</h2>` +
+        sections
+          .map((s) => `<h3>${escapeHtml(s.format.label)}</h3><p>${escapeHtml(s.format.description)}</p><ul>${s.files.map((f) => `<li>${escapeHtml(f.display)}</li>`).join('')}</ul>`)
+          .join('')
+      : '<p>Los archivos de este molde están en preparación.</p>',
+    `<p>Se descargan gratis desde <a href="${pageUrl}">${pageUrl}</a> (algunos archivos sin cuenta y el resto con una cuenta gratuita). ` +
+      `Ver más <a href="${origin}/moldes-gratis">moldes gratis</a> o el <a href="${origin}/catalogo">catálogo completo</a> (${CATALOGO_TXT}).</p>`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+
+  const schemas: Schema[] = [
+    {
+      id: 'schema-product',
+      data: {
+        '@context': 'https://schema.org',
+        '@type': 'Product',
+        name: `${name} — molde gratis`,
+        description,
+        ...(mold.image_url ? { image: mold.image_url } : {}),
+        sku: mold.code || canonicalSlug,
+        brand: { '@type': 'Brand', name: SITE_NAME },
+        url: pageUrl,
+        ...(cat ? { category: cat.label } : {}),
+        offers: { '@type': 'Offer', price: 0, priceCurrency: 'ARS', availability: 'https://schema.org/InStock', url: pageUrl },
+      },
+    },
+    { id: 'schema-breadcrumb', data: breadcrumb(migas) },
+  ];
+
+  html = setHeadSeo(html, `${name} — molde gratis para descargar | ${SITE_NAME}`, description, pageUrl);
+  html = html.replace(/(<meta property="og:type" content=")[^"]*(")/, (_m, open: string, close: string) => `${open}product${close}`);
+  // Vista previa al compartir: la foto ENTERA (sin recortar) en 1200x630 y en
+  // JPG, porque las fotos son WebP y WhatsApp no las muestra.
+  html = setShareImage(
+    html,
+    mold.image_url
+      ? {
+          url: `https://wsrv.nl/?url=${encodeURIComponent(mold.image_url)}&w=1200&h=630&fit=contain&cbg=ffffff&output=jpg&q=85`,
+          alt: `${name} — molde gratis Modeltex`,
+          width: 1200,
+          height: 630,
+        }
+      : { url: DEFAULT_IMAGE, alt: `${name} — molde gratis Modeltex`, width: 1200, height: 630 },
+  );
+  return respond(injectBody(html, inner, schemas));
+}
+
+/** Enlaces a cada molde gratis, al pie del HTML inicial de /moldes-gratis. */
+async function freeMoldLinksHtml(origin: string) {
+  const molds = await fetchFreeMolds();
+  if (!molds.length) return '';
+  const slugs = assignFreeMoldSlugs(molds);
+  return `<h2>Moldes gratis disponibles</h2><ul>${molds
+    .map((m) => {
+      const formats = groupFiles(m.files || []).map((s) => s.format.short);
+      return `<li><a href="${origin}${freeMoldPath(slugs.get(m.id) as string)}">${escapeHtml(freeMoldName(m.title))}</a>${formats.length ? ` — ${escapeHtml(formats.join(', '))}` : ''}</li>`;
+    })
+    .join('')}</ul>`;
+}
+
 // ---------- Guias para produccion ----------
 
 function guiasIndexPage(html: string, origin: string) {
@@ -1878,6 +2021,14 @@ export default async function middleware(request: Request) {
       return respond(injectBody(html, inner, schemas));
     }
 
+    // ---------- Moldes gratis: pagina de cada molde ----------
+    if (path.startsWith('/moldes-gratis/')) {
+      const htmlRes = await fetch(`${url.origin}/index.html`);
+      const html = await htmlRes.text();
+      const slug = decodeURIComponent(path.replace(/^\/moldes-gratis\//, ''));
+      return await freeMoldPage(html, url.origin, slug, `${url.origin}${path}`);
+    }
+
     // ---------- Guias para produccion ----------
     if (path === '/guias' || path.startsWith('/guias/')) {
       const htmlRes = await fetch(`${url.origin}/index.html`);
@@ -2092,6 +2243,7 @@ export default async function middleware(request: Request) {
     if (page.image) html = setShareImage(html, page.image);
     const cuerpo = [
       page.body(url.origin),
+      path === '/moldes-gratis' ? await freeMoldLinksHtml(url.origin) : '',
       faqHtml(path, page.faqTitle || 'Preguntas frecuentes'),
       relatedHtml(url.origin, path),
     ]

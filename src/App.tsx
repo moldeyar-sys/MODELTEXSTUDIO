@@ -41,6 +41,7 @@ const AdminPage = lazy(() => import('./pages/AdminPage'));
 const CustomDesignPage = lazy(() => import('./pages/CustomDesignPage'));
 const IaTextilPage = lazy(() => import('./pages/IaTextilPage'));
 const FreeMoldsPage = lazy(() => import('./pages/FreeMoldsPage'));
+const FreeMoldDetailPage = lazy(() => import('./pages/FreeMoldDetailPage'));
 const LabHomePage = lazy(() => import('./pages/LabHomePage'));
 const LabCoursePage = lazy(() => import('./pages/LabCoursePage'));
 const LabLessonPage = lazy(() => import('./pages/LabLessonPage'));
@@ -100,6 +101,7 @@ function AppLayout() {
             <Route path="/diseno-a-pedido" element={<CustomDesignPage />} />
             <Route path="/ia-textil" element={<IaTextilPage />} />
             <Route path="/moldes-gratis" element={<FreeMoldsPage />} />
+            <Route path="/moldes-gratis/:slug" element={<FreeMoldDetailPage />} />
             <Route path="/lab" element={<LabHomePage />} />
             <Route path="/lab/ia" element={<LabAiPage />} />
             <Route path="/lab/glosario" element={<LabGlossaryPage />} />
