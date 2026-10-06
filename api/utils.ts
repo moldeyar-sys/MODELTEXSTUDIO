@@ -10,6 +10,7 @@
 // Acciones:
 //   POST ?action=notify-order        -> avisa al dueño (WhatsApp+email) de una compra nueva
 //   POST ?action=notify-buyer-paid   -> avisa al comprador invitado que ya puede descargar
+//   POST ?action=email-buyer         -> email del admin al comprador de un pedido (boton "Enviar email" del panel)
 //   GET  ?action=geo                 -> pais del visitante (geolocalizacion de Vercel)
 //   GET  ?action=indexnow-key        -> archivo de verificacion de IndexNow (texto plano)
 //   POST ?action=indexnow            -> notifica URLs nuevas/actualizadas a IndexNow (Bing/Yandex)
@@ -427,6 +428,84 @@ async function handleNotifyBuyerPaid(req: any, res: any) {
   } catch (err) {
     console.error('notify-buyer-paid error', err);
     res.status(500).json({ error: 'Error interno' });
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Email al comprador desde el panel (boton "Enviar email" de cada pedido).
+// Solo admin. El destinatario sale del pedido en la base (guest_email o el
+// email del perfil), nunca del cliente: el panel elige el pedido, el servidor
+// decide la direccion. Sale desde NOTIFY_FROM (la misma casilla que el aviso
+// de pago) con reply_to al dueño (NOTIFY_EMAIL), asi la respuesta le llega.
+// ---------------------------------------------------------------------------
+async function handleEmailBuyer(req: any, res: any) {
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!token || !(await isAdmin(token))) {
+    return res.status(403).json({ error: 'Esta accion es solo para administradores.' });
+  }
+  const resendKey = process.env.RESEND_API_KEY;
+  if (!SERVICE_ROLE || !resendKey) {
+    return res.status(200).json({ ok: false, error: 'Falta RESEND_API_KEY o SUPABASE_SERVICE_ROLE_KEY en Vercel. Usá "Abrir en mi correo".' });
+  }
+  try {
+    const body = readBody(req);
+    const orderId = typeof body.orderId === 'string' ? body.orderId.trim() : '';
+    const subject = typeof body.subject === 'string' ? body.subject.trim().slice(0, 200) : '';
+    const message = typeof body.message === 'string' ? body.message.trim().slice(0, 6000) : '';
+    const includeLink = body.includeLink !== false;
+    if (!orderId || !subject || !message) return res.status(400).json({ error: 'Faltan orderId, subject o message' });
+
+    const orderRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}&select=id,total,guest_email,user_id,payment_status,buyer:profiles(email,full_name)`,
+      { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+    );
+    if (!orderRes.ok) throw new Error(`Supabase orders ${orderRes.status}`);
+    const order = ((await orderRes.json()) as any[])?.[0];
+    if (!order) return res.status(404).json({ error: 'Pedido no encontrado' });
+    const to = String(order.guest_email || order.buyer?.email || '').trim();
+    if (!to) return res.status(400).json({ error: 'El pedido no tiene email del comprador' });
+
+    const shortId = String(order.id).slice(0, 8);
+    const link = order.guest_email
+      ? `${SITE_URL}/mi-pedido?order=${encodeURIComponent(order.id)}&email=${encodeURIComponent(order.guest_email)}`
+      : `${SITE_URL}/mis-compras`;
+    const firma = 'Modeltex · contacto@modeltex.com.ar · WhatsApp +54 9 11 6653 1086';
+    const text =
+      message +
+      (includeLink ? `\n\nPodés ver y descargar tu pedido #${shortId} acá: ${link}` : '') +
+      `\n\n${firma}`;
+    const htmlLink = includeLink
+      ? `<p><a href="${link}" style="display:inline-block;background:#0048AD;color:#fff;padding:12px 20px;border-radius:8px;text-decoration:none;font-weight:bold;">Ver y descargar mi pedido #${escHtml(shortId)}</a></p>` +
+        `<p style="color:#666;font-size:13px;">Si el botón no funciona, copiá y pegá este link en tu navegador:<br/>${escHtml(link)}</p>`
+      : '';
+    const html =
+      `<div style="font-family:Arial,sans-serif;font-size:15px;color:#222;line-height:1.5;">` +
+      `<p>${escHtml(message).replace(/\n/g, '<br/>')}</p>` +
+      htmlLink +
+      `<p style="color:#666;font-size:13px;margin-top:24px;">${escHtml(firma)}</p></div>`;
+
+    const payload: Record<string, unknown> = {
+      from: process.env.NOTIFY_FROM || 'Modeltex <onboarding@resend.dev>',
+      to: [to],
+      subject,
+      html,
+      text,
+    };
+    if (process.env.NOTIFY_EMAIL) payload.reply_to = process.env.NOTIFY_EMAIL;
+    const r = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${resendKey}` },
+      body: JSON.stringify(payload),
+    });
+    if (!r.ok) {
+      console.error('email-buyer resend', r.status, await r.text());
+      return res.status(200).json({ ok: false, error: `El servicio de email respondió ${r.status}. Probá "Abrir en mi correo".` });
+    }
+    return res.status(200).json({ ok: true, to });
+  } catch (err) {
+    console.error('email-buyer error', err);
+    return res.status(500).json({ error: 'Error interno' });
   }
 }
 
@@ -935,6 +1014,8 @@ export default async function handler(req: any, res: any) {
       return handleNotifyOrder(req, res);
     case 'notify-buyer-paid':
       return handleNotifyBuyerPaid(req, res);
+    case 'email-buyer':
+      return handleEmailBuyer(req, res);
     case 'indexnow-key':
       return handleIndexNowKey(req, res);
     case 'indexnow':
@@ -946,6 +1027,6 @@ export default async function handler(req: any, res: any) {
     case 'unsubscribe':
       return handleUnsubscribe(req, res);
     default:
-      res.status(400).json({ error: 'Accion desconocida. Usa ?action=geo|notify-order|notify-buyer-paid|indexnow-key|indexnow|upload-image|send-free-molds|unsubscribe' });
+      res.status(400).json({ error: 'Accion desconocida. Usa ?action=geo|notify-order|notify-buyer-paid|email-buyer|indexnow-key|indexnow|upload-image|send-free-molds|unsubscribe' });
   }
 }

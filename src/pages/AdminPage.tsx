@@ -36,6 +36,13 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<AdminTab>('dashboard');
   const [products, setProducts] = useState<Product[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);
+  // Email al comprador desde la tarjeta del pedido (boton "Enviar email").
+  const [emailOrder, setEmailOrder] = useState<Order | null>(null);
+  const [emailSubject, setEmailSubject] = useState('');
+  const [emailBody, setEmailBody] = useState('');
+  const [emailIncludeLink, setEmailIncludeLink] = useState(true);
+  const [emailSending, setEmailSending] = useState(false);
+  const [emailResult, setEmailResult] = useState<{ ok: boolean; text: string } | null>(null);
   const [customers, setCustomers] = useState<Profile[]>([]);
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [freeMolds, setFreeMolds] = useState<FreeMold[]>([]);
@@ -201,6 +208,63 @@ export default function AdminPage() {
           }
         }
       }
+    }
+  };
+
+  // ---- Email al comprador desde la tarjeta del pedido ----
+  const orderBuyerEmail = (o: Order) => (o.guest_email || o.buyer?.email || '').trim();
+  const orderLink = (o: Order) =>
+    o.guest_email
+      ? `https://modeltex.com.ar/mi-pedido?order=${encodeURIComponent(o.id)}&email=${encodeURIComponent(o.guest_email)}`
+      : 'https://modeltex.com.ar/mis-compras';
+  const orderItemsText = (o: Order) => {
+    const fuente: Array<{ nombre: string; formato?: string | null; sizes?: string[] | null }> = o.order_items?.length
+      ? o.order_items.map(it => ({ nombre: it.product?.name || it.product_name || 'Producto', formato: it.formato, sizes: it.sizes }))
+      : (o.cart_snapshot ?? []).map(it => ({ nombre: it.product_name, formato: it.formato, sizes: it.sizes }));
+    return fuente
+      .map(it => {
+        const partes = [it.nombre];
+        if (it.formato) partes.push(it.formato);
+        if (it.sizes?.length) partes.push(`talles ${it.sizes.join(', ')}`);
+        return `• ${partes.join(' · ')}`;
+      })
+      .join('\n');
+  };
+  const openBuyerEmail = (o: Order) => {
+    const nombre = (o.buyer?.full_name || '').trim().split(/\s+/)[0];
+    setEmailSubject(`Tu pedido #${o.id.slice(0, 8)} en Modeltex`);
+    setEmailBody(`Hola${nombre ? ` ${nombre}` : ''}:\n\nTe escribimos por tu pedido #${o.id.slice(0, 8)}:\n${orderItemsText(o)}\n\n`);
+    setEmailIncludeLink(o.payment_status === 'pagado');
+    setEmailResult(null);
+    setEmailOrder(o);
+  };
+  const buyerMailto = (o: Order, subject: string, body: string, includeLink: boolean) => {
+    const texto = includeLink ? `${body}\n\nPodés ver y descargar tu pedido acá: ${orderLink(o)}` : body;
+    return `mailto:${orderBuyerEmail(o)}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(texto)}`;
+  };
+  const sendBuyerEmail = async () => {
+    if (!emailOrder) return;
+    setEmailSending(true);
+    setEmailResult(null);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const token = session?.access_token;
+      if (!token) throw new Error('Sesión vencida: volvé a iniciar sesión.');
+      const r = await fetch('/api/email-buyer', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ orderId: emailOrder.id, subject: emailSubject.trim(), message: emailBody.trim(), includeLink: emailIncludeLink }),
+      });
+      const data = await r.json().catch(() => ({}));
+      if (r.ok && data.ok) {
+        setEmailResult({ ok: true, text: `Enviado a ${data.to || orderBuyerEmail(emailOrder)}.` });
+      } else {
+        setEmailResult({ ok: false, text: data.error || `No se pudo enviar (${r.status}).` });
+      }
+    } catch (e) {
+      setEmailResult({ ok: false, text: e instanceof Error ? e.message : 'No se pudo enviar.' });
+    } finally {
+      setEmailSending(false);
     }
   };
 
@@ -851,10 +915,82 @@ export default function AdminPage() {
                       Marcar entregado
                     </button>
                   )}
+                  {orderBuyerEmail(o) && (
+                    <button
+                      onClick={() => openBuyerEmail(o)}
+                      className="text-xs font-medium px-3 py-1.5 bg-primary-100 text-primary-700 rounded-lg hover:bg-primary-200 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <Mail className="w-3.5 h-3.5" /> Enviar email
+                    </button>
+                  )}
+                  {o.buyer?.whatsapp && (
+                    <a
+                      href={`https://wa.me/${o.buyer.whatsapp.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola, te escribimos de Modeltex por tu pedido #${o.id.slice(0, 8)}.`)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium px-3 py-1.5 bg-green-100 text-green-700 rounded-lg hover:bg-green-200 transition-colors inline-flex items-center gap-1.5"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" /> WhatsApp
+                    </a>
+                  )}
                 </div>
               </div>
             ))}
             {orders.length === 0 && <p className="text-gray-500 text-center py-8">No hay pedidos todavía</p>}
+
+            {emailOrder && (
+              <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => !emailSending && setEmailOrder(null)}>
+                <div className="bg-white rounded-2xl shadow-xl w-full max-w-xl p-6 max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+                  <div className="flex items-start justify-between gap-3 mb-4">
+                    <div>
+                      <h3 className="font-display text-xl font-bold text-primary-900">Enviar email al comprador</h3>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Pedido <span className="font-mono font-semibold text-gray-900">#{emailOrder.id.slice(0, 8)}</span>
+                        {' · '}Para: <span className="font-medium text-gray-900">{orderBuyerEmail(emailOrder)}</span>
+                      </p>
+                    </div>
+                    <button onClick={() => setEmailOrder(null)} className="text-gray-400 hover:text-gray-600" aria-label="Cerrar">
+                      <X className="w-5 h-5" />
+                    </button>
+                  </div>
+                  <div className="space-y-3">
+                    <div>
+                      <label htmlFor="email-buyer-subject" className="block text-xs font-medium text-gray-500 mb-1">Asunto</label>
+                      <input id="email-buyer-subject" value={emailSubject} onChange={e => setEmailSubject(e.target.value)} className="input-field" />
+                    </div>
+                    <div>
+                      <label htmlFor="email-buyer-body" className="block text-xs font-medium text-gray-500 mb-1">Mensaje</label>
+                      <textarea id="email-buyer-body" value={emailBody} onChange={e => setEmailBody(e.target.value)} rows={9} className="input-field resize-y" autoFocus />
+                    </div>
+                    <label className="flex items-center gap-2 text-sm text-gray-700">
+                      <input type="checkbox" checked={emailIncludeLink} onChange={e => setEmailIncludeLink(e.target.checked)} />
+                      Agregar el link para ver y descargar el pedido
+                    </label>
+                    <p className="text-xs text-gray-400">
+                      Sale desde la casilla de Modeltex y la respuesta te llega a tu correo. Si querés adjuntar archivos, usá "Abrir en mi correo".
+                    </p>
+                    {emailResult && (
+                      <p className={`text-sm rounded-lg px-3 py-2 ${emailResult.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                        {emailResult.text}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap items-center gap-2 mt-5">
+                    <button
+                      onClick={sendBuyerEmail}
+                      disabled={emailSending || !emailSubject.trim() || !emailBody.trim()}
+                      className="btn-primary text-sm inline-flex items-center gap-2 disabled:opacity-50"
+                    >
+                      {emailSending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Mail className="w-4 h-4" />} Enviar
+                    </button>
+                    <a href={buyerMailto(emailOrder, emailSubject, emailBody, emailIncludeLink)} className="btn-secondary text-sm">
+                      Abrir en mi correo
+                    </a>
+                    <button onClick={() => setEmailOrder(null)} className="text-sm text-gray-500 hover:text-gray-700 px-3">Cerrar</button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         )}
 
