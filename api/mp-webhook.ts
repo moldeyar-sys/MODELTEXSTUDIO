@@ -11,7 +11,7 @@
 // Esto tambien neutraliza (para MP) el vector de "precio manipulado en el
 // navegador": un pago menor al precio real de catalogo no se auto-aprueba.
 
-import { sendBuyerPaidEmailCore, pisoDelItem } from './utils';
+import { sendBuyerPaidEmailCore, pisoDelItem } from './utils.js';
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';

@@ -5,7 +5,7 @@
 // acceso a orders/order_items/product_files a nadie sin sesion: la unica
 // puerta es esta funcion, y solo entrega datos si pedido + email calzan.
 
-import { formatoAFileType, pisoDelItem, PRODUCT_PRICE_COLUMNS } from './utils';
+import { formatoAFileType, pisoDelItem, PRODUCT_PRICE_COLUMNS } from './utils.js';
 
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';

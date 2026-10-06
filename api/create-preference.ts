@@ -1,7 +1,7 @@
 // Serverless function: crea una preferencia de pago en Mercado Pago Checkout Pro.
 // El Access Token vive como variable de entorno secreta en Vercel, nunca en el cliente.
 
-import { pisoDelItem, PRODUCT_PRICE_COLUMNS } from './utils';
+import { pisoDelItem, PRODUCT_PRICE_COLUMNS } from './utils.js';
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
