@@ -1275,14 +1275,14 @@ const STATIC_PAGES: Record<
   '/devoluciones': {
     title: 'Política de devoluciones y reembolsos | Modeltex',
     description:
-      'Devoluciones y reembolsos en Modeltex: garantía de los moldes digitales, derecho de arrepentimiento para moldes en cartón, plazos de reintegro y botón de arrepentimiento.',
+      'Devoluciones y reembolsos en Modeltex: garantía de los moldes digitales y en cartón, qué casos se reemplazan o reembolsan, plazos de reintegro y botón de arrepentimiento.',
     body: (o) => `
 <h1>Política de devoluciones y reembolsos</h1>
 <p>Vale para todas las compras en modeltex.com.ar y respeta la Ley 24.240 de Defensa del Consumidor y el Código Civil y Comercial (artículos 1110 a 1116).</p>
 <h2>Moldes digitales</h2>
 <p>Son archivos descargables de entrega inmediata: una vez habilitada la descarga no admiten devolución por arrepentimiento ni por haber elegido mal talle o formato (artículo 1116 del Código Civil y Comercial). Sí tienen garantía: si el archivo no abre, está dañado o no es el molde, formato o talles comprados, Modeltex lo corrige o reenvía dentro de las 48 horas hábiles sin costo y, si no puede resolverlo en 5 días hábiles, devuelve el 100 % por el mismo medio de pago. Si el pago se hizo y la descarga todavía no fue habilitada, la compra se puede cancelar con reintegro total.</p>
 <h2>Moldes en cartón</h2>
-<p>Producto físico, solo Argentina: 10 días corridos desde la recepción para arrepentirse sin dar motivos, con el molde completo y sin uso; el envío de devolución corre por cuenta de Modeltex y el reintegro se hace dentro de los 10 días hábiles de recibido, por el mismo medio de pago.</p>
+<p>Producto físico, solo Argentina, cortado a pedido en los talles elegidos: no se acepta devolución por arrepentimiento ni cambio de opinión, aunque esté en perfecto estado, porque un molde se puede copiar y devolver (artículo 1116, inciso a, del Código Civil y Comercial). Sí se reemplaza sin costo o se reembolsa si llegó el molde equivocado, dañado o si no sale como se prometió en la ficha; avisar dentro de las 48 horas de recibido, con fotos.</p>
 <h2>Cómo pedirlo</h2>
 <p>Por el botón de arrepentimiento de <a href="${o}/devoluciones#arrepentimiento">${o}/devoluciones</a>, por WhatsApp (+54 9 11 6653 1086) o por email (contacto@modeltex.com.ar), con el número de pedido y el email de la compra. Respuesta dentro de las 24 horas hábiles con la constancia del trámite. Los reembolsos se hacen siempre por el mismo medio de pago: Mercado Pago (3 a 10 días hábiles según el banco), transferencia, PayPal, Payoneer, Wise o cripto (5 días hábiles).</p>
 <p>Texto completo en <a href="${o}/devoluciones">${o}/devoluciones</a>. Consultas: <a href="${o}/contacto">contacto</a>.</p>`,

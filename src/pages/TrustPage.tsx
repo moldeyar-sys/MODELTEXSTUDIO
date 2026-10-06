@@ -204,10 +204,10 @@ function buildPages(t: (key: string, es: string) => string): Record<TrustPageVar
     devoluciones: {
       eyebrow: t('tp.dv.eyebrow', 'Compra protegida'),
       title: t('tp.dv.title', 'Política de devoluciones y reembolsos'),
-      description: t('tp.dv.desc', 'Qué se puede devolver, qué garantía tienen los archivos, cómo pedir un reembolso y en qué plazo te devolvemos el dinero. Vale para todas las compras en modeltex.com.ar.'),
+      description: t('tp.dv.desc', 'En qué casos hay reemplazo o reembolso, qué garantía tienen los moldes digitales y en cartón, cómo pedirlo y en qué plazo te devolvemos el dinero. Vale para todas las compras en modeltex.com.ar.'),
       icon: Undo2,
       seoTitle: t('tp.dv.seoTitle', 'Política de devoluciones y reembolsos'),
-      seoDescription: t('tp.dv.seoDesc', 'Devoluciones y reembolsos en Modeltex: garantía de los moldes digitales, derecho de arrepentimiento para moldes en cartón, plazos de reintegro y botón de arrepentimiento.'),
+      seoDescription: t('tp.dv.seoDesc', 'Devoluciones y reembolsos en Modeltex: garantía de los moldes digitales y en cartón, qué casos se reemplazan o reembolsan, plazos de reintegro y botón de arrepentimiento.'),
       path: '/devoluciones',
       sections: [
         {
@@ -227,7 +227,7 @@ function buildPages(t: (key: string, es: string) => string): Record<TrustPageVar
           icon: Download,
           text: t('tp.dv.s2.text', 'Los moldes digitales se entregan como archivos descargables apenas se confirma el pago. Por ser contenido digital de entrega inmediata, una vez habilitada la descarga no admiten devolución por arrepentimiento ni por haber elegido mal el talle o el formato (artículo 1116 del Código Civil y Comercial). Lo que sí garantizamos es que recibas exactamente lo que compraste y que funcione.'),
           items: [
-            t('tp.dv.s2.i1', 'Si el archivo no abre, está dañado o no es el molde, formato o talles que pagaste, lo corregimos o reenviamos dentro de las 48 horas hábiles, sin costo.'),
+            t('tp.dv.s2.i1', 'Si el archivo no abre, está dañado, no es el molde, formato o talles que pagaste o el molde no sale como se prometió en la ficha, lo corregimos o reenviamos dentro de las 48 horas hábiles, sin costo.'),
             t('tp.dv.s2.i2', 'Si no podemos resolverlo en 5 días hábiles, te devolvemos el 100 % del importe por el mismo medio de pago.'),
             t('tp.dv.s2.i3', 'Si pagaste y la descarga todavía no fue habilitada, podés cancelar y te reintegramos el total.'),
             t('tp.dv.s2.i4', 'Un cobro duplicado se devuelve completo apenas lo verificamos.'),
@@ -236,14 +236,14 @@ function buildPages(t: (key: string, es: string) => string): Record<TrustPageVar
         },
         {
           id: 'carton',
-          title: t('tp.dv.s3.title', 'Moldes en cartón: derecho de arrepentimiento'),
+          title: t('tp.dv.s3.title', 'Moldes en cartón: sin devolución por arrepentimiento'),
           icon: Package,
-          text: t('tp.dv.s3.text', 'Los moldes en cartón son un producto físico que se vende solo dentro de Argentina. Como en toda compra a distancia, tenés 10 días corridos desde que lo recibís para arrepentirte sin dar motivos (artículo 34 de la Ley 24.240 y artículo 1110 del Código Civil y Comercial).'),
+          text: t('tp.dv.s3.text', 'Los moldes en cartón son un producto físico, solo para Argentina, que se corta a pedido en los talles que elegís. Por eso, y porque un molde se puede copiar y devolver, no se aceptan devoluciones por arrepentimiento ni por cambio de opinión, aunque el molde esté en perfecto estado (artículo 1116, inciso a, del Código Civil y Comercial: productos personalizados o que por su naturaleza no pueden devolverse). Sí respondemos si el molde no es el que compraste o no sale como se prometió.'),
           items: [
-            t('tp.dv.s3.i1', 'El molde debe volver completo y sin uso: sin cortar, marcar ni doblar más de lo que venía.'),
-            t('tp.dv.s3.i2', 'El costo del envío de devolución corre por cuenta de Modeltex; te indicamos cómo despacharlo.'),
-            t('tp.dv.s3.i3', 'El reintegro se hace dentro de los 10 días hábiles de recibido el molde, por el mismo medio con el que pagaste.'),
-            t('tp.dv.s3.i4', 'Si llegó dañado o no es el molde que compraste, lo reemplazamos sin costo o te devolvemos el dinero: avisanos dentro de las 48 horas de recibido, con fotos.'),
+            t('tp.dv.s3.i1', 'Molde equivocado (otro modelo, talle o formato del que compraste): lo reemplazamos sin costo o te devolvemos el dinero. Avisanos dentro de las 48 horas de recibido, con fotos.'),
+            t('tp.dv.s3.i2', 'Molde que no sale como se prometió en la ficha (prenda, talles o medidas distintas de las indicadas): lo revisamos y, si confirmamos el error, lo corregimos, lo reemplazamos o te reembolsamos.'),
+            t('tp.dv.s3.i3', 'Llegó dañado o incompleto: lo reponemos sin costo. Mandá fotos del paquete y del molde al recibirlo.'),
+            t('tp.dv.s3.i4', 'Revisá modelo, talles y formato antes de pagar; si tenés dudas, consultanos por WhatsApp.'),
           ],
         },
         {

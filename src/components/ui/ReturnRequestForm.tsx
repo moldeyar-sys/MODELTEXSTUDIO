@@ -8,8 +8,11 @@ import { trackWhatsAppClick } from '../../lib/analytics';
 /**
  * "Botón de arrepentimiento" de /devoluciones (Resolución 424/2020 de la
  * Secretaría de Comercio Interior: toda tienda online argentina debe tener
- * un enlace visible que permita revocar la compra). El mismo formulario
- * sirve para pedir la garantía de un archivo o un reembolso.
+ * un enlace visible que permita revocar la compra). En Modeltex sirve para
+ * cancelar un pedido todavía no entregado y para la garantía (molde
+ * equivocado, archivo que no abre, molde que no sale como se prometió). Los
+ * moldes, digitales o en cartón, NO se devuelven por arrepentimiento: un
+ * molde se puede copiar y devolver (decisión de Denis, 2026-10-06).
  *
  * Qué hace: guarda el pedido en contact_messages (best-effort, igual que el
  * formulario de /contacto, así queda en el panel) y abre WhatsApp con todo
@@ -18,18 +21,18 @@ import { trackWhatsAppClick } from '../../lib/analytics';
  * reembolso.
  */
 
-type Motivo = 'arrepentimiento' | 'archivo' | 'distinto' | 'sin-descarga' | 'duplicado' | 'otro';
+type Motivo = 'distinto' | 'archivo' | 'no-prometido' | 'sin-descarga' | 'duplicado' | 'otro';
 
 export function ReturnRequestForm() {
   const { t } = useLocale();
-  const [form, setForm] = useState({ name: '', email: '', order: '', reason: 'arrepentimiento' as Motivo, message: '' });
+  const [form, setForm] = useState({ name: '', email: '', order: '', reason: 'distinto' as Motivo, message: '' });
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState<string | null>(null);
 
   const motivos: Array<{ value: Motivo; label: string }> = [
-    { value: 'arrepentimiento', label: t('rr.m.regret', 'Me arrepentí de la compra (molde en cartón, dentro de los 10 días)') },
-    { value: 'archivo', label: t('rr.m.file', 'El archivo no abre o está dañado') },
     { value: 'distinto', label: t('rr.m.wrong', 'Recibí un molde, formato o talles distintos a los que compré') },
+    { value: 'archivo', label: t('rr.m.file', 'El archivo no abre o está dañado') },
+    { value: 'no-prometido', label: t('rr.m.notAsPromised', 'El molde no sale como se prometió en la ficha') },
     { value: 'sin-descarga', label: t('rr.m.noDownload', 'Pagué y la descarga no se habilitó') },
     { value: 'duplicado', label: t('rr.m.double', 'Me cobraron dos veces') },
     { value: 'otro', label: t('rr.m.other', 'Otro motivo') },
@@ -86,7 +89,7 @@ export function ReturnRequestForm() {
           <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">
             {t(
               'rr.text',
-              'Es el mecanismo previsto por la Resolución 424/2020 para revocar una compra a distancia dentro de los 10 días corridos, cuando corresponde. Completá el formulario y te respondemos dentro de las 24 horas hábiles con la constancia del trámite. También sirve para pedir la garantía de un archivo o un reembolso.',
+              'Es el enlace que exige la Resolución 424/2020 a toda tienda online. En Modeltex sirve para cancelar un pedido que todavía no fue entregado ni habilitado y para pedir la garantía: molde equivocado, archivo que no abre o molde que no sale como se prometió. Completá el formulario y te respondemos dentro de las 24 horas hábiles con la constancia del trámite.',
             )}
           </p>
         </div>

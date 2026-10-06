@@ -194,7 +194,7 @@ export const LANDING_FAQS: Record<string, Faq[]> = {
     },
     {
       q: '¿Puedo devolver un molde en cartón?',
-      a: 'Sí. Es un producto físico (solo Argentina) y tenés 10 días corridos desde que lo recibís para arrepentirte sin dar motivos, siempre que vuelva completo y sin uso. El envío de devolución corre por cuenta de Modeltex y el reintegro se hace dentro de los 10 días hábiles de recibido el molde, por el mismo medio con el que pagaste.',
+      a: 'No por arrepentimiento: se corta a pedido en los talles elegidos y, como cualquier molde, se puede copiar, así que no se acepta la devolución aunque esté en perfecto estado (artículo 1116 del Código Civil y Comercial, productos personalizados). Sí se reemplaza o reembolsa si te enviamos el molde equivocado, si llegó dañado o si el molde no sale como se prometió en la ficha; avisá dentro de las 48 horas de recibido, con fotos.',
     },
     {
       q: '¿Puedo cancelar un pedido que todavía no se habilitó?',
@@ -206,7 +206,7 @@ export const LANDING_FAQS: Record<string, Faq[]> = {
     },
     {
       q: '¿Qué es el botón de arrepentimiento?',
-      a: 'Es el mecanismo que exige la Resolución 424/2020 para que cualquier compra online se pueda revocar dentro de los 10 días corridos, cuando corresponde. En Modeltex está en el pie de todas las páginas y lleva al formulario de la política de devoluciones; se responde dentro de las 24 horas hábiles con la constancia del trámite.',
+      a: 'Es el enlace que exige la Resolución 424/2020 a toda tienda online. En Modeltex está en el pie de todas las páginas y sirve para cancelar un pedido que todavía no fue entregado ni habilitado y para pedir la garantía (molde equivocado, archivo que no abre, molde que no sale como se prometió); se responde dentro de las 24 horas hábiles con la constancia del trámite.',
     },
   ],
 
