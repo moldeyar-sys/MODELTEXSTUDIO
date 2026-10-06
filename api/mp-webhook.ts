@@ -11,7 +11,7 @@
 // Esto tambien neutraliza (para MP) el vector de "precio manipulado en el
 // navegador": un pago menor al precio real de catalogo no se auto-aprueba.
 
-import { sendBuyerPaidEmailCore } from './utils';
+import { sendBuyerPaidEmailCore, pisoDelItem } from './utils';
 
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
@@ -37,9 +37,11 @@ async function verificarFirma(req: any, dataId: string): Promise<boolean> {
   const v1 = parts.v1;
   if (!ts || !v1) return false;
   const manifest = `id:${dataId};request-id:${reqId};ts:${ts};`;
-  const { createHmac } = await import('node:crypto');
+  const { createHmac, timingSafeEqual } = await import('node:crypto');
   const expected = createHmac('sha256', MP_WEBHOOK_SECRET).update(manifest).digest('hex');
-  return expected === v1;
+  const a = Buffer.from(expected);
+  const b = Buffer.from(v1);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 
 function extractPaymentId(req: any): string | null {
@@ -59,88 +61,11 @@ function extractPaymentId(req: any): string | null {
   return null;
 }
 
-/** Precio real minimo de un producto entre todos sus formatos cargados. */
-function precioMinimo(p: any): number {
-  const candidatos = [
-    p?.precio_carton, p?.precio_pdf_a4, p?.precio_pdf_ploter, p?.price,
-    p?.precio_dxf, p?.precio_pds, p?.precio_mrk, p?.precio_ads,
-  ]
-    .map(Number)
-    .filter((n) => Number.isFinite(n) && n > 0);
-  return candidatos.length ? Math.min(...candidatos) : 0;
-}
-
-/**
- * Precio real del FORMATO especifico que el item dice haber comprado (el string
- * libre guardado en order_items.formato, ej "Moldes en Cartón", "DXF / AAMA").
- * Sin esto, alguien podia pagar el precio del formato mas barato y declarar
- * en el pedido el formato mas caro (el piso solo miraba el minimo global).
- * Si el formato no matchea nada conocido (pedidos viejos sin este campo, o
- * un valor inesperado) se cae al piso global de siempre: nunca mas estricto
- * de lo que ya funcionaba.
- */
-function precioReal(p: any, formato: string | null | undefined): number {
-  const f = (formato || '').toLowerCase();
-  if (f.includes('cartón') || f.includes('carton')) return Number(p?.precio_carton) || 0;
-  if (f.includes('plóter') || f.includes('ploter')) return Number(p?.precio_pdf_ploter) || 0;
-  if (f.includes('pdf-a4') || f.includes('pdf a4')) return Number(p?.precio_pdf_a4) || Number(p?.price) || 0;
-  if (f.includes('dxf') || f.includes('aama')) return Number(p?.precio_dxf) || 0;
-  if (f.includes('pds')) return Number(p?.precio_pds) || 0;
-  if (f.includes('mrk') || f.includes('tizado')) return Number(p?.precio_mrk) || 0;
-  if (f.includes('ads') || f.includes('audaces')) return Number(p?.precio_ads) || 0;
-  return precioMinimo(p);
-}
-
-// ---------------------------------------------------------------------------
-// Ajuste de precio por talles: MISMA lógica que src/lib/sizeUtils.ts (no se
-// puede importar de src/ desde api/ en este proyecto, ver comentario en
-// api/sitemap.ts). Sin esto, un comprador que sacó talles en FormatOptions
-// para bajar el precio (funcionalidad real, promocionada en la ficha) pagaba
-// de menos frente al piso de "curva completa" de abajo y el pago quedaba
-// SIEMPRE en revisión manual aunque Mercado Pago lo hubiera aprobado.
-// ---------------------------------------------------------------------------
-const ADULT_LETTERS = new Set(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']);
-const DEFAULT_ADULT = new Set(['S', 'M', 'L', 'XL', '2XL']);
-const DEFAULT_CHILD = new Set(['4', '6', '8', '10', '12', '14', '16']);
-const DEFAULT_BABY = new Set(['1', '2', '3', '4', '5']);
-const CHILD_ONLY = new Set(['10', '12', '14', '16', '18']);
-
-function getDefaultSizes(availableSizes: string[]): string[] {
-  if (!availableSizes || availableSizes.length === 0) return [];
-  if (availableSizes.some((s) => ADULT_LETTERS.has(s))) {
-    const defs = availableSizes.filter((s) => DEFAULT_ADULT.has(s));
-    return defs.length > 0 ? defs : availableSizes;
-  }
-  if (availableSizes.some((s) => CHILD_ONLY.has(s))) {
-    const defs = availableSizes.filter((s) => DEFAULT_CHILD.has(s));
-    return defs.length > 0 ? defs : availableSizes;
-  }
-  const allNumeric = availableSizes.every((s) => /^\d+$/.test(s));
-  if (allNumeric && Math.max(...availableSizes.map(Number)) <= 9) {
-    const defs = availableSizes.filter((s) => DEFAULT_BABY.has(s));
-    return defs.length > 0 ? defs : availableSizes;
-  }
-  return availableSizes;
-}
-
-const TALLE_ARS: Record<'carton' | 'pdf' | 'ploter', number> = { carton: 10_000, pdf: 3_000, ploter: 4_000 };
-
-function tipoFormato(formato: string | null | undefined): 'carton' | 'pdf' | 'ploter' {
-  const f = (formato || '').toLowerCase();
-  if (f.includes('cart') || f.includes('carton')) return 'carton';
-  if (f.includes('pl')) return 'ploter';
-  return 'pdf';
-}
-
-/** Piso real de UN item: precio del formato ajustado por la cantidad de talles pedidos. */
-function pisoDelItem(product: any, formato: string | null | undefined, sizesPedidos: string[] | null | undefined): number {
-  const base = precioReal(product, formato);
-  const disponibles: string[] = Array.isArray(product?.sizes) ? product.sizes : [];
-  const defaults = getDefaultSizes(disponibles);
-  const seleccionados = Array.isArray(sizesPedidos) && sizesPedidos.length ? sizesPedidos.length : defaults.length;
-  const diff = seleccionados - defaults.length;
-  return Math.max(0, base + diff * TALLE_ARS[tipoFormato(formato)]);
-}
+// El piso de precio por item (precio real del formato declarado, ajustado por
+// talles) vive en api/utils.ts (pisoDelItem) y usa EXACTAMENTE el mismo mapeo
+// formato -> file_type que la base (migración 037). Auditoría 2026-10-05: la
+// copia que había acá tenía otro mapeo y, para un formato sin precio cargado
+// en el producto, devolvía piso 0 => cualquier monto se auto-aprobaba.
 
 export default async function handler(req: any, res: any) {
   // MP reintenta si no respondemos 2xx; respondemos 200 siempre que la
@@ -228,12 +153,19 @@ export default async function handler(req: any, res: any) {
     // sacara talles (funcionalidad real, mas barata a proposito) quedaba
     // "pendiente" para siempre aunque Mercado Pago hubiera aprobado el pago
     // por el monto correcto.
-    const pisoCatalogo = items.reduce(
-      (sum: number, it: any) => sum + pisoDelItem(it?.product, it?.formato, it?.sizes) * (Number(it?.quantity) || 1),
-      0,
-    );
-
     const controles: string[] = [];
+    let pisoCatalogo = 0;
+    for (const it of items) {
+      const piso = pisoDelItem(it?.product, it?.formato, it?.sizes);
+      if (piso === null) {
+        // Formato que ese producto no vende (sin precio cargado) o producto
+        // inexistente: no hay contra qué verificar => revisión manual, nunca
+        // piso 0.
+        controles.push(`formato "${it?.formato ?? ''}" sin precio en el producto`);
+        continue;
+      }
+      pisoCatalogo += piso * (Number(it?.quantity) || 1);
+    }
     // Mercado Pago en esta cuenta solo cobra en pesos. Si el pedido quedo
     // marcado en otra moneda (ver orders.currency, USD para compradores del
     // exterior via FormatOptions) no se puede auto-aprobar por MP: ese caso

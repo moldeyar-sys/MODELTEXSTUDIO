@@ -33,10 +33,6 @@
     { "source": "/api/notify-order", "destination": "/api/utils?action=notify-order" },
     { "source": "/api/notify-buyer-paid", "destination": "/api/utils?action=notify-buyer-paid" },
     { "source": "/api/baja", "destination": "/api/utils?action=unsubscribe" },
-    { "source": "/api/cron-novedades", "destination": "/api/utils?action=announce-free-molds" },
     { "source": "/((?!api/).*)", "destination": "/index.html" }
-  ],
-  "crons": [
-    { "path": "/api/cron-novedades", "schedule": "0 21 * * *" }
   ]
 }

@@ -14,9 +14,10 @@
 //   GET  ?action=indexnow-key        -> archivo de verificacion de IndexNow (texto plano)
 //   POST ?action=indexnow            -> notifica URLs nuevas/actualizadas a IndexNow (Bing/Yandex)
 //   POST ?action=upload-image        -> sube una imagen a Cloudflare R2 (reemplaza Supabase Storage)
-//   GET  ?action=announce-free-molds -> aviso diario por mail de moldes gratis nuevos (cron de vercel.json;
-//                                       mode=status|test para el panel admin)
 //   GET/POST ?action=unsubscribe     -> baja de la lista de novedades (link /api/baja de los mails)
+//   GET/POST ?action=send-free-molds -> envio MANUAL (solo admin) del mail de moldes gratis:
+//                                       GET mode=status (cuantos destinatarios por publico, ultimos envios);
+//                                       POST { moldIds, audience, test } manda (test=true: solo al admin)
 
 import { createHmac, timingSafeEqual } from 'node:crypto';
 import { AwsClient } from 'aws4fetch';
@@ -46,6 +47,120 @@ async function isAdmin(token: string): Promise<boolean> {
 function readBody(req: any): any {
   return typeof req.body === 'string' ? JSON.parse(req.body || '{}') : req.body || {};
 }
+
+// ---------------------------------------------------------------------------
+// Precios reales por formato (compartido por mp-webhook, create-preference y
+// guest-order). UNA sola regla para "qué formato es este order_item", calcada
+// de public.formato_a_file_type() (migración 037): antes cada archivo tenía su
+// propia copia y no coincidían. Ejemplo real (auditoría 2026-10-05): un
+// order_item con formato "pl" lo mapeaba la base a 'pdf_plotter' (entregaba
+// los archivos de plóter) pero el webhook no lo reconocía y usaba el precio
+// MÍNIMO del producto para validar el pago. Peor: si el formato declarado no
+// tenía precio cargado (ej. "DXF" en un producto que no vende DXF), el
+// webhook tomaba piso 0 y auto-aprobaba cualquier monto. Ahora:
+//   - mismo mapeo que la base, siempre;
+//   - un formato sin precio en ese producto devuelve null => NUNCA se
+//     auto-aprueba ni se arma link de pago: queda para revisión manual.
+// ---------------------------------------------------------------------------
+export type FileTypeKey = 'carton' | 'pdf_plotter' | 'dxf' | 'pds' | 'mrk' | 'ads' | 'pdf_a4';
+
+/** Mismo criterio y mismo orden que public.formato_a_file_type() (migración 037). */
+export function formatoAFileType(formato: string | null | undefined): FileTypeKey {
+  const f = (formato || '').toLowerCase();
+  if (f.includes('cart')) return 'carton';
+  if (f.includes('pl')) return 'pdf_plotter';
+  if (f.includes('dxf') || f.includes('aama')) return 'dxf';
+  if (f.includes('pds') || f.includes('optitex')) return 'pds';
+  if (f.includes('mrk') || f.includes('tizado')) return 'mrk';
+  if (f.includes('ads') || f.includes('audaces')) return 'ads';
+  return 'pdf_a4';
+}
+
+/**
+ * Precio de catálogo (ARS) del formato declarado. Devuelve null si ese
+ * formato no tiene precio cargado en el producto (= no se vende en ese
+ * formato): el que llama tiene que tratarlo como "no verificable".
+ */
+export function precioDelFormato(p: any, formato: string | null | undefined, currency: 'ARS' | 'USD' = 'ARS'): number | null {
+  const ft = formatoAFileType(formato);
+  const v = currency === 'USD'
+    ? (ft === 'carton' ? p?.precio_usd_carton
+      : ft === 'pdf_plotter' ? p?.precio_usd_pdf_ploter
+      : ft === 'dxf' ? p?.precio_usd_dxf
+      : ft === 'pds' ? p?.precio_usd_pds
+      : ft === 'mrk' ? p?.precio_usd_mrk
+      : ft === 'ads' ? p?.precio_usd_ads
+      : p?.precio_usd_pdf_a4)
+    : (ft === 'carton' ? p?.precio_carton
+      : ft === 'pdf_plotter' ? p?.precio_pdf_ploter
+      : ft === 'dxf' ? p?.precio_dxf
+      : ft === 'pds' ? p?.precio_pds
+      : ft === 'mrk' ? p?.precio_mrk
+      : ft === 'ads' ? p?.precio_ads
+      : (p?.precio_pdf_a4 ?? p?.price));
+  const n = Number(v);
+  return Number.isFinite(n) && n > 0 ? n : null;
+}
+
+// Ajuste por talles: MISMA lógica que src/lib/sizeUtils.ts (ver nota en
+// api/sitemap.ts sobre por qué no se importa desde src/).
+const ADULT_LETTERS = new Set(['XS', 'S', 'M', 'L', 'XL', '2XL', '3XL', '4XL']);
+const DEFAULT_ADULT = new Set(['S', 'M', 'L', 'XL', '2XL']);
+const DEFAULT_CHILD = new Set(['4', '6', '8', '10', '12', '14', '16']);
+const DEFAULT_BABY = new Set(['1', '2', '3', '4', '5']);
+const CHILD_ONLY = new Set(['10', '12', '14', '16', '18']);
+const TALLE_ARS: Record<'carton' | 'pdf' | 'ploter', number> = { carton: 10_000, pdf: 3_000, ploter: 4_000 };
+const TALLE_USD: Record<'carton' | 'pdf' | 'ploter', number> = { carton: 7, pdf: 3, ploter: 5 };
+
+function getDefaultSizes(availableSizes: string[]): string[] {
+  if (!availableSizes || availableSizes.length === 0) return [];
+  if (availableSizes.some((s) => ADULT_LETTERS.has(s))) {
+    const defs = availableSizes.filter((s) => DEFAULT_ADULT.has(s));
+    return defs.length > 0 ? defs : availableSizes;
+  }
+  if (availableSizes.some((s) => CHILD_ONLY.has(s))) {
+    const defs = availableSizes.filter((s) => DEFAULT_CHILD.has(s));
+    return defs.length > 0 ? defs : availableSizes;
+  }
+  const allNumeric = availableSizes.every((s) => /^\d+$/.test(s));
+  if (allNumeric && Math.max(...availableSizes.map(Number)) <= 9) {
+    const defs = availableSizes.filter((s) => DEFAULT_BABY.has(s));
+    return defs.length > 0 ? defs : availableSizes;
+  }
+  return availableSizes;
+}
+
+function tipoTalle(formato: string | null | undefined): 'carton' | 'pdf' | 'ploter' {
+  const ft = formatoAFileType(formato);
+  if (ft === 'carton') return 'carton';
+  if (ft === 'pdf_plotter') return 'ploter';
+  return 'pdf';
+}
+
+/**
+ * Piso real (ARS) de UN item: precio del formato declarado ajustado por la
+ * cantidad de talles pedidos. null si el formato no se vende en ese producto.
+ */
+export function pisoDelItem(
+  product: any,
+  formato: string | null | undefined,
+  sizesPedidos: string[] | null | undefined,
+  currency: 'ARS' | 'USD' = 'ARS',
+): number | null {
+  const base = precioDelFormato(product, formato, currency);
+  if (base === null) return null;
+  const disponibles: string[] = Array.isArray(product?.sizes) ? product.sizes : [];
+  const defaults = getDefaultSizes(disponibles);
+  const seleccionados = Array.isArray(sizesPedidos) && sizesPedidos.length ? sizesPedidos.length : defaults.length;
+  const diff = seleccionados - defaults.length;
+  const porTalle = currency === 'USD' ? TALLE_USD : TALLE_ARS;
+  return Math.max(0, base + diff * porTalle[tipoTalle(formato)]);
+}
+
+/** Columnas de products que necesitan precioDelFormato/pisoDelItem. */
+export const PRODUCT_PRICE_COLUMNS =
+  'id,name,sizes,price,precio_carton,precio_pdf_a4,precio_pdf_ploter,precio_dxf,precio_pds,precio_mrk,precio_ads,' +
+  'precio_usd_carton,precio_usd_pdf_a4,precio_usd_pdf_ploter,precio_usd_dxf,precio_usd_pds,precio_usd_mrk,precio_usd_ads';
 
 // ---------------------------------------------------------------------------
 // geo: pais del visitante (geolocalizacion de Vercel, sin servicios externos)
@@ -184,13 +299,16 @@ async function handleNotifyOrder(req: any, res: any) {
     const notifyEmail = process.env.NOTIFY_EMAIL;
     if (resendKey && notifyEmail) {
       try {
-        const htmlItems = lines.map((l) => `<li>${l.replace(/^• /, '')}</li>`).join('');
+        // Todo lo que entra acá lo escribió el comprador (nombre de perfil,
+        // formato, talles de order_items): se escapa para que nadie pueda
+        // meter un link o HTML en el mail que lee el dueño.
+        const htmlItems = lines.map((l) => `<li>${escHtml(l.replace(/^• /, ''))}</li>`).join('');
         const html =
           `<h2>🛒 Nueva compra en Modeltex</h2>` +
-          `<p><strong>Pedido #${shortId}</strong> — Total: <strong>${total}</strong><br/>` +
-          `Método: ${metodo}<br/>` +
-          `Cliente: ${buyerName}${buyer.whatsapp ? ` (WhatsApp: ${buyer.whatsapp})` : ''}` +
-          `${buyer.email ? ` — ${buyer.email}` : ''}</p>` +
+          `<p><strong>Pedido #${escHtml(shortId)}</strong> — Total: <strong>${escHtml(total)}</strong><br/>` +
+          `Método: ${escHtml(String(metodo))}<br/>` +
+          `Cliente: ${escHtml(String(buyerName))}${buyer.whatsapp ? ` (WhatsApp: ${escHtml(String(buyer.whatsapp))})` : ''}` +
+          `${buyer.email ? ` — ${escHtml(String(buyer.email))}` : ''}</p>` +
           `<p><strong>Detalle:</strong></p><ul>${htmlItems}</ul>`;
         const r = await fetch('https://api.resend.com/emails', {
           method: 'POST',
@@ -477,34 +595,18 @@ async function handleUploadImage(req: any, res: any) {
 }
 
 // ---------------------------------------------------------------------------
-// Novedades por mail: aviso automatico de moldes gratis nuevos.
-//
-// Un envio por dia (cron de vercel.json, 21:00 UTC = 18:00 AR) a toda la
-// lista newsletter_subscribers con los moldes gratis ACTIVOS creados en la
-// ventana del dia: [corte de ayer, corte de hoy), con el corte a las 20:00
-// UTC. La ventana es fija y no depende de cuando corra el cron dentro de su
-// hora, asi cada molde entra en exactamente un envio sin guardar estado en la
-// base. Si se suben 10 moldes el mismo dia, sale UN mail con los 10.
-//
-// Por eso el envio real solo lo dispara el cron: un "enviar ahora" manual
-// duplicaria el aviso del cron. El admin tiene mode=status (que sale en el
-// proximo envio) y mode=test (se lo manda solo a si mismo).
-//
-// Requiere el dominio verificado en Resend: con el remitente de prueba
-// (onboarding@resend.dev) Resend solo entrega a la casilla del duenio de la
-// cuenta, y el error de Resend se devuelve tal cual para que se vea en el panel.
-// ---------------------------------------------------------------------------
-const CUTOFF_UTC_HOUR = 20;
+// Novedades por mail: envio MANUAL de moldes gratis (solo admin, desde el
+// panel). El envio automatico (cron diario) se elimino el 2026-10-05 a
+// pedido de Denis: nada sale solo. El admin elige que moldes y a que
+// publico, se manda una prueba y recien con "Enviar" sale. Cada envio queda
+// registrado en newsletter_sends; quien se da de baja (/api/baja) entra en
+// newsletter_optout y no recibe mas nada, sea cual sea el publico elegido.
+// Requiere el dominio verificado en Resend (si no, Resend solo entrega a la
+// casilla del duenio de la cuenta y devuelve el error, que se muestra en el panel).
 const NEWSLETTER_FROM = process.env.NEWSLETTER_FROM || 'Modeltex <novedades@modeltex.com.ar>';
 
 interface MoldRow { id: string; title: string; sizes: string[] | string | null; image_url: string | null; created_at: string }
-
-function lastCutoff(now = new Date()): Date {
-  const c = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), CUTOFF_UTC_HOUR));
-  if (c > now) c.setUTCDate(c.getUTCDate() - 1);
-  return c;
-}
-
+// ---------------------------------------------------------------------------
 function unsubscribeToken(email: string): string {
   const secret = process.env.NEWSLETTER_SECRET || SERVICE_ROLE;
   return createHmac('sha256', secret).update(email.trim().toLowerCase()).digest('base64url').slice(0, 32);
@@ -594,25 +696,6 @@ function unsubscribeUrl(email: string) {
   return `${SITE_URL}/api/baja?e=${encodeURIComponent(email)}&t=${unsubscribeToken(email)}`;
 }
 
-async function fetchMolds(from: Date, to?: Date): Promise<MoldRow[]> {
-  const q = [`select=id,title,sizes,image_url,created_at`, `is_active=eq.true`, `created_at=gte.${from.toISOString()}`];
-  if (to) q.push(`created_at=lt.${to.toISOString()}`);
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/free_molds?${q.join('&')}&order=created_at.asc`, {
-    headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
-  });
-  if (!r.ok) throw new Error(`free_molds ${r.status}`);
-  return (await r.json()) as MoldRow[];
-}
-
-async function fetchSubscriberEmails(): Promise<string[]> {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_subscribers?select=email`, {
-    headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
-  });
-  if (!r.ok) throw new Error(`newsletter_subscribers ${r.status}`);
-  const rows = (await r.json()) as Array<{ email: string }>;
-  return [...new Set(rows.map((x) => (x.email || '').trim().toLowerCase()).filter(Boolean))];
-}
-
 /** Slugs de las paginas de todos los moldes activos (mismo calculo que la app y middleware.ts). */
 async function fetchMoldSlugs(): Promise<Map<string, string>> {
   try {
@@ -672,66 +755,122 @@ async function adminEmail(token: string): Promise<string | null> {
   }
 }
 
-async function handleAnnounceFreeMolds(req: any, res: any) {
+
+type Audience = 'subscribers' | 'users' | 'customers' | 'all';
+const AUDIENCES: Audience[] = ['subscribers', 'users', 'customers', 'all'];
+const H_SR = () => ({ apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` });
+
+function normEmails(rows: Array<{ email?: string | null }>): string[] {
+  return rows.map((x) => (x.email || '').trim().toLowerCase()).filter((e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e));
+}
+
+/** Emails que pidieron no recibir mas nada (link de baja). Vale para todos los publicos. */
+async function fetchOptouts(): Promise<Set<string>> {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_optout?select=email`, { headers: H_SR() });
+  if (!r.ok) return new Set(); // tabla inexistente (migracion 048 sin correr): no bloquea
+  return new Set(normEmails((await r.json()) as Array<{ email: string }>));
+}
+
+async function fetchAudience(audience: Audience): Promise<string[]> {
+  const out = new Set<string>();
+  const add = (list: string[]) => list.forEach((e) => out.add(e));
+  if (audience === 'subscribers' || audience === 'all') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_subscribers?select=email`, { headers: H_SR() });
+    if (!r.ok) throw new Error(`newsletter_subscribers ${r.status}`);
+    add(normEmails((await r.json()) as Array<{ email: string }>));
+  }
+  if (audience === 'users' || audience === 'all') {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/profiles?select=email`, { headers: H_SR() });
+    if (!r.ok) throw new Error(`profiles ${r.status}`);
+    add(normEmails((await r.json()) as Array<{ email: string }>));
+  }
+  if (audience === 'customers' || audience === 'all') {
+    // Compradores: pedidos pagados, con cuenta (email del perfil) o invitados (guest_email).
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/orders?select=guest_email,buyer:profiles(email)&payment_status=eq.pagado`, { headers: H_SR() });
+    if (!r.ok) throw new Error(`orders ${r.status}`);
+    const rows = (await r.json()) as Array<{ guest_email: string | null; buyer: { email: string } | null }>;
+    add(normEmails(rows.map((o) => ({ email: o.guest_email || o.buyer?.email || '' }))));
+  }
+  const optout = await fetchOptouts();
+  return [...out].filter((e) => !optout.has(e));
+}
+
+async function recordSend(row: Record<string, unknown>) {
+  try {
+    const r = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_sends`, {
+      method: 'POST',
+      headers: { ...H_SR(), 'Content-Type': 'application/json', Prefer: 'return=minimal' },
+      body: JSON.stringify(row),
+    });
+    if (!r.ok) console.warn('newsletter_sends insert', r.status, await r.text());
+  } catch (e) {
+    console.warn('newsletter_sends insert', e);
+  }
+}
+
+async function handleSendFreeMolds(req: any, res: any) {
   res.setHeader('Cache-Control', 'no-store');
   if (!SERVICE_ROLE) return res.status(500).json({ error: 'Falta SUPABASE_SERVICE_ROLE_KEY en Vercel.' });
-  const mode = String(req.query?.mode || '');
-  const cutoff = lastCutoff();
+  const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
+  if (!token || !(await isAdmin(token))) return res.status(403).json({ error: 'Solo para administradores.' });
 
-  if (mode === 'status' || mode === 'test') {
-    const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
-    if (!token || !(await isAdmin(token))) return res.status(403).json({ error: 'Solo para administradores.' });
+  if (req.method === 'GET') {
     try {
-      const next = new Date(cutoff);
-      next.setUTCDate(next.getUTCDate() + 1);
-      const [pending, emails] = await Promise.all([fetchMolds(cutoff), fetchSubscriberEmails()]);
-      if (mode === 'status') {
-        return res.status(200).json({
-          subscribers: emails.length,
-          pending: pending.map((m) => freeMoldName(m.title)),
-          nextSendUtc: new Date(next.getTime() + 3600_000).toISOString(),
-          resendConfigured: !!process.env.RESEND_API_KEY,
-          from: NEWSLETTER_FROM,
-        });
-      }
-      // Prueba: los moldes del proximo envio o, si no hay, los 3 ultimos publicados.
-      let molds = pending;
-      if (!molds.length) {
-        const r = await fetch(`${SUPABASE_URL}/rest/v1/free_molds?select=id,title,sizes,image_url,created_at&is_active=eq.true&order=created_at.desc&limit=3`, {
-          headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
-        });
-        molds = r.ok ? ((await r.json()) as MoldRow[]) : [];
-      }
-      const me = await adminEmail(token);
-      if (!me) return res.status(400).json({ error: 'No se pudo leer tu email de administrador.' });
-      if (!molds.length) return res.status(400).json({ error: 'No hay moldes gratis activos para armar el mail.' });
-      const result = await sendNewsletter(molds, [me]);
-      return res.status(result.error ? 502 : 200).json({ ...result, to: me });
+      const counts: Record<string, number> = {};
+      for (const a of AUDIENCES) counts[a] = (await fetchAudience(a)).length;
+      const r = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_sends?select=id,created_at,audience,mold_titles,recipients,sent,error,test&order=created_at.desc&limit=10`, { headers: H_SR() });
+      const lastSends = r.ok ? await r.json() : [];
+      return res.status(200).json({ counts, lastSends, resendConfigured: !!process.env.RESEND_API_KEY, from: NEWSLETTER_FROM });
     } catch (err) {
-      console.error('announce status/test', err);
+      console.error('send-free-molds status', err);
       return res.status(500).json({ error: 'Error interno' });
     }
   }
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
-  // Envio real: solo el cron de Vercel. Con CRON_SECRET configurado Vercel lo
-  // manda como Bearer; sin el, se acepta el user-agent del cron (es
-  // idempotente por ventana, asi que dispararlo de mas no duplica nada nuevo).
-  const cronSecret = process.env.CRON_SECRET;
-  const auth = String(req.headers.authorization || '');
-  const isCron = cronSecret ? auth === `Bearer ${cronSecret}` : /vercel-cron/i.test(String(req.headers['user-agent'] || ''));
-  if (!isCron) return res.status(403).json({ error: 'Solo el envio automatico diario.' });
   try {
-    const from = new Date(cutoff);
-    from.setUTCDate(from.getUTCDate() - 1);
-    const molds = await fetchMolds(from, cutoff);
-    if (!molds.length) return res.status(200).json({ sent: 0, molds: 0 });
-    const emails = await fetchSubscriberEmails();
-    if (!emails.length) return res.status(200).json({ sent: 0, molds: molds.length });
+    const body = readBody(req);
+    const moldIds: string[] = Array.isArray(body.moldIds)
+      ? body.moldIds.filter((x: unknown) => typeof x === 'string' && /^[0-9a-f-]{36}$/i.test(x)).slice(0, 12)
+      : [];
+    const audience: Audience = AUDIENCES.includes(body.audience) ? body.audience : 'subscribers';
+    const test = body.test === true;
+    if (!moldIds.length) return res.status(400).json({ error: 'Elegí al menos un molde.' });
+
+    const r = await fetch(
+      `${SUPABASE_URL}/rest/v1/free_molds?select=id,title,sizes,image_url,created_at&is_active=eq.true&id=in.(${moldIds.join(',')})&order=created_at.desc`,
+      { headers: H_SR() },
+    );
+    if (!r.ok) throw new Error(`free_molds ${r.status}`);
+    const molds = (await r.json()) as MoldRow[];
+    if (!molds.length) return res.status(400).json({ error: 'Esos moldes no existen o no están activos.' });
+
+    const me = await adminEmail(token);
+    let emails: string[];
+    if (test) {
+      if (!me) return res.status(400).json({ error: 'No se pudo leer tu email de administrador.' });
+      emails = [me];
+    } else {
+      emails = await fetchAudience(audience);
+      if (!emails.length) return res.status(400).json({ error: 'No hay destinatarios para ese público.' });
+    }
+
     const result = await sendNewsletter(molds, emails);
-    console.log('newsletter', { molds: molds.length, subscribers: emails.length, ...result });
-    return res.status(result.error ? 502 : 200).json({ molds: molds.length, ...result });
+    const row = {
+      audience: test ? 'test' : audience,
+      mold_ids: molds.map((m) => m.id),
+      mold_titles: molds.map((m) => freeMoldName(m.title)),
+      recipients: emails.length,
+      sent: result.sent,
+      error: result.error || null,
+      test,
+      sent_by: me,
+    };
+    await recordSend(row);
+    console.log('send-free-molds', row);
+    return res.status(result.error ? 502 : 200).json({ ...result, recipients: emails.length, to: test ? me : undefined });
   } catch (err) {
-    console.error('announce-free-molds', err);
+    console.error('send-free-molds', err);
     return res.status(500).json({ error: 'Error interno' });
   }
 }
@@ -756,6 +895,19 @@ async function handleUnsubscribe(req: any, res: any) {
     return res.status(400).send(unsubscribePage('Link inválido', '<p>Este link de baja no es válido. Si querés dejar de recibir avisos, respondé cualquiera de nuestros mails y te damos de baja.</p>'));
   }
   if (req.method === 'POST') {
+    // Queda anotado en newsletter_optout: aunque sea usuario registrado o
+    // comprador (publicos que no salen de newsletter_subscribers), no se le
+    // vuelve a mandar nada. Best-effort: si la migracion 048 no corrio, igual
+    // se lo saca de la lista de abajo.
+    try {
+      await fetch(`${SUPABASE_URL}/rest/v1/newsletter_optout`, {
+        method: 'POST',
+        headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}`, 'Content-Type': 'application/json', Prefer: 'resolution=ignore-duplicates,return=minimal' },
+        body: JSON.stringify({ email }),
+      });
+    } catch (e) {
+      console.warn('unsubscribe optout', e);
+    }
     const r = await fetch(`${SUPABASE_URL}/rest/v1/newsletter_subscribers?email=eq.${encodeURIComponent(email)}`, {
       method: 'DELETE',
       headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` },
@@ -789,11 +941,11 @@ export default async function handler(req: any, res: any) {
       return handleIndexNow(req, res);
     case 'upload-image':
       return handleUploadImage(req, res);
-    case 'announce-free-molds':
-      return handleAnnounceFreeMolds(req, res);
+    case 'send-free-molds':
+      return handleSendFreeMolds(req, res);
     case 'unsubscribe':
       return handleUnsubscribe(req, res);
     default:
-      res.status(400).json({ error: 'Accion desconocida. Usa ?action=geo|notify-order|notify-buyer-paid|indexnow-key|indexnow|upload-image|announce-free-molds|unsubscribe' });
+      res.status(400).json({ error: 'Accion desconocida. Usa ?action=geo|notify-order|notify-buyer-paid|indexnow-key|indexnow|upload-image|send-free-molds|unsubscribe' });
   }
 }

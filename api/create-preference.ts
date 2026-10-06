@@ -1,6 +1,8 @@
 // Serverless function: crea una preferencia de pago en Mercado Pago Checkout Pro.
 // El Access Token vive como variable de entorno secreta en Vercel, nunca en el cliente.
 
+import { pisoDelItem, PRODUCT_PRICE_COLUMNS } from './utils';
+
 const MP_ACCESS_TOKEN = process.env.MP_ACCESS_TOKEN || '';
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
@@ -26,43 +28,20 @@ const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
  *    email real del dueño del pedido (guest_email, o el email de la
  *    cuenta si el pedido es de un usuario logueado).
  */
-/** Precio real minimo de un producto entre todos sus formatos cargados (mismo criterio que api/mp-webhook.ts). */
-function precioMinimo(p: any): number {
-  const candidatos = [
-    p?.precio_carton, p?.precio_pdf_a4, p?.precio_pdf_ploter, p?.price,
-    p?.precio_dxf, p?.precio_pds, p?.precio_mrk, p?.precio_ads,
-  ]
-    .map(Number)
-    .filter((n) => Number.isFinite(n) && n > 0);
-  return candidatos.length ? Math.min(...candidatos) : 0;
-}
-
-/** Precio real del formato declarado (mismo criterio que api/mp-webhook.ts). */
-function precioReal(p: any, formato: string | null | undefined): number {
-  const f = (formato || '').toLowerCase();
-  if (f.includes('cartón') || f.includes('carton')) return Number(p?.precio_carton) || 0;
-  if (f.includes('plóter') || f.includes('ploter')) return Number(p?.precio_pdf_ploter) || 0;
-  if (f.includes('pdf-a4') || f.includes('pdf a4')) return Number(p?.precio_pdf_a4) || Number(p?.price) || 0;
-  if (f.includes('dxf') || f.includes('aama')) return Number(p?.precio_dxf) || 0;
-  if (f.includes('pds')) return Number(p?.precio_pds) || 0;
-  if (f.includes('mrk') || f.includes('tizado')) return Number(p?.precio_mrk) || 0;
-  if (f.includes('ads') || f.includes('audaces')) return Number(p?.precio_ads) || 0;
-  return precioMinimo(p);
-}
-
 async function pedidoReal(orderId: string): Promise<{
   ok: boolean;
   status: string | null;
   currency: string | null;
   ownerEmail: string | null;
   guestEmail: string | null;
+  formatoInvalido: string | null;
   items: { id: string; title: string; quantity: number; unit_price: number }[];
 }> {
-  const NO_ENCONTRADO = { ok: false, status: null, currency: null, ownerEmail: null, guestEmail: null, items: [] };
+  const NO_ENCONTRADO = { ok: false, status: null, currency: null, ownerEmail: null, guestEmail: null, formatoInvalido: null, items: [] };
+  const ITEMS = 'order_items(product_id,quantity,price,formato,sizes,product_name)';
   let r = await fetch(
     `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}` +
-      `&select=payment_status,order_status,guest_email,currency,cart_snapshot,` +
-      `buyer:profiles(email),order_items(product_id,quantity,price,formato,product_name)`,
+      `&select=payment_status,order_status,guest_email,currency,cart_snapshot,buyer:profiles(email),${ITEMS}`,
     { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
   );
   if (!r.ok) {
@@ -70,8 +49,7 @@ async function pedidoReal(orderId: string): Promise<{
     // corrio, reintenta sin esa columna (ver mismo patron en mp-webhook.ts).
     r = await fetch(
       `${SUPABASE_URL}/rest/v1/orders?id=eq.${encodeURIComponent(orderId)}` +
-        `&select=payment_status,order_status,guest_email,cart_snapshot,` +
-        `buyer:profiles(email),order_items(product_id,quantity,price,formato,product_name)`,
+        `&select=payment_status,order_status,guest_email,cart_snapshot,buyer:profiles(email),${ITEMS}`,
       { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
     );
   }
@@ -83,41 +61,44 @@ async function pedidoReal(orderId: string): Promise<{
   const usandoRespaldo = !order.order_items?.length;
   const raw: any[] = usandoRespaldo ? (order.cart_snapshot || []) : order.order_items;
 
-  // El respaldo cart_snapshot lo escribe el NAVEGADOR (ver CheckoutPage.tsx):
-  // antes se usaba tal cual it.price para armar el link de pago, así que
-  // alguien podía mandar un pedido con order_items vacío (el insert normal
-  // puede fallar y el checkout no lo bloquea) y un cart_snapshot con
-  // cualquier precio. Ahora, cuando se cae a este respaldo, el precio se
-  // recalcula siempre desde el catálogo real (mismo criterio que el webhook),
-  // nunca desde lo que mandó el cliente.
+  // Tanto order_items.price como cart_snapshot los escribe el NAVEGADOR (ver
+  // CheckoutPage.tsx). order_items.price pasa el trigger de piso de la base
+  // (migración 042), pero ese piso es el 15 % del precio real: antes el link
+  // de pago se armaba con ese valor tal cual, así que se podía pagar por MP
+  // el 15 % del molde. Ahora el precio que se cobra es SIEMPRE el mayor entre
+  // lo que dice el pedido y el precio real de catálogo del formato declarado
+  // (ajustado por talles, misma función que valida el webhook). Si el
+  // formato declarado no se vende en ese producto, no se arma link de pago.
   const preciosReales = new Map<string, any>();
-  if (usandoRespaldo && raw.length) {
-    const ids = Array.from(new Set(raw.map((it: any) => it.product_id).filter(Boolean)));
-    if (ids.length) {
-      const pRes = await fetch(
-        `${SUPABASE_URL}/rest/v1/products?id=in.(${ids.join(',')})` +
-          `&select=id,price,precio_carton,precio_pdf_a4,precio_pdf_ploter,precio_dxf,precio_pds,precio_mrk,precio_ads`,
-        { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
-      );
-      if (pRes.ok) {
-        for (const p of (await pRes.json()) as any[]) preciosReales.set(p.id, p);
-      }
+  const ids = Array.from(new Set(raw.map((it: any) => it.product_id).filter(Boolean)));
+  if (ids.length) {
+    const pRes = await fetch(
+      `${SUPABASE_URL}/rest/v1/products?id=in.(${ids.map(encodeURIComponent).join(',')})&select=${PRODUCT_PRICE_COLUMNS}`,
+      { headers: { apikey: SERVICE_ROLE, Authorization: `Bearer ${SERVICE_ROLE}` } },
+    );
+    if (pRes.ok) {
+      for (const p of (await pRes.json()) as any[]) preciosReales.set(p.id, p);
     }
   }
 
+  let formatoInvalido: string | null = null;
   const items = raw
     .map((it: any) => {
-      const unitPrice = usandoRespaldo
-        ? precioReal(preciosReales.get(it.product_id), it.formato)
-        : Number(it.price) || 0;
+      const product = preciosReales.get(it.product_id);
+      const piso = pisoDelItem(product, it.formato, it.sizes);
+      if (piso === null) {
+        formatoInvalido = String(it.formato ?? '(sin formato)');
+        return null;
+      }
+      const declarado = usandoRespaldo ? 0 : Number(it.price) || 0;
       return {
         id: String(it.product_id ?? ''),
-        title: String(it.product_name || 'Molde'),
+        title: String(product?.name || it.product_name || 'Molde'),
         quantity: Number(it.quantity) || 1,
-        unit_price: unitPrice,
+        unit_price: Math.max(declarado, piso),
       };
     })
-    .filter((it) => it.id && it.unit_price > 0);
+    .filter((it): it is NonNullable<typeof it> => !!it && !!it.id && it.unit_price > 0);
 
   const ownerEmail: string | null = order.guest_email || order.buyer?.email || null;
 
@@ -127,6 +108,7 @@ async function pedidoReal(orderId: string): Promise<{
     currency: order.currency ?? null,
     ownerEmail,
     guestEmail: order.guest_email || null,
+    formatoInvalido,
     items,
   };
 }
@@ -169,6 +151,10 @@ export default async function handler(req: any, res: any) {
     }
     if (pedido.status !== 'pendiente') {
       res.status(409).json({ error: 'Este pedido ya no está pendiente de pago.' });
+      return;
+    }
+    if (pedido.formatoInvalido !== null) {
+      res.status(400).json({ error: 'Uno de los formatos del pedido no está disponible para ese molde. Volvé a armar el carrito o escribinos por WhatsApp.' });
       return;
     }
     if (!pedido.ok) {

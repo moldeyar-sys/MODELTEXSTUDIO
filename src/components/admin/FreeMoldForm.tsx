@@ -289,6 +289,9 @@ export function FreeMoldForm({
           <p className="text-xs text-gray-500 mb-3">
             Subí cada tipo de archivo en su sección. Marcá <b>"Sin cuenta"</b> en los que se pueden bajar sin crear cuenta (ej: un talle de muestra); el resto pide cuenta gratis.
           </p>
+          <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 mb-3">
+            <b>Todo lo que subas acá es público</b> (cualquiera con el link lo puede bajar, con o sin cuenta: el candado es solo visual). Los moldes que se cobran van en la ficha del producto, en "Archivos descargables".
+          </p>
           <div className="space-y-3">
             {UPLOAD_GROUPS.map(group => {
               const groupFilesList = files.filter(f => group.formats.includes((f.format || 'otro') as FreeFileFormat));

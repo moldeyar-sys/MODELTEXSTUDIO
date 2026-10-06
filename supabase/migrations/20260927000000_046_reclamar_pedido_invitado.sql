@@ -27,10 +27,23 @@ SECURITY DEFINER
 SET search_path = public
 AS $$
 DECLARE
-  v_email text := lower(coalesce(auth.jwt()->>'email', ''));
+  v_email text;
+  v_confirmed timestamptz;
   v_updated integer := 0;
 BEGIN
-  IF auth.uid() IS NULL OR v_email = '' THEN
+  IF auth.uid() IS NULL THEN
+    RETURN false;
+  END IF;
+
+  -- Auditoría 2026-10-05: el email se lee de auth.users y se exige que esté
+  -- confirmado. Con el registro autoconfirmado de hoy esto no cambia nada,
+  -- pero el día que se active la confirmación por mail, nadie puede
+  -- registrarse con el email de otro (sin tener acceso a esa casilla) y
+  -- quedarse con su pedido. La ventana de 7 días acota el reclamo a la
+  -- compra recién hecha, que es el único caso de uso.
+  SELECT lower(email), email_confirmed_at INTO v_email, v_confirmed
+    FROM auth.users WHERE id = auth.uid();
+  IF v_email IS NULL OR v_email = '' OR v_confirmed IS NULL THEN
     RETURN false;
   END IF;
 
@@ -38,7 +51,8 @@ BEGIN
      SET user_id = auth.uid()
    WHERE id = p_order_id
      AND user_id IS NULL
-     AND lower(coalesce(guest_email, '')) = v_email;
+     AND lower(coalesce(guest_email, '')) = v_email
+     AND created_at > now() - interval '7 days';
 
   GET DIAGNOSTICS v_updated = ROW_COUNT;
   RETURN v_updated > 0;

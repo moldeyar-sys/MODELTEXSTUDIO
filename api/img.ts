@@ -10,6 +10,9 @@
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
 
 const ALLOWED_BUCKETS = new Set(['product-images', 'free-files']);
+// Las fotos del catálogo se comprimen a WebP <= 1600 px antes de subir
+// (src/lib/storage.ts, compressImage); 8 MB es techo de sobra para una imagen.
+const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 
 export default async function handler(req: any, res: any) {
   if (req.method !== 'GET' && req.method !== 'HEAD') {
@@ -35,21 +38,32 @@ export default async function handler(req: any, res: any) {
         .join('/')}`,
     );
     if (!origin.ok) {
+      // Cacheable: sin esto, cada pedido de una ruta inexistente volvía a
+      // pegarle a Supabase (y descontaba transferencia).
+      res.setHeader('Cache-Control', 'public, max-age=300, s-maxage=3600');
       res.status(origin.status === 404 ? 404 : 502).json({ error: 'No encontrada' });
       return;
     }
 
-    const buf = Buffer.from(await origin.arrayBuffer());
     const originType = origin.headers.get('content-type') || 'application/octet-stream';
     // Este proxy solo debería servir imágenes (buckets product-images y
     // free-files). Si por algún medio quedó un archivo que no es imagen ahí
     // (ver el endpoint de subida, que ahora valida esto en el origen), no lo
     // serví igual desde el dominio del sitio: mejor un 415 que abrir la
     // puerta a que un archivo así se ejecute como si fuera parte del sitio.
-    if (!originType.toLowerCase().startsWith('image/')) {
+    // Se decide por las CABECERAS, antes de bajar el cuerpo: free-files tiene
+    // PDF/ZIP de hasta 200 MB y antes se descargaban enteros desde Supabase
+    // solo para responder 415 (sin cache), o sea, un bucle de pedidos a
+    // /img/free-files/<zip> podía agotar la transferencia mensual.
+    const contentLength = Number(origin.headers.get('content-length') || 0);
+    if (!originType.toLowerCase().startsWith('image/') || contentLength > MAX_IMAGE_BYTES) {
+      try { await origin.body?.cancel(); } catch { /* ignorar */ }
+      res.setHeader('Cache-Control', 'public, max-age=3600, s-maxage=86400');
       res.status(415).json({ error: 'El archivo solicitado no es una imagen' });
       return;
     }
+
+    const buf = Buffer.from(await origin.arrayBuffer());
     res.setHeader('Content-Type', originType);
     res.setHeader('X-Content-Type-Options', 'nosniff');
     // s-maxage: cache del CDN de Vercel (la clave de todo el ahorro).

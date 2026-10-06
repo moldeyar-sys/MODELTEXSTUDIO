@@ -5,6 +5,8 @@
 // acceso a orders/order_items/product_files a nadie sin sesion: la unica
 // puerta es esta funcion, y solo entrega datos si pedido + email calzan.
 
+import { formatoAFileType, pisoDelItem, PRODUCT_PRICE_COLUMNS } from './utils';
+
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || 'https://jotibqgyrcgwctiolhcw.supabase.co';
 const SERVICE_ROLE = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 const FILES_BUCKET = 'product-files';
@@ -15,20 +17,10 @@ function signPath(path: string): string {
   return path.split('/').map(encodeURIComponent).join('/');
 }
 
-// Mismo mapeo que la migración 037 (formato_a_file_type) y que api/mp-webhook.ts
-// (precioReal): texto libre que el comprador eligió -> file_type real del archivo.
-// Este endpoint usa la service role (ignora RLS), así que el filtro por formato
-// tiene que aplicarse acá también — la policy de product_files sola no alcanza.
-function formatoAFileType(formato: string | null | undefined): string {
-  const f = (formato || '').toLowerCase();
-  if (f.includes('cart')) return 'carton';
-  if (f.includes('pl')) return 'pdf_plotter';
-  if (f.includes('dxf') || f.includes('aama')) return 'dxf';
-  if (f.includes('pds') || f.includes('optitex')) return 'pds';
-  if (f.includes('mrk') || f.includes('tizado')) return 'mrk';
-  if (f.includes('ads') || f.includes('audaces')) return 'ads';
-  return 'pdf_a4';
-}
+// El mapeo formato -> file_type (formatoAFileType, en api/utils.ts) es el
+// mismo que usa la migración 037 y el webhook. Este endpoint usa la service
+// role (ignora RLS), así que el filtro por formato tiene que aplicarse acá
+// también — la policy de product_files sola no alcanza.
 
 /**
  * Filtra los archivos de un producto según lo que efectivamente compró el
@@ -38,7 +30,7 @@ function formatoAFileType(formato: string | null | undefined): string {
  * el formato pagado.
  */
 function filesPermitidosPorFormato(
-  fileRows: { id: string; product_id: string; file_type?: string | null }[],
+  fileRows: { id: string; product_id: string; file_name: string; file_url: string; file_type?: string | null }[],
   formatoPorProducto: Map<string, string[]>,
 ): typeof fileRows {
   const byProduct = new Map<string, typeof fileRows>();
@@ -150,17 +142,51 @@ export default async function handler(req: any, res: any) {
     // reconstruye desde el respaldo guardado junto con el pedido (cart_snapshot) —
     // mismo patrón ya usado en el panel admin — para no dejar a un cliente que
     // sí pagó sin forma de bajar lo que compró.
-    const items: any[] =
-      order.order_items?.length
-        ? order.order_items
-        : (order.cart_snapshot || []).map((c: any) => ({
-            quantity: c.quantity,
-            price: c.price,
-            formato: c.formato,
-            sizes: c.sizes,
-            product_name: c.product_name,
-            product: { id: c.product_id, name: c.product_name },
-          }));
+    const usandoRespaldo = !order.order_items?.length;
+    const items: any[] = !usandoRespaldo
+      ? order.order_items
+      : (Array.isArray(order.cart_snapshot) ? order.cart_snapshot : []).map((c: any) => ({
+          quantity: c.quantity,
+          price: c.price,
+          formato: c.formato,
+          sizes: c.sizes,
+          product_name: c.product_name,
+          product: { id: c.product_id, name: c.product_name },
+        }));
+
+    // El cart_snapshot lo escribe el NAVEGADOR y no pasa por el trigger de
+    // piso de precio de order_items (migración 042): un pedido de invitado
+    // con order_items vacío a propósito y un snapshot con 30 moldes caros a
+    // $1 cada uno, aprobado a mano por transferencia, entregaba los 30. Antes
+    // de entregar nada desde el respaldo se verifica contra el catálogo real:
+    // cada item con precio >= precio real del formato (ajustado por talles) y
+    // la suma de los items <= total del pedido. Si no cierra, el pedido queda
+    // "en revisión" y no se firma ningún archivo.
+    if (usandoRespaldo && items.length) {
+      const ids = Array.from(new Set(items.map((it) => it.product?.id).filter(Boolean)));
+      const pRes = await fetch(
+        `${SUPABASE_URL}/rest/v1/products?id=in.(${ids.map(encodeURIComponent).join(',')})&select=${PRODUCT_PRICE_COLUMNS}`,
+        { headers: H2 },
+      );
+      const productos = new Map<string, any>();
+      if (pRes.ok) for (const p of (await pRes.json()) as any[]) productos.set(p.id, p);
+      let suma = 0;
+      let coherente = items.length <= 50;
+      const moneda: 'ARS' | 'USD' = order.currency === 'USD' ? 'USD' : 'ARS';
+      for (const it of items) {
+        const qty = Math.max(1, Number(it.quantity) || 1);
+        const piso = pisoDelItem(productos.get(it.product?.id), it.formato, it.sizes, moneda);
+        const price = Number(it.price);
+        if (piso === null || !Number.isFinite(price) || price < piso) { coherente = false; break; }
+        suma += price * qty;
+      }
+      if (coherente && suma > Number(order.total) * 1.01 + 1) coherente = false;
+      if (!coherente) {
+        console.warn(`guest-order: pedido ${order.id} pagado pero su cart_snapshot no cierra contra el catálogo; requiere revisión manual`);
+        res.status(200).json({ order: summary, files: [], pending: true, review: true });
+        return;
+      }
+    }
     const productIds = Array.from(new Set(items.map((it) => it.product?.id).filter(Boolean)));
     const productNames = new Map(items.map((it) => [it.product?.id, it.product?.name || it.product_name || 'Producto']));
     const formatoPorProducto = new Map<string, string[]>();

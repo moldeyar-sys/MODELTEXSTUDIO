@@ -12,6 +12,7 @@ import type { Product, ProductFile, FileType, Order, Profile, CustomRequest, Cus
 import { FILE_TYPE_LABELS } from '../lib/types';
 import { CATEGORIES, PAYMENT_METHODS, SIZE_GROUPS, FABRICS, SEASONS } from '../lib/types';
 import { uploadProductImage, uploadProductFile, removeProductFile, inferFileType } from '../lib/storage';
+import { NewsletterSendPanel } from '../components/admin/NewsletterSendPanel';
 import { fetchAllFreeMolds, fetchFreeMoldDownloadStats } from '../lib/freeMolds';
 import type { FreeMoldDownloadStats } from '../lib/freeMolds';
 import { fetchContactMessages } from '../lib/contact';
@@ -22,7 +23,6 @@ import type { ChatSession } from '../lib/chatHistory';
 import { FreeMoldForm } from '../components/admin/FreeMoldForm';
 import { LabAdminPanel } from '../components/admin/lab/LabAdminPanel';
 import { AllContactsPanel } from '../components/admin/AllContactsPanel';
-import { NewsletterAutoPanel } from '../components/admin/NewsletterAutoPanel';
 import { fetchPaymentSettings, savePaymentSettings, PAYMENT_SETTINGS_DEFAULTS } from '../lib/paymentSettings';
 import type { PaymentSettings } from '../lib/paymentSettings';
 import { fetchAISettings, saveAISettings } from '../lib/aiSettings';
@@ -1159,11 +1159,11 @@ export default function AdminPage() {
         {/* Novedades (lista de emails de "Moldes Gratis") */}
         {activeTab === 'newsletter' && (
           <div className="space-y-4">
-            <NewsletterAutoPanel />
+            <NewsletterSendPanel />
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div>
                 <h2 className="font-semibold text-gray-900 text-lg">Lista de novedades</h2>
-                <p className="text-sm text-gray-500">Emails que pidieron que les avises de moldes gratis nuevos: desde el botón "Avisame" de Moldes Gratis o tildando la casilla al crear su cuenta.</p>
+                <p className="text-sm text-gray-500">Emails que pidieron que les avises de moldes gratis nuevos: desde el botón "Avisame" de Moldes Gratis o tildando la casilla al crear su cuenta. No se manda nada solo: el aviso sale únicamente cuando vos lo enviás desde el bloque de arriba.</p>
               </div>
               {subscribers.length > 0 && (
                 <button onClick={copyAllEmails} className="inline-flex items-center gap-2 text-sm font-medium px-3.5 py-2 bg-primary-50 text-primary-700 rounded-lg hover:bg-primary-100 flex-shrink-0">
@@ -2523,6 +2523,8 @@ function ProductForm({
           <div className="space-y-3">
             <p className="text-xs text-gray-500">
               Se guardan en un bucket privado. Los clientes solo accederán con un enlace temporal tras pagar.
+              Todo <b>.pdf</b> entra como <b>PDF A4</b>: si es el PDF de <b>plóter</b> (o cartón), cambiá el formato en el selector de al lado apenas lo subas.
+              El comprador solo puede bajar los archivos del formato que pagó.
             </p>
             {files.length > 0 && new Set(files.map(f => f.file_type)).size > 1 && (
               <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">

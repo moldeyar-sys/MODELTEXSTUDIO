@@ -7,6 +7,17 @@
   el formulario de "Diseno a pedido" habilitado para visitantes anonimos).
   Equivale a correr las migraciones 001 + 002 + 003 juntas, en su estado final.
   Es idempotente: se puede volver a ejecutar sin romper nada.
+
+  !!! SOLO PARA UNA CUENTA NUEVA Y VACÍA !!!
+  NO ejecutar sobre la base de producción ya migrada: este script recrea
+  policies con DROP/CREATE y, si se corre sobre una base que ya tiene las
+  migraciones 004 en adelante, PISA fixes de seguridad posteriores (storage,
+  formatos, triggers de precio, etc.). Después de correrlo en una cuenta
+  nueva hay que aplicar TODAS las migraciones de supabase/migrations/ en
+  orden, igual que en producción.
+  Auditoría 2026-10-05: las policies de abajo que tenían versión vieja
+  (pedidos, ítems, archivos, descargas, solicitudes) se actualizaron a la
+  definición final para que volver a ejecutarlo no reabra agujeros.
 */
 
 -- ==================== PROFILES ====================
@@ -125,7 +136,11 @@ CREATE POLICY "Users can read own orders"
 DROP POLICY IF EXISTS "Users can insert own orders" ON orders;
 CREATE POLICY "Users can insert own orders"
   ON orders FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (
+    user_id = auth.uid()
+    AND payment_status = 'pendiente'
+    AND order_status = 'pendiente'
+  );
 
 DROP POLICY IF EXISTS "Admins can read all orders" ON orders;
 CREATE POLICY "Admins can read all orders"
@@ -159,7 +174,13 @@ DROP POLICY IF EXISTS "Users can insert own order items" ON order_items;
 CREATE POLICY "Users can insert own order items"
   ON order_items FOR INSERT TO authenticated
   WITH CHECK (
-    EXISTS (SELECT 1 FROM orders WHERE id = order_items.order_id AND user_id = auth.uid())
+    EXISTS (
+      SELECT 1 FROM orders
+      WHERE id = order_items.order_id
+        AND user_id = auth.uid()
+        AND payment_status = 'pendiente'
+        AND order_status = 'pendiente'
+    )
   );
 
 DROP POLICY IF EXISTS "Admins can read all order items" ON order_items;
@@ -178,6 +199,10 @@ CREATE TABLE IF NOT EXISTS product_files (
 );
 ALTER TABLE product_files ENABLE ROW LEVEL SECURITY;
 
+-- NOTA: la versión definitiva de esta policy (filtro por formato comprado)
+-- está en la migración 037 y requiere la función formato_a_file_type: hay
+-- que aplicar 037 después de este script. Esta versión básica solo exige
+-- pedido propio y pagado.
 DROP POLICY IF EXISTS "Users can read files of purchased products" ON product_files;
 CREATE POLICY "Users can read files of purchased products"
   ON product_files FOR SELECT TO authenticated
@@ -229,10 +254,9 @@ CREATE POLICY "Users can read own downloads"
   ON downloads FOR SELECT TO authenticated
   USING (user_id = auth.uid());
 
+-- Sin policy de INSERT en downloads: tabla legada, ningún código escribe en
+-- ella (migración 047).
 DROP POLICY IF EXISTS "Users can insert own downloads" ON downloads;
-CREATE POLICY "Users can insert own downloads"
-  ON downloads FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid());
 
 DROP POLICY IF EXISTS "Admins can read all downloads" ON downloads;
 CREATE POLICY "Admins can read all downloads"
@@ -259,12 +283,12 @@ ALTER TABLE custom_requests ENABLE ROW LEVEL SECURITY;
 DROP POLICY IF EXISTS "Guests can insert custom requests" ON custom_requests;
 CREATE POLICY "Guests can insert custom requests"
   ON custom_requests FOR INSERT TO anon
-  WITH CHECK (user_id IS NULL);
+  WITH CHECK (user_id IS NULL AND status = 'pendiente');
 
 DROP POLICY IF EXISTS "Users can insert own custom requests" ON custom_requests;
 CREATE POLICY "Users can insert own custom requests"
   ON custom_requests FOR INSERT TO authenticated
-  WITH CHECK (user_id = auth.uid());
+  WITH CHECK (user_id = auth.uid() AND status = 'pendiente');
 
 DROP POLICY IF EXISTS "Users can read own custom requests" ON custom_requests;
 CREATE POLICY "Users can read own custom requests"
