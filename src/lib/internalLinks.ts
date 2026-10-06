@@ -106,6 +106,11 @@ const CONTACTO: RelatedLink = {
   label: 'Contacto',
   hint: 'WhatsApp, Telegram y email, las 24 horas.',
 };
+const DEVOLUCIONES: RelatedLink = {
+  to: '/devoluciones',
+  label: 'Política de devoluciones',
+  hint: 'Garantía de archivos, arrepentimiento en moldes en cartón, plazos de reintegro.',
+};
 
 /** Categorías del catálogo: el escalón que baja de una página temática al producto. */
 export const CATEGORIA_LINKS: RelatedLink[] = [
@@ -202,12 +207,12 @@ export const RELATED: Record<string, RelatedBlock> = {
   },
   '/preguntas-frecuentes': {
     title: 'Dónde seguir',
-    links: [CATALOGO, MOLDERIA_DIGITAL, PDF, A4, PLOTTER, GRATIS, A_MEDIDA, COMO_FUNCIONA, IMPRESION, CONTACTO],
+    links: [CATALOGO, MOLDERIA_DIGITAL, PDF, A4, PLOTTER, GRATIS, A_MEDIDA, COMO_FUNCIONA, IMPRESION, DEVOLUCIONES, CONTACTO],
     categorias: true,
   },
   '/como-funciona': {
     title: 'Seguir por acá',
-    links: [CATALOGO, GRATIS, PDF, A4, PLOTTER, MOLDERIA_DIGITAL, FAQ, CONTACTO],
+    links: [CATALOGO, GRATIS, PDF, A4, PLOTTER, MOLDERIA_DIGITAL, FAQ, DEVOLUCIONES, CONTACTO],
     categorias: true,
   },
   '/ayuda-impresion': {
@@ -249,11 +254,15 @@ export const RELATED: Record<string, RelatedBlock> = {
   },
   '/politica-descargas': {
     title: 'Seguir por acá',
+    links: [DEVOLUCIONES, FAQ, COMO_FUNCIONA, CATALOGO, GRATIS, CONTACTO],
+  },
+  '/devoluciones': {
+    title: 'Seguir por acá',
     links: [FAQ, COMO_FUNCIONA, CATALOGO, GRATIS, CONTACTO],
   },
   '/terminos': {
     title: 'Seguir por acá',
-    links: [FAQ, COMO_FUNCIONA, CATALOGO, CONTACTO],
+    links: [FAQ, DEVOLUCIONES, COMO_FUNCIONA, CATALOGO, CONTACTO],
   },
   '/privacidad': {
     title: 'Seguir por acá',

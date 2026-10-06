@@ -187,6 +187,29 @@ export const LANDING_FAQS: Record<string, Faq[]> = {
     },
   ],
 
+  '/devoluciones': [
+    {
+      q: '¿Puedo devolver un molde digital después de descargarlo?',
+      a: 'No por arrepentimiento: los moldes digitales son archivos de entrega inmediata y el Código Civil y Comercial (artículo 1116) excluye del derecho de revocación el contenido digital que se descarga al instante. Sí tienen garantía: si el archivo no abre, está dañado o no es el molde, formato o talles que compraste, Modeltex lo corrige o reenvía dentro de las 48 horas hábiles y, si no puede resolverlo en 5 días hábiles, devuelve el 100 % del importe.',
+    },
+    {
+      q: '¿Puedo devolver un molde en cartón?',
+      a: 'Sí. Es un producto físico (solo Argentina) y tenés 10 días corridos desde que lo recibís para arrepentirte sin dar motivos, siempre que vuelva completo y sin uso. El envío de devolución corre por cuenta de Modeltex y el reintegro se hace dentro de los 10 días hábiles de recibido el molde, por el mismo medio con el que pagaste.',
+    },
+    {
+      q: '¿Puedo cancelar un pedido que todavía no se habilitó?',
+      a: 'Sí. Un pedido pendiente de pago se cancela sin costo. Si ya pagaste pero la descarga todavía no fue habilitada, podés cancelar y se reintegra el total por el mismo medio de pago.',
+    },
+    {
+      q: '¿Cómo y cuándo me devuelven el dinero?',
+      a: 'Siempre por el mismo medio de pago y a nombre de quien compró: Mercado Pago se reintegra a la cuenta o tarjeta de origen y se ve en 3 a 10 días hábiles según el banco; transferencia, PayPal, Payoneer, Wise y cripto se devuelven a la misma cuenta o billetera dentro de los 5 días hábiles de aprobado el reembolso. Nunca en efectivo ni a terceros.',
+    },
+    {
+      q: '¿Qué es el botón de arrepentimiento?',
+      a: 'Es el mecanismo que exige la Resolución 424/2020 para que cualquier compra online se pueda revocar dentro de los 10 días corridos, cuando corresponde. En Modeltex está en el pie de todas las páginas y lleva al formulario de la política de devoluciones; se responde dentro de las 24 horas hábiles con la constancia del trámite.',
+    },
+  ],
+
   '/ayuda-impresion': [
     {
       q: '¿Cómo se imprimen los moldes PDF sin perder la escala?',

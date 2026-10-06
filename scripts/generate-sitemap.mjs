@@ -20,6 +20,7 @@ const staticRoutes = [
   { path: '/como-funciona', changefreq: 'monthly', priority: '0.75' },
   { path: '/ayuda-impresion', changefreq: 'monthly', priority: '0.75' },
   { path: '/politica-descargas', changefreq: 'monthly', priority: '0.65' },
+  { path: '/devoluciones', changefreq: 'yearly', priority: '0.55' },
   { path: '/contacto', changefreq: 'monthly', priority: '0.60' },
   { path: '/ia-textil', changefreq: 'monthly', priority: '0.55' },
   { path: '/privacidad', changefreq: 'yearly', priority: '0.45' },

@@ -224,6 +224,7 @@ export default function ProductDetailPage() {
         hasMerchantReturnPolicy: {
           '@type': 'MerchantReturnPolicy',
           returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+          merchantReturnLink: 'https://modeltex.com.ar/devoluciones',
         },
       };
     }
@@ -312,9 +313,9 @@ export default function ProductDetailPage() {
     { label: t('pd.formats', 'Formatos'), value: availableFormats.length > 0 ? `${availableFormats.length} ${t('pd.available', 'disponibles')}` : t('common.consult', 'A consultar'), icon: FileText },
   ];
 
-  const trustItems = [
+  const trustItems: Array<{ icon: typeof Download; title: string; text: string; to?: string }> = [
     { icon: Download, title: deliveryLabel, text: deliveryDescription },
-    { icon: ShieldCheck, title: t('pd.secure', 'Compra segura'), text: t('pd.secureDesc', 'Pago protegido y acceso desde tu cuenta.') },
+    { icon: ShieldCheck, title: t('pd.secure', 'Compra segura'), text: t('pd.secureDesc', 'Pago protegido, acceso desde tu cuenta y garantía de archivos.'), to: '/devoluciones' },
     { icon: Headphones, title: t('pd.support', 'Soporte post-compra'), text: t('pd.supportDesc', 'Te ayudamos con impresión, talles y uso del archivo.') },
   ];
 
@@ -422,11 +423,21 @@ export default function ProductDetailPage() {
             <div className="grid sm:grid-cols-3 gap-3">
               {trustItems.map(item => {
                 const Icon = item.icon;
-                return (
-                  <div key={item.title} className="bg-white border border-gray-100 rounded-xl p-3.5 sm:p-4 shadow-sm">
+                const inner = (
+                  <>
                     <Icon className="w-5 h-5 text-petroleum-600 mb-2" />
                     <p className="text-sm font-bold text-primary-900">{item.title}</p>
                     <p className="text-xs text-gray-500 mt-1 leading-relaxed">{item.text}</p>
+                  </>
+                );
+                const cardClass = 'bg-white border border-gray-100 rounded-xl p-3.5 sm:p-4 shadow-sm';
+                return item.to ? (
+                  <Link key={item.title} to={item.to} className={`${cardClass} block hover:border-primary-200 transition-colors`}>
+                    {inner}
+                  </Link>
+                ) : (
+                  <div key={item.title} className={cardClass}>
+                    {inner}
                   </div>
                 );
               })}

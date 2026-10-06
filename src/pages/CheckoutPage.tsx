@@ -704,7 +704,11 @@ export default function CheckoutPage() {
               />
 
               <p className="text-xs text-gray-400 text-center mt-3">
-                {t('co.terms', 'Al confirmar, aceptás los términos de compra de Modeltex')}
+                {t('co.termsPre', 'Al confirmar, aceptás los')}{' '}
+                <Link to="/terminos" className="underline hover:text-gray-600">{t('co.termsLink', 'términos de compra')}</Link>{' '}
+                {t('co.termsAnd', 'y la')}{' '}
+                <Link to="/devoluciones" className="underline hover:text-gray-600">{t('co.returnsLink', 'política de devoluciones')}</Link>{' '}
+                {t('co.termsPost', 'de Modeltex')}
               </p>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { lazy, Suspense, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, useLocation, useNavigationType } from 'react-router-dom';
 import { LocaleProvider } from './lib/locale';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
@@ -22,6 +22,40 @@ function PageViewTracker() {
   useEffect(() => {
     trackPageView(location.pathname);
   }, [location.pathname]);
+  return null;
+}
+
+/**
+ * Scroll al cambiar de página. Sin esto, al tocar un enlace del pie de
+ * página (por ejemplo "Botón de arrepentimiento" o "Términos") la página
+ * nueva aparecía desplazada hasta abajo, donde estaba el pie de la anterior:
+ * el navegador conserva el scroll en la navegación de una SPA. Con #ancla se
+ * espera al elemento (las páginas se cargan en diferido) y se lleva hasta él.
+ * Atrás/adelante (POP) se deja al navegador, que restaura solo la posición.
+ */
+function ScrollManager() {
+  const { pathname, hash } = useLocation();
+  const navType = useNavigationType();
+  useEffect(() => {
+    if (navType === 'POP') return;
+    if (!hash) {
+      window.scrollTo({ top: 0 });
+      return;
+    }
+    const id = decodeURIComponent(hash.slice(1));
+    let intentos = 0;
+    let timer = 0;
+    const buscar = () => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+      if (intentos++ < 40) timer = window.setTimeout(buscar, 50);
+    };
+    buscar();
+    return () => window.clearTimeout(timer);
+  }, [pathname, hash, navType]);
   return null;
 }
 
@@ -74,6 +108,7 @@ function AppLayout() {
   return (
     <div className="flex flex-col min-h-screen">
       <PageViewTracker />
+      <ScrollManager />
       <Navbar />
       <main className="flex-1">
         <Suspense fallback={<PageLoader />}>
@@ -116,6 +151,7 @@ function AppLayout() {
             <Route path="/como-funciona" element={<TrustPage variant="como-funciona" />} />
             <Route path="/ayuda-impresion" element={<TrustPage variant="ayuda-impresion" />} />
             <Route path="/politica-descargas" element={<TrustPage variant="politica-descargas" />} />
+            <Route path="/devoluciones" element={<TrustPage variant="devoluciones" />} />
             <Route path="/terminos" element={<TrustPage variant="terminos" />} />
             <Route path="/privacidad" element={<TrustPage variant="privacidad" />} />
             <Route path="/legal/respaldo-drive-denis" element={<RespaldoDrivePage />} />

@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { Mail, MapPin } from 'lucide-react';
+import { Mail, MapPin, Undo2 } from 'lucide-react';
 import { CATEGORIES } from '../../lib/types';
 import { useLocale } from '../../lib/locale';
 import { BrandLogo } from '../brand/BrandLogo';
@@ -66,7 +66,8 @@ export function Footer() {
               <li><Link to="/guias" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.guides', 'Guías para producción')}</Link></li>
               <li><Link to="/lab" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.lab', 'Curso gratis de moldería')}</Link></li>
               <li><Link to="/ayuda-impresion" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.printHelp', 'Ayuda para imprimir')}</Link></li>
-              <li><Link to="/politica-descargas" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.downloads', 'Descargas y reembolsos')}</Link></li>
+              <li><Link to="/politica-descargas" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.downloads', 'Política de descargas')}</Link></li>
+              <li><Link to="/devoluciones" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.returns', 'Devoluciones y reembolsos')}</Link></li>
               <li><Link to="/terminos" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.terms', 'Términos')}</Link></li>
               <li><Link to="/privacidad" className="text-primary-200 text-sm hover:text-white transition-colors">{t('footer.privacy', 'Privacidad')}</Link></li>
             </ul>
@@ -85,10 +86,19 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-primary-700/50 mt-12 pt-8 text-center">
+        <div className="border-t border-primary-700/50 mt-12 pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-center sm:text-left">
           <p className="text-primary-300 text-sm">
             &copy; {new Date().getFullYear()} Modeltex. {t('footer.rights', 'Todos los derechos reservados.')}
           </p>
+          {/* Resolución 424/2020: toda tienda online argentina debe mostrar un
+              "Botón de arrepentimiento" visible desde la portada. Lleva al
+              formulario de /devoluciones. */}
+          <Link
+            to="/devoluciones#arrepentimiento"
+            className="inline-flex items-center gap-2 rounded-lg border border-primary-500/60 px-3 py-1.5 text-xs font-semibold text-primary-100 hover:bg-primary-800 hover:text-white transition-colors"
+          >
+            <Undo2 className="w-3.5 h-3.5" /> {t('footer.regret', 'Botón de arrepentimiento')}
+          </Link>
         </div>
       </div>
     </footer>

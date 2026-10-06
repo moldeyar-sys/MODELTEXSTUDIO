@@ -8,18 +8,21 @@ import {
   HelpCircle,
   Lock,
   MessageCircle,
+  Package,
   Printer,
   RefreshCw,
   Scale,
   ShieldCheck,
   ShoppingCart,
+  Undo2,
 } from 'lucide-react';
 import { useSeo } from '../lib/seo';
 import { useLocale } from '../lib/locale';
 import { RelatedLinks } from '../components/ui/RelatedLinks';
 import { FaqSection } from '../components/ui/FaqSection';
+import { ReturnRequestForm } from '../components/ui/ReturnRequestForm';
 
-export type TrustPageVariant = 'como-funciona' | 'ayuda-impresion' | 'politica-descargas' | 'terminos' | 'privacidad';
+export type TrustPageVariant = 'como-funciona' | 'ayuda-impresion' | 'politica-descargas' | 'devoluciones' | 'terminos' | 'privacidad';
 
 interface TrustPageProps {
   variant: TrustPageVariant;
@@ -34,10 +37,14 @@ type PageData = {
   seoDescription: string;
   path: string;
   sections: Array<{
+    /** Ancla (#id) para enlazar una sección puntual. */
+    id?: string;
     title: string;
     text?: string;
     items?: string[];
     icon?: typeof CheckCircle2;
+    /** Enlace al pie de la sección (ej. a la política completa). */
+    link?: { to: string; label: string };
   }>;
   note?: string;
 };
@@ -143,10 +150,10 @@ function buildPages(t: (key: string, es: string) => string): Record<TrustPageVar
     },
     'politica-descargas': {
       eyebrow: t('tp.pd.eyebrow', 'Compra digital'),
-      title: t('tp.pd.title', 'Política de descargas digitales y reembolsos'),
+      title: t('tp.pd.title', 'Política de descargas digitales'),
       description: t('tp.pd.desc', 'Condiciones claras para productos digitales, entregas manuales, comprobantes y pedidos de ayuda.'),
       icon: RefreshCw,
-      seoTitle: t('tp.pd.seoTitle', 'Política de descargas digitales y reembolsos'),
+      seoTitle: t('tp.pd.seoTitle', 'Política de descargas digitales'),
       seoDescription: t('tp.pd.seoDesc', 'Condiciones de descarga, entrega digital y reembolsos para compras de moldes digitales en Modeltex.'),
       path: '/politica-descargas',
       sections: [
@@ -173,12 +180,13 @@ function buildPages(t: (key: string, es: string) => string): Record<TrustPageVar
         {
           title: t('tp.pd.s3.title', 'Reembolsos y cambios'),
           icon: RefreshCw,
-          text: t('tp.pd.s3.text', 'Por tratarse de productos digitales, una vez habilitada o descargada la compra no se realizan reembolsos automáticos. Si hubo un error técnico verificable, revisamos el caso para ayudarte.'),
+          text: t('tp.pd.s3.text', 'Por ser contenido digital de entrega inmediata, una vez habilitada la descarga no hay devolución por arrepentimiento; lo que sí garantizamos es que recibas lo que compraste y que funcione. Las condiciones completas, incluidas las de los moldes en cartón, están en la Política de devoluciones.'),
           items: [
-            t('tp.pd.s3.i1', 'Podemos corregir accesos o reenviar archivos si corresponde.'),
-            t('tp.pd.s3.i2', 'No se reemplaza una compra por elegir mal talle/formato sin consulta previa.'),
+            t('tp.pd.s3.i1', 'Si el archivo no abre o no es el que compraste, lo corregimos o reenviamos sin costo.'),
+            t('tp.pd.s3.i2', 'No se reemplaza una compra por elegir mal talle o formato: revisá la ficha antes de pagar.'),
             t('tp.pd.s3.i3', 'Para formatos especiales, consultá antes de abonar.'),
           ],
+          link: { to: '/devoluciones', label: t('tp.pd.s3.link', 'Ver la política de devoluciones y reembolsos') },
         },
         {
           title: t('tp.pd.s4.title', 'Soporte post-compra'),
@@ -192,6 +200,88 @@ function buildPages(t: (key: string, es: string) => string): Record<TrustPageVar
         },
       ],
       note: t('tp.pd.note', 'Estos textos son una base operativa para el sitio. Si necesitás cobertura legal específica para tu empresa, conviene revisarlos con un profesional.'),
+    },
+    devoluciones: {
+      eyebrow: t('tp.dv.eyebrow', 'Compra protegida'),
+      title: t('tp.dv.title', 'Política de devoluciones y reembolsos'),
+      description: t('tp.dv.desc', 'Qué se puede devolver, qué garantía tienen los archivos, cómo pedir un reembolso y en qué plazo te devolvemos el dinero. Vale para todas las compras en modeltex.com.ar.'),
+      icon: Undo2,
+      seoTitle: t('tp.dv.seoTitle', 'Política de devoluciones y reembolsos'),
+      seoDescription: t('tp.dv.seoDesc', 'Devoluciones y reembolsos en Modeltex: garantía de los moldes digitales, derecho de arrepentimiento para moldes en cartón, plazos de reintegro y botón de arrepentimiento.'),
+      path: '/devoluciones',
+      sections: [
+        {
+          id: 'alcance',
+          title: t('tp.dv.s1.title', 'Qué cubre esta política'),
+          icon: FileText,
+          text: t('tp.dv.s1.text', 'Aplica a todas las compras hechas en modeltex.com.ar, con o sin cuenta. Vendemos dos tipos de producto y cada uno tiene reglas distintas: archivos digitales (PDF A4, PDF plotter, DXF/AAMA, PDS, MRK, ADS, sublimación) y moldes en cartón (producto físico, solo Argentina).'),
+          items: [
+            t('tp.dv.s1.i1', 'Los moldes gratis no son una compra: no hay nada que devolver ni reembolsar.'),
+            t('tp.dv.s1.i2', 'La moldería a pedido y las modificaciones sobre un molde tienen condiciones propias (más abajo).'),
+            t('tp.dv.s1.i3', 'Esta política respeta la Ley 24.240 de Defensa del Consumidor y el Código Civil y Comercial (artículos 1110 a 1116).'),
+          ],
+        },
+        {
+          id: 'digitales',
+          title: t('tp.dv.s2.title', 'Moldes digitales: garantía de archivos'),
+          icon: Download,
+          text: t('tp.dv.s2.text', 'Los moldes digitales se entregan como archivos descargables apenas se confirma el pago. Por ser contenido digital de entrega inmediata, una vez habilitada la descarga no admiten devolución por arrepentimiento ni por haber elegido mal el talle o el formato (artículo 1116 del Código Civil y Comercial). Lo que sí garantizamos es que recibas exactamente lo que compraste y que funcione.'),
+          items: [
+            t('tp.dv.s2.i1', 'Si el archivo no abre, está dañado o no es el molde, formato o talles que pagaste, lo corregimos o reenviamos dentro de las 48 horas hábiles, sin costo.'),
+            t('tp.dv.s2.i2', 'Si no podemos resolverlo en 5 días hábiles, te devolvemos el 100 % del importe por el mismo medio de pago.'),
+            t('tp.dv.s2.i3', 'Si pagaste y la descarga todavía no fue habilitada, podés cancelar y te reintegramos el total.'),
+            t('tp.dv.s2.i4', 'Un cobro duplicado se devuelve completo apenas lo verificamos.'),
+            t('tp.dv.s2.i5', 'Antes de pagar revisá talles y formato en la ficha; si tenés dudas, consultanos por WhatsApp. Cambiar de formato después de la descarga se cotiza aparte.'),
+          ],
+        },
+        {
+          id: 'carton',
+          title: t('tp.dv.s3.title', 'Moldes en cartón: derecho de arrepentimiento'),
+          icon: Package,
+          text: t('tp.dv.s3.text', 'Los moldes en cartón son un producto físico que se vende solo dentro de Argentina. Como en toda compra a distancia, tenés 10 días corridos desde que lo recibís para arrepentirte sin dar motivos (artículo 34 de la Ley 24.240 y artículo 1110 del Código Civil y Comercial).'),
+          items: [
+            t('tp.dv.s3.i1', 'El molde debe volver completo y sin uso: sin cortar, marcar ni doblar más de lo que venía.'),
+            t('tp.dv.s3.i2', 'El costo del envío de devolución corre por cuenta de Modeltex; te indicamos cómo despacharlo.'),
+            t('tp.dv.s3.i3', 'El reintegro se hace dentro de los 10 días hábiles de recibido el molde, por el mismo medio con el que pagaste.'),
+            t('tp.dv.s3.i4', 'Si llegó dañado o no es el molde que compraste, lo reemplazamos sin costo o te devolvemos el dinero: avisanos dentro de las 48 horas de recibido, con fotos.'),
+          ],
+        },
+        {
+          id: 'a-pedido',
+          title: t('tp.dv.s4.title', 'Moldería a pedido y modificaciones'),
+          icon: Scale,
+          text: t('tp.dv.s4.text', 'La moldería a pedido y los cambios sobre un molde del catálogo son trabajos personalizados: se acuerdan por escrito (WhatsApp o email) antes de empezar, con alcance, formato, talles y precio.'),
+          items: [
+            t('tp.dv.s4.i1', 'Una vez iniciado el desarrollo, el anticipo no se reintegra, porque el trabajo se hace a medida (artículo 1116, inciso a, del Código Civil y Comercial).'),
+            t('tp.dv.s4.i2', 'Si Modeltex no puede entregar lo acordado, se devuelve el 100 % de lo pagado.'),
+            t('tp.dv.s4.i3', 'Las correcciones sobre lo pactado se hacen sin costo; los cambios de alcance se cotizan aparte.'),
+          ],
+        },
+        {
+          id: 'como-pedir',
+          title: t('tp.dv.s5.title', 'Cómo pedir una devolución o un reembolso'),
+          icon: MessageCircle,
+          text: t('tp.dv.s5.text', 'Escribinos dentro del plazo por el formulario de abajo, por WhatsApp (+54 9 11 6653 1086) o por email (contacto@modeltex.com.ar), desde el mismo email con el que compraste.'),
+          items: [
+            t('tp.dv.s5.i1', 'Incluí el número de pedido (los 8 caracteres que figuran en tu compra), el molde, el formato y qué pasó; si es un problema de archivo, sumá una captura.'),
+            t('tp.dv.s5.i2', 'Te respondemos dentro de las 24 horas hábiles con la confirmación del trámite y los pasos a seguir.'),
+            t('tp.dv.s5.i3', 'Nunca te vamos a pedir la contraseña ni los datos de tu tarjeta para gestionar un reembolso.'),
+          ],
+        },
+        {
+          id: 'plazos',
+          title: t('tp.dv.s6.title', 'Plazos y forma de reintegro'),
+          icon: RefreshCw,
+          text: t('tp.dv.s6.text', 'Los reembolsos se hacen siempre por el mismo medio de pago que usaste y a nombre de quien compró; nunca en efectivo ni a terceros.'),
+          items: [
+            t('tp.dv.s6.i1', 'Mercado Pago: se reintegra a la cuenta o tarjeta con la que pagaste; según el banco, se ve en 3 a 10 días hábiles.'),
+            t('tp.dv.s6.i2', 'Transferencia bancaria: a un CBU o alias a nombre del comprador, dentro de los 5 días hábiles de aprobado el reembolso.'),
+            t('tp.dv.s6.i3', 'PayPal, Payoneer, Wise y criptomonedas: se devuelve a la misma cuenta o billetera de origen, dentro de los 5 días hábiles.'),
+            t('tp.dv.s6.i4', 'Si pasado el plazo no ves el reintegro, escribinos con el número de pedido y lo revisamos.'),
+          ],
+        },
+      ],
+      note: t('tp.dv.note', 'Última actualización: octubre de 2026. Esta política es una base operativa que respeta la normativa argentina de defensa del consumidor; si necesitás cobertura legal específica para tu empresa, conviene revisarla con un profesional. Si creés que no resolvimos tu reclamo, podés recurrir a Defensa del Consumidor (argentina.gob.ar/defensadelconsumidor).'),
     },
     terminos: {
       eyebrow: t('tp.tc.eyebrow', 'Condiciones de uso'),
@@ -310,7 +400,8 @@ export default function TrustPage({ variant }: TrustPageProps) {
   const relatedLinks: Array<{ to: string; label: string; icon: typeof HelpCircle }> = [
     { to: '/como-funciona', label: t('footer.howItWorks', 'Cómo funciona'), icon: ShoppingCart },
     { to: '/ayuda-impresion', label: t('footer.printHelp', 'Ayuda para imprimir'), icon: Printer },
-    { to: '/politica-descargas', label: t('footer.downloads', 'Descargas y reembolsos'), icon: RefreshCw },
+    { to: '/politica-descargas', label: t('footer.downloads', 'Política de descargas'), icon: RefreshCw },
+    { to: '/devoluciones', label: t('footer.returns', 'Devoluciones y reembolsos'), icon: Undo2 },
     { to: '/terminos', label: t('footer.terms', 'Términos'), icon: FileText },
     { to: '/privacidad', label: t('footer.privacy', 'Privacidad'), icon: Lock },
   ];
@@ -343,7 +434,7 @@ export default function TrustPage({ variant }: TrustPageProps) {
             {page.sections.map(section => {
               const SectionIcon = section.icon || CheckCircle2;
               return (
-                <section key={section.title} className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-6 shadow-sm">
+                <section key={section.title} id={section.id} className="bg-white border border-gray-100 rounded-2xl p-5 sm:p-6 shadow-sm scroll-mt-24">
                   <div className="flex items-start gap-3">
                     <div className="w-11 h-11 rounded-xl bg-primary-50 text-primary-800 flex items-center justify-center flex-shrink-0">
                       <SectionIcon className="w-5 h-5" />
@@ -365,9 +456,16 @@ export default function TrustPage({ variant }: TrustPageProps) {
                       ))}
                     </ul>
                   )}
+                  {section.link && (
+                    <Link to={section.link.to} className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-primary-800 hover:text-primary-900">
+                      {section.link.label} <ArrowRight className="w-4 h-4" />
+                    </Link>
+                  )}
                 </section>
               );
             })}
+
+            {variant === 'devoluciones' && <ReturnRequestForm />}
 
             {page.note && (
               <div className="bg-amber-50 border border-amber-200 rounded-2xl p-5 text-sm text-amber-900 flex items-start gap-3">

@@ -80,6 +80,7 @@ export const config = {
     '/quienes-somos',
     '/ia-textil',
     '/politica-descargas',
+    '/devoluciones',
     '/terminos',
     '/privacidad',
     // Catch-all: cualquier otra ruta (typos, links rotos, escaneos, rutas
@@ -532,6 +533,7 @@ async function productBody(p: ProductRow, pageUrl: string, origin: string): Prom
           hasMerchantReturnPolicy: {
             '@type': 'MerchantReturnPolicy',
             returnPolicyCategory: 'https://schema.org/MerchantReturnNotPermitted',
+            merchantReturnLink: 'https://modeltex.com.ar/devoluciones',
           },
         },
       ]
@@ -1263,12 +1265,41 @@ const STATIC_PAGES: Record<
 <p>Usala desde <a href="${o}/ia-textil">${o}/ia-textil</a> y después elegí los moldes en el <a href="${o}/catalogo">catálogo</a>.</p>`,
   },
   '/politica-descargas': {
-    title: 'Política de descargas digitales y reembolsos | Modeltex',
+    title: 'Política de descargas digitales | Modeltex',
     description: 'Condiciones de descarga, entrega digital y reembolsos para compras de moldes digitales en Modeltex.',
     body: (o) => `
-<h1>Política de descargas digitales y reembolsos</h1>
+<h1>Política de descargas digitales</h1>
 <p>Los moldes de Modeltex son productos digitales: se entregan por descarga (inmediata en los marcados como descarga rápida; el resto dentro de las 24 horas de confirmado el pago) y quedan disponibles desde la cuenta del cliente o desde el link enviado por email en compras sin cuenta.</p>
-<p>El texto completo de la política está en <a href="${o}/politica-descargas">${o}/politica-descargas</a>. Consultas: <a href="${o}/contacto">contacto</a>.</p>`,
+<p>El texto completo de la política está en <a href="${o}/politica-descargas">${o}/politica-descargas</a>; las condiciones de devolución y reembolso, en la <a href="${o}/devoluciones">política de devoluciones</a>. Consultas: <a href="${o}/contacto">contacto</a>.</p>`,
+  },
+  '/devoluciones': {
+    title: 'Política de devoluciones y reembolsos | Modeltex',
+    description:
+      'Devoluciones y reembolsos en Modeltex: garantía de los moldes digitales, derecho de arrepentimiento para moldes en cartón, plazos de reintegro y botón de arrepentimiento.',
+    body: (o) => `
+<h1>Política de devoluciones y reembolsos</h1>
+<p>Vale para todas las compras en modeltex.com.ar y respeta la Ley 24.240 de Defensa del Consumidor y el Código Civil y Comercial (artículos 1110 a 1116).</p>
+<h2>Moldes digitales</h2>
+<p>Son archivos descargables de entrega inmediata: una vez habilitada la descarga no admiten devolución por arrepentimiento ni por haber elegido mal talle o formato (artículo 1116 del Código Civil y Comercial). Sí tienen garantía: si el archivo no abre, está dañado o no es el molde, formato o talles comprados, Modeltex lo corrige o reenvía dentro de las 48 horas hábiles sin costo y, si no puede resolverlo en 5 días hábiles, devuelve el 100 % por el mismo medio de pago. Si el pago se hizo y la descarga todavía no fue habilitada, la compra se puede cancelar con reintegro total.</p>
+<h2>Moldes en cartón</h2>
+<p>Producto físico, solo Argentina: 10 días corridos desde la recepción para arrepentirse sin dar motivos, con el molde completo y sin uso; el envío de devolución corre por cuenta de Modeltex y el reintegro se hace dentro de los 10 días hábiles de recibido, por el mismo medio de pago.</p>
+<h2>Cómo pedirlo</h2>
+<p>Por el botón de arrepentimiento de <a href="${o}/devoluciones#arrepentimiento">${o}/devoluciones</a>, por WhatsApp (+54 9 11 6653 1086) o por email (contacto@modeltex.com.ar), con el número de pedido y el email de la compra. Respuesta dentro de las 24 horas hábiles con la constancia del trámite. Los reembolsos se hacen siempre por el mismo medio de pago: Mercado Pago (3 a 10 días hábiles según el banco), transferencia, PayPal, Payoneer, Wise o cripto (5 días hábiles).</p>
+<p>Texto completo en <a href="${o}/devoluciones">${o}/devoluciones</a>. Consultas: <a href="${o}/contacto">contacto</a>.</p>`,
+    faqTitle: 'Preguntas frecuentes sobre devoluciones',
+    schemas: (o) => [
+      {
+        id: 'schema-breadcrumb',
+        data: {
+          '@context': 'https://schema.org',
+          '@type': 'BreadcrumbList',
+          itemListElement: [
+            { '@type': 'ListItem', position: 1, name: 'Inicio', item: `${o}/` },
+            { '@type': 'ListItem', position: 2, name: 'Política de devoluciones', item: `${o}/devoluciones` },
+          ],
+        },
+      },
+    ],
   },
   '/terminos': {
     title: 'Términos y condiciones | Modeltex',

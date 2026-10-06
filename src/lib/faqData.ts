@@ -75,7 +75,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     q: '¿Hacen reembolsos si me arrepiento?',
-    a: 'Por tratarse de productos digitales, una vez habilitada o descargada la compra no se hacen reembolsos automáticos. Si hubo un error técnico verificable (por ejemplo un archivo que no abre), revisamos el caso y lo resolvemos. Por eso recomendamos revisar bien la ficha y, si hay dudas, consultar por WhatsApp antes de pagar.',
+    a: 'Depende del producto. Los moldes digitales no tienen devolución por arrepentimiento una vez habilitada la descarga, porque son archivos de entrega inmediata (así lo prevé el Código Civil y Comercial para el contenido digital); sí tienen garantía: si el archivo no abre, no es el que compraste o le falta algo, lo corregimos sin costo y, si no podemos, te devolvemos el dinero. Los moldes en cartón (producto físico) tienen 10 días corridos desde que los recibís para arrepentirte. El detalle, los plazos y el botón de arrepentimiento están en la Política de devoluciones (modeltex.com.ar/devoluciones). Por eso recomendamos revisar bien la ficha y, si hay dudas, consultar por WhatsApp antes de pagar.',
   },
   {
     q: '¿Qué hago si no me llega la descarga?',
