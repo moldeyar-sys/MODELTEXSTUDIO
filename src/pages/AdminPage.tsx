@@ -43,6 +43,7 @@ export default function AdminPage() {
   const [emailIncludeLink, setEmailIncludeLink] = useState(true);
   const [emailSending, setEmailSending] = useState(false);
   const [emailResult, setEmailResult] = useState<{ ok: boolean; text: string } | null>(null);
+  const [emailSender, setEmailSender] = useState<{ from: string; problem?: string; replyTo?: string | null } | null>(null);
   const [customers, setCustomers] = useState<Profile[]>([]);
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [freeMolds, setFreeMolds] = useState<FreeMold[]>([]);
@@ -237,6 +238,16 @@ export default function AdminPage() {
     setEmailIncludeLink(o.payment_status === 'pagado');
     setEmailResult(null);
     setEmailOrder(o);
+    // Desde qué casilla sale (y si Resend puede mandarlo): se muestra en el cuadro.
+    setEmailSender(null);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      const token = session?.access_token;
+      if (!token) return;
+      fetch('/api/email-buyer', { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(d => setEmailSender({ from: String(d.from || ''), problem: d.problem, replyTo: d.replyTo }))
+        .catch(() => setEmailSender({ from: '', problem: 'No pude comprobar la casilla remitente.' }));
+    });
   };
   const buyerMailto = (o: Order, subject: string, body: string, includeLink: boolean) => {
     const texto = includeLink ? `${body}\n\nPodés ver y descargar tu pedido acá: ${orderLink(o)}` : body;
@@ -966,9 +977,20 @@ export default function AdminPage() {
                       <input type="checkbox" checked={emailIncludeLink} onChange={e => setEmailIncludeLink(e.target.checked)} />
                       Agregar el link para ver y descargar el pedido
                     </label>
-                    <p className="text-xs text-gray-400">
-                      Sale desde la casilla de Modeltex y la respuesta te llega a tu correo. Si querés adjuntar archivos, usá "Abrir en mi correo".
-                    </p>
+                    {emailSender ? (
+                      emailSender.problem ? (
+                        <p className="text-xs rounded-lg px-3 py-2 bg-amber-50 text-amber-800">
+                          Remitente: <span className="font-medium">{emailSender.from || '(sin configurar)'}</span>. {emailSender.problem} Mientras tanto usá "Abrir en mi correo".
+                        </p>
+                      ) : (
+                        <p className="text-xs text-gray-500">
+                          Sale desde <span className="font-medium text-gray-700">{emailSender.from}</span>
+                          {emailSender.replyTo ? `; las respuestas llegan a ${emailSender.replyTo}` : ''}. Para adjuntar archivos usá "Abrir en mi correo".
+                        </p>
+                      )
+                    ) : (
+                      <p className="text-xs text-gray-400">Comprobando la casilla remitente…</p>
+                    )}
                     {emailResult && (
                       <p className={`text-sm rounded-lg px-3 py-2 ${emailResult.ok ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
                         {emailResult.text}

@@ -10,7 +10,8 @@
 // Acciones:
 //   POST ?action=notify-order        -> avisa al dueño (WhatsApp+email) de una compra nueva
 //   POST ?action=notify-buyer-paid   -> avisa al comprador invitado que ya puede descargar
-//   POST ?action=email-buyer         -> email del admin al comprador de un pedido (boton "Enviar email" del panel)
+//   GET/POST ?action=email-buyer     -> GET: desde que casilla sale y si Resend puede mandar; POST: email del admin
+//                                       al comprador de un pedido (boton "Enviar email" del panel)
 //   GET  ?action=geo                 -> pais del visitante (geolocalizacion de Vercel)
 //   GET  ?action=indexnow-key        -> archivo de verificacion de IndexNow (texto plano)
 //   POST ?action=indexnow            -> notifica URLs nuevas/actualizadas a IndexNow (Bing/Yandex)
@@ -438,12 +439,57 @@ async function handleNotifyBuyerPaid(req: any, res: any) {
 // decide la direccion. Sale desde NOTIFY_FROM (la misma casilla que el aviso
 // de pago) con reply_to al dueño (NOTIFY_EMAIL), asi la respuesta le llega.
 // ---------------------------------------------------------------------------
+// GET ?action=email-buyer (solo admin): desde qué casilla sale el mail y si
+// Resend puede mandarlo. Sin NOTIFY_FROM, Resend usa su remitente de prueba
+// (onboarding@resend.dev) que SOLO entrega a la casilla del dueño de la
+// cuenta; con NOTIFY_FROM de un dominio no verificado, Resend rechaza el
+// envío. El panel lo muestra antes de que el admin apriete "Enviar".
+async function emailBuyerStatus(res: any) {
+  const from = process.env.NOTIFY_FROM || 'Modeltex <onboarding@resend.dev>';
+  const resendKey = process.env.RESEND_API_KEY;
+  const domain = (from.match(/@([^>\s]+)/)?.[1] || '').toLowerCase();
+  const out: Record<string, unknown> = {
+    from,
+    domain,
+    replyTo: process.env.NOTIFY_EMAIL || null,
+    resendConfigured: !!resendKey,
+    domainVerified: false,
+  };
+  if (!resendKey) {
+    out.problem = 'Falta RESEND_API_KEY en Vercel.';
+    return res.status(200).json(out);
+  }
+  if (!process.env.NOTIFY_FROM) {
+    out.problem = 'Falta NOTIFY_FROM en Vercel: con el remitente de prueba de Resend el mail solo llega a tu propia casilla.';
+    return res.status(200).json(out);
+  }
+  try {
+    const r = await fetch('https://api.resend.com/domains', { headers: { Authorization: `Bearer ${resendKey}` } });
+    if (r.ok) {
+      const data = (await r.json()) as { data?: Array<{ name?: string; status?: string }> };
+      const d = (data.data || []).find((x) => String(x.name || '').toLowerCase() === domain);
+      const status = d?.status || 'no cargado en Resend';
+      out.domainStatus = status;
+      out.domainVerified = status === 'verified';
+      if (!out.domainVerified) {
+        out.problem = `El dominio ${domain} no está verificado en Resend (${status}): el envío va a fallar.`;
+      }
+    } else {
+      out.problem = `No se pudo consultar Resend (${r.status}).`;
+    }
+  } catch {
+    out.problem = 'No se pudo consultar Resend.';
+  }
+  return res.status(200).json(out);
+}
+
 async function handleEmailBuyer(req: any, res: any) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const token = (req.headers.authorization || '').replace(/^Bearer\s+/i, '');
   if (!token || !(await isAdmin(token))) {
     return res.status(403).json({ error: 'Esta accion es solo para administradores.' });
   }
+  if (req.method === 'GET') return emailBuyerStatus(res);
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
   const resendKey = process.env.RESEND_API_KEY;
   if (!SERVICE_ROLE || !resendKey) {
     return res.status(200).json({ ok: false, error: 'Falta RESEND_API_KEY o SUPABASE_SERVICE_ROLE_KEY en Vercel. Usá "Abrir en mi correo".' });
