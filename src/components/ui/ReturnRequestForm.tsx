@@ -33,7 +33,7 @@ export function ReturnRequestForm() {
     { value: 'distinto', label: t('rr.m.wrong', 'Recibí un molde, formato o talles distintos a los que compré') },
     { value: 'archivo', label: t('rr.m.file', 'El archivo no abre o está dañado') },
     { value: 'no-prometido', label: t('rr.m.notAsPromised', 'El molde no sale como se prometió en la ficha') },
-    { value: 'sin-descarga', label: t('rr.m.noDownload', 'Pagué y la descarga no se habilitó') },
+    { value: 'sin-descarga', label: t('rr.m.noDownload', 'Pagué y no puedo descargar (los recibís por email o WhatsApp)') },
     { value: 'duplicado', label: t('rr.m.double', 'Me cobraron dos veces') },
     { value: 'otro', label: t('rr.m.other', 'Otro motivo') },
   ];
@@ -89,7 +89,7 @@ export function ReturnRequestForm() {
           <p className="mt-2 text-sm sm:text-base text-gray-600 leading-relaxed">
             {t(
               'rr.text',
-              'Es el enlace que exige la Resolución 424/2020 a toda tienda online. En Modeltex sirve para cancelar un pedido que todavía no fue entregado ni habilitado y para pedir la garantía: molde equivocado, archivo que no abre o molde que no sale como se prometió. Completá el formulario y te respondemos dentro de las 24 horas hábiles con la constancia del trámite.',
+              'Es el enlace que exige la Resolución 424/2020 a toda tienda online. En Modeltex sirve para pedir la garantía: molde equivocado, archivo que no abre, molde que no sale como se prometió o pago sin descarga (te mandamos los archivos por email o WhatsApp). Completá el formulario y te respondemos dentro de las 24 horas hábiles con la constancia del trámite.',
             )}
           </p>
         </div>

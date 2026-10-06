@@ -225,11 +225,11 @@ function buildPages(t: (key: string, es: string) => string): Record<TrustPageVar
           id: 'digitales',
           title: t('tp.dv.s2.title', 'Moldes digitales: garantía de archivos'),
           icon: Download,
-          text: t('tp.dv.s2.text', 'Los moldes digitales se entregan como archivos descargables apenas se confirma el pago. Por ser contenido digital de entrega inmediata, una vez habilitada la descarga no admiten devolución por arrepentimiento ni por haber elegido mal el talle o el formato (artículo 1116 del Código Civil y Comercial). Lo que sí garantizamos es que recibas exactamente lo que compraste y que funcione.'),
+          text: t('tp.dv.s2.text', 'Los moldes digitales se entregan como archivos descargables apenas se confirma el pago; si no podés descargar, te los enviamos por email o WhatsApp. Por ser contenido digital de entrega inmediata, una vez habilitada la descarga o enviados los archivos no admiten devolución por arrepentimiento ni por haber elegido mal el talle o el formato (artículo 1116 del Código Civil y Comercial). Lo que sí garantizamos es que recibas exactamente lo que compraste y que funcione.'),
           items: [
             t('tp.dv.s2.i1', 'Si el archivo no abre, está dañado, no es el molde, formato o talles que pagaste o el molde no sale como se prometió en la ficha, lo corregimos o reenviamos dentro de las 48 horas hábiles, sin costo.'),
             t('tp.dv.s2.i2', 'Si no podemos resolverlo en 5 días hábiles, te devolvemos el 100 % del importe por el mismo medio de pago.'),
-            t('tp.dv.s2.i3', 'Si pagaste y la descarga todavía no fue habilitada, podés cancelar y te reintegramos el total.'),
+            t('tp.dv.s2.i3', 'Si pagaste y no podés descargar, no hace falta cancelar nada: te mandamos los archivos por email o WhatsApp. Con eso la compra queda entregada y no hay devolución.'),
             t('tp.dv.s2.i4', 'Un cobro duplicado se devuelve completo apenas lo verificamos.'),
             t('tp.dv.s2.i5', 'Antes de pagar revisá talles y formato en la ficha; si tenés dudas, consultanos por WhatsApp. Cambiar de formato después de la descarga se cotiza aparte.'),
           ],

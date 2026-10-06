@@ -197,8 +197,8 @@ export const LANDING_FAQS: Record<string, Faq[]> = {
       a: 'No por arrepentimiento: se corta a pedido en los talles elegidos y, como cualquier molde, se puede copiar, así que no se acepta la devolución aunque esté en perfecto estado (artículo 1116 del Código Civil y Comercial, productos personalizados). Sí se reemplaza o reembolsa si te enviamos el molde equivocado, si llegó dañado o si el molde no sale como se prometió en la ficha; avisá dentro de las 48 horas de recibido, con fotos.',
     },
     {
-      q: '¿Puedo cancelar un pedido que todavía no se habilitó?',
-      a: 'Sí. Un pedido pendiente de pago se cancela sin costo. Si ya pagaste pero la descarga todavía no fue habilitada, podés cancelar y se reintegra el total por el mismo medio de pago.',
+      q: '¿Qué pasa si pagué y no puedo descargar?',
+      a: 'Te enviamos los archivos por email o WhatsApp: escribinos con el número de pedido y el email de la compra. Con eso la compra queda entregada y, como con cualquier descarga, ya no hay devolución. Un pedido que todavía no se pagó se cancela solo, sin costo.',
     },
     {
       q: '¿Cómo y cuándo me devuelven el dinero?',
@@ -206,7 +206,7 @@ export const LANDING_FAQS: Record<string, Faq[]> = {
     },
     {
       q: '¿Qué es el botón de arrepentimiento?',
-      a: 'Es el enlace que exige la Resolución 424/2020 a toda tienda online. En Modeltex está en el pie de todas las páginas y sirve para cancelar un pedido que todavía no fue entregado ni habilitado y para pedir la garantía (molde equivocado, archivo que no abre, molde que no sale como se prometió); se responde dentro de las 24 horas hábiles con la constancia del trámite.',
+      a: 'Es el enlace que exige la Resolución 424/2020 a toda tienda online. En Modeltex está en el pie de todas las páginas y sirve para pedir la garantía (molde equivocado, archivo que no abre, molde que no sale como se prometió, pago sin descarga: se envían los archivos por email o WhatsApp); se responde dentro de las 24 horas hábiles con la constancia del trámite.',
     },
   ],
 

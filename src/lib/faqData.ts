@@ -79,7 +79,7 @@ export const FAQ_ITEMS: FaqItem[] = [
   },
   {
     q: '¿Qué hago si no me llega la descarga?',
-    a: 'Si compraste con cuenta, entrá con el mismo email a "Mis descargas". Si compraste sin cuenta, consultá tu pedido con el número y tu email en "Mi pedido". Si el pago ya está confirmado y no ves los archivos, escribinos por WhatsApp (+54 9 11 6653 1086) con el número de pedido y lo resolvemos.',
+    a: 'Si compraste con cuenta, entrá con el mismo email a "Mis descargas". Si compraste sin cuenta, consultá tu pedido con el número y tu email en "Mi pedido". Si el pago ya está confirmado y no ves los archivos, escribinos por WhatsApp (+54 9 11 6653 1086) con el número de pedido y te los enviamos por email o WhatsApp; con eso la compra queda entregada.',
   },
   {
     q: '¿Hacen moldes a medida?',
